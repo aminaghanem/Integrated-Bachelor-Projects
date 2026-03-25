@@ -16,8 +16,6 @@ export default function Step5Review({ data, back, submit }: Props) {
       <p>Username: {data.username}</p>
       <p>Full Name: {data.full_name}</p>
       <p>Personal Email: {data.personal_email || "N/A"}</p>
-      <p>School Name: {data.school_name}</p>
-      <p>School Class: {data.school_class}</p>
       <p>Date of Birth: {data.date_of_birth}</p>
       <p>Grade Level: {data.grade_level}</p>
       <p>Parent Email: {data.parent_email}</p>

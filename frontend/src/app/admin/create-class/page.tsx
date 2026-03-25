@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
+import { useEffect } from "react"
 
 type Subject = {
-  subject_name: string
+  subject_id: string
   teacher_username: string
 }
 
@@ -21,10 +22,28 @@ export default function CreateClass() {
   const [message, setMessage] = useState("")
 
   const [subjects, setSubjects] = useState([
-    { subject_name: "", teacher_username: "" }
+    { subject_id: "", teacher_username: "" }
   ])
 
+  const [availableSubjects, setAvailableSubjects] = useState<any[]>([])
+  const [teachers, setTeachers] = useState<any[]>([])
+
   const [students, setStudents] = useState([""])
+
+  const fetchSubjectsByGrade = async (grade: string) => {
+    if (!grade) return
+
+    const res = await fetch(`http://localhost:4000/api/subjects/grade/${grade}`)
+    const data = await res.json()
+    setAvailableSubjects(data)
+  }
+
+  const fetchTeachers = async () => {
+    const res = await fetch("http://localhost:4000/api/teachers")
+    const data = await res.json()
+
+    setTeachers(Array.isArray(data) ? data : data.teachers || [])
+  }
 
   const handleSubjectChange = (index: number, field: keyof Subject, value: string) => {
     const updated = [...subjects]
@@ -33,7 +52,7 @@ export default function CreateClass() {
   }
 
   const addSubject = () => {
-    setSubjects([...subjects, { subject_name: "", teacher_username: "" }])
+    setSubjects([...subjects, { subject_id: "", teacher_username: "" }])
   }
 
   const removeSubject = (index: number) => {
@@ -58,7 +77,15 @@ export default function CreateClass() {
 
   const handleChange = (e:any) => {
     setForm({...form, [e.target.name]: e.target.value})
+
+    if (e.target.name === "grade_level") {
+      fetchSubjectsByGrade(e.target.value)
+    }
   }
+
+  useEffect(() => {
+    fetchTeachers()
+  }, [])
 
   const handleSubmit = async (e:any) => {
 
@@ -80,8 +107,8 @@ export default function CreateClass() {
 
     const data = await res.json()
 
-    if(!res.ok){
-      setError(data.message)
+    if (!res.ok) {
+      setError(data.error)
       return
     }
 
@@ -117,23 +144,62 @@ export default function CreateClass() {
             {subjects.map((s, i) => (
             <tr key={i}>
                 <td>
-                <input
-                    placeholder="Subject name"
-                    value={s.subject_name}
-                    onChange={(e) =>
-                    handleSubjectChange(i, "subject_name", e.target.value)
-                    }
-                />
+                <select
+                  value={s.subject_id || ""}
+                  onChange={(e) =>
+                    handleSubjectChange(i, "subject_id", e.target.value)
+                  }
+                >
+                  <option value="">Select Subject</option>
+                  {availableSubjects.map((sub) => (
+                    <option key={sub._id} value={sub._id}>
+                      {sub.name}
+                    </option>
+                  ))}
+                </select>
                 </td>
 
                 <td>
-                <input
-                    placeholder="Teacher username"
-                    value={s.teacher_username}
-                    onChange={(e) =>
-                    handleSubjectChange(i, "teacher_username", e.target.value)
+                <select
+                  value={s.teacher_username}
+                  onChange={async (e) => {
+                    const selectedUsername = e.target.value
+
+                    handleSubjectChange(i, "teacher_username", selectedUsername)
+
+                    const teacher = teachers.find(t => t.username === selectedUsername)
+
+                    if (!teacher || !s.subject_id) return
+
+                    const canTeach = teacher.teachable_subjects?.includes(s.subject_id)
+
+                    if (!canTeach) {
+                      const confirmAdd = confirm(
+                        "This teacher does not teach this subject. Do you want to add it?"
+                      )
+
+                      if (confirmAdd) {
+                        await fetch(`http://localhost:4000/api/teachers/${teacher._id}/add-subject`, {
+                          method: "PUT",
+                          headers: {
+                            "Content-Type": "application/json"
+                          },
+                          body: JSON.stringify({ subject_id: s.subject_id })
+                        })
+
+                        alert("Subject added to teacher ✅")
+                      }
                     }
-                />
+                  }}
+                >
+                  <option value="">Select Teacher</option>
+                  {Array.isArray(teachers) &&
+                    teachers.map((t) => (
+                      <option key={t._id} value={t.username}>
+                        {t.username}
+                      </option>
+                  ))}
+                </select>
                 </td>
 
                 <td>

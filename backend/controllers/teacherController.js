@@ -20,8 +20,26 @@ const createTeacher = async (req, res) => {
 };
 
 const getTeachers = async (req, res) => {
-  const teachers = await Teacher.find().populate("students_ids");
+  const teachers = await Teacher.find();
   res.json(teachers);
 };
 
-module.exports = { createTeacher, getTeachers };
+const addTeachableSubject = async (req, res) => {
+  try {
+    const { subject_id } = req.body
+
+    const teacher = await Teacher.findByIdAndUpdate(
+      req.params.id,
+      {
+        $addToSet: { teachable_subjects: subject_id }
+      },
+      { new: true }
+    )
+
+    res.json(teacher)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+}
+
+module.exports = { createTeacher, getTeachers, addTeachableSubject };

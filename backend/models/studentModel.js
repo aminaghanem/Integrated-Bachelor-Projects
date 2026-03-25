@@ -33,12 +33,12 @@ const studentSchema = new mongoose.Schema({
     ref: "Parent"
   },
 
-  teacher_ids: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Teacher"
-    }
-  ],
+  // teacher_ids: [
+  //   {
+  //     type: mongoose.Schema.Types.ObjectId,
+  //     ref: "Teacher"
+  //   }
+  // ],
 
   username: { type: String, required: true, unique: true },
   password_hash: { type: String, required: true },

@@ -31,6 +31,7 @@ app.use("/api/activity", require("./routes/browserActivityRoutes"));
 app.use("/api/feedback", require("./routes/feedbackRoutes"));
 app.use("/api/classes", require("./routes/classRoutes"));
 app.use("/api/proxy", require("./routes/proxy"));
+app.use("/api/subjects", require("./routes/subjectRoutes"));
 
 console.log('Set up routes...')
 

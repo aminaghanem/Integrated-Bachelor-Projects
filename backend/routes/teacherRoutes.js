@@ -3,7 +3,8 @@ const router = express.Router();
 
 const {
   createTeacher,
-  getTeachers
+  getTeachers,
+  addTeachableSubject
 } = require("../controllers/teacherController");
 
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
@@ -14,9 +15,11 @@ router.post("/", createTeacher);
 // Get all teachers (protected)
 router.get(
   "/",
-  protect,
-  authorizeRoles("parent", "teacher"),
+  //protect,
+  //authorizeRoles("parent", "teacher"),
   getTeachers
 );
+
+router.put("/:id/add-subject", addTeachableSubject);
 
 module.exports = router;

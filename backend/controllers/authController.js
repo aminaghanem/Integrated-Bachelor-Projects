@@ -3,12 +3,7 @@ const jwt = require("jsonwebtoken");
 const Student = require("../models/studentModel.js");
 const Parent = require("../models/parentModel.js");
 const Teacher = require("../models/teacherModel.js");
-
-const generateToken = (id, role) => {
-  return jwt.sign({ id, role }, process.env.JWT_SECRET, {
-    expiresIn: "7d"
-  });
-};
+const Admin = require("../models/adminModel") ;
 
 const login = async (req, res) => {
 
@@ -18,68 +13,58 @@ const login = async (req, res) => {
 
     console.log("Login attempt:", username)
 
+    let user = null
+    let role = null
+
     // check students
-    let user = await Student.findOne({ username })
+    user = await Student.findOne({ username })
 
     if (user) {
-
-      const valid = await bcrypt.compare(password, user.password_hash)
-
-      if (!valid)
-        return res.status(400).json({ error: "Invalid credentials" })
-
-      const token = jwt.sign(
-        { id: user._id, role: "student" },
-        process.env.JWT_SECRET
-      )
-
-      return res.json({
-        token,
-        role: "student",
-        userId: user._id
-      })
+      role = "student"
     }
 
     // check teachers
-    user = await Teacher.findOne({ username })
-
-    if (user) {
-
-      const valid = await bcrypt.compare(password, user.password_hash)
-
-      if (!valid)
-        return res.status(400).json({ error: "Invalid credentials" })
-
-      const token = jwt.sign(
-        { id: user._id, role: "teacher" },
-        process.env.JWT_SECRET
-      )
-
-      return res.json({
-        token,
-        role: "teacher",
-        userId: user._id
-      })
+    if (!user) {
+      user = await Teacher.findOne({ username })
+      if (user) {
+        role = "teacher"
+      }
     }
 
     // check parents
-    user = await Parent.findOne({ username })
+    if (!user) {
+      user = await Parent.findOne({ username })
+      if (user) {
+        role = "parent"
+      }
+    }
+
+    // check admins
+    if (!user) {
+      user = await Admin.findOne({ username })
+      if (user) {
+        role = "admin"
+      }
+    }
 
     if (user) {
 
       const valid = await bcrypt.compare(password, user.password_hash)
 
-      if (!valid)
+      if (!valid) {
         return res.status(400).json({ error: "Invalid credentials" })
+      }
 
+      // ✅ generate token CORRECTLY
       const token = jwt.sign(
-        { id: user._id, role: "parent" },
-        process.env.JWT_SECRET
+        { id: user._id, role },   // 🔥 USE REAL ROLE
+        process.env.JWT_SECRET,
+        { expiresIn: "7d" }
       )
 
-      return res.json({
+      res.json({
         token,
-        role: "parent",
+        role,
         userId: user._id
       })
     }

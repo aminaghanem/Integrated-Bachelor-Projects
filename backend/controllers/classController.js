@@ -1,7 +1,7 @@
 const SchoolClass = require("../models/classModel");
 const Teacher = require("../models/teacherModel");
 const Student = require("../models/studentModel");
-
+const Subject = require("../models/subjectModel");
 
 // Create a new class
 const createClass = async (req, res) => {
@@ -34,6 +34,15 @@ const createClass = async (req, res) => {
 
     for (let subject of subjects) {
 
+      // 1. check subject exists
+      const subjectDoc = await Subject.findById(subject.subject_id);
+      if (!subjectDoc) {
+        return res.status(400).json({
+          message: `Subject not found`
+        });
+      }
+
+      // 2. check teacher exists
       const teacher = await Teacher.findOne({
         username: subject.teacher_username
       });
@@ -44,11 +53,22 @@ const createClass = async (req, res) => {
         });
       }
 
+      // 3. OPTIONAL (very good practice 🔥)
+      // check teacher can teach this subject
+      if (
+        teacher.teachable_subjects &&
+        !teacher.teachable_subjects.includes(subject.subject_id)
+      ) {
+        return res.status(400).json({
+          message: `${teacher.username} cannot teach this subject`
+        });
+      }
+
+      // 4. push correct structure
       resolvedSubjects.push({
-        subject_name: subject.subject_name,
+        subject: subjectDoc._id,   // ✅ ObjectId
         teacher_id: teacher._id
       });
-
     }
 
     // resolve students
@@ -56,10 +76,27 @@ const createClass = async (req, res) => {
       username: { $in: student_usernames }
     });
 
-    if (students.length !== student_usernames.length) {
+    const foundUsernames = students.map(s => s.username)
+
+    const invalidUsernames = student_usernames.filter(
+      u => !foundUsernames.includes(u)
+    )
+
+    if (invalidUsernames.length > 0) {
       return res.status(400).json({
-        message: "One or more student usernames are invalid"
-      });
+        error: `Invalid usernames: ${invalidUsernames.join(", ")}`
+      })
+    }
+
+    const alreadyAssigned = students.filter(s => s.class_id)
+
+    if (alreadyAssigned.length > 0) {
+      return res.status(400).json({
+        error: ` ${alreadyAssigned
+          .map(s => s.username)
+          .join(", ")}
+          are already assigned to a class`
+      })
     }
 
     const studentIds = students.map(s => s._id);
@@ -92,11 +129,11 @@ const createClass = async (req, res) => {
           $addToSet: {
             teaching_assignments: {
               class_id: newClass._id,
-              subject_name: subject.subject_name
+              subject: subject.subject
             }
           }
         }
-      )
+      );
 
     }
 
@@ -125,8 +162,9 @@ const getClassById = async (req, res) => {
   try {
 
     const schoolClass = await SchoolClass.findById(req.params.id)
+      .populate("subjects.subject")
       .populate("subjects.teacher_id")
-      .populate("students");
+      .populate("students.student_id");
 
     if (!schoolClass) {
       return res.status(404).json({ error: "Class not found" });

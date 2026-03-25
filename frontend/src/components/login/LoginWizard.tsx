@@ -2,11 +2,13 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 
-export default function StudentLogin() {
+export default function Login() {
 
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+
+  const router = useRouter()
 
   const handleLogin = async () => {
 
@@ -32,15 +34,19 @@ export default function StudentLogin() {
       localStorage.setItem("userId", data.userId)
 
       if (data.role === "student") {
-        window.location.href = "/student/dashboard"
+        router.push("/student/dashboard")
       }
 
       if (data.role === "teacher") {
-        window.location.href = "/teacher/dashboard"
+        router.push("/teacher/dashboard")
       }
 
       if (data.role === "parent") {
-        window.location.href = "/parent/dashboard"
+        router.push ("/parent/dashboard")
+      }
+
+      if (data.role === "admin") {
+        router.push ("/admin/dashboard")
       }
 
     } catch (err) {

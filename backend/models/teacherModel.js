@@ -11,9 +11,17 @@ const teacherSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "SchoolClass"
       },
-      subject_name: String
+      subject: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Subject"
+      }
     }
   ],
+
+  teachable_subjects: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Subject"
+  }],
 
   created_at: { type: Date, default: Date.now }
 });

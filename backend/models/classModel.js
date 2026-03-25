@@ -21,8 +21,9 @@ const schoolClassSchema = new mongoose.Schema(
 
   subjects: [
     {
-      subject_name: {
-        type: String,
+      subject: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Subject",
         required: true
       },
 
