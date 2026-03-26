@@ -108,7 +108,8 @@ export default function CreateClass() {
     const data = await res.json()
 
     if (!res.ok) {
-      setError(data.error)
+      setError(data.error || data.message || "Something went wrong")
+      console.log("FULL ERROR:", data)
       return
     }
 

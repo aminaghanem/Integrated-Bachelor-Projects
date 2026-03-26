@@ -203,7 +203,7 @@ const addStudentToClass = async (req, res) => {
 
   } catch (error) {
 
-    res.status(400).json({ error: error.message });
+    res.status(400).json({ message: 'cannot add' });
 
   }
 };

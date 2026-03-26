@@ -90,7 +90,7 @@ export default function Step2Profile({ data, update, next, back, errors }: Props
         )}
       </div> */}
 
-      <div className="form-group">
+      {/* <div className="form-group">
         <label>Grade Level</label>
         <input
           type="number"
@@ -101,7 +101,7 @@ export default function Step2Profile({ data, update, next, back, errors }: Props
         {errors.grade_level && (
           <p className="error">{errors.grade_level}</p>
         )}
-      </div>
+      </div> */}
 
       <div className="form-group">
         <label>School Type</label>

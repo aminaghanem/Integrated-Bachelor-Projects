@@ -78,7 +78,7 @@ const studentSchema = new mongoose.Schema({
     required: true
   },
   
-  grade_level: Number,
+  // grade_level: Number,
   preferred_language: String,
 
   learning_preferences: {

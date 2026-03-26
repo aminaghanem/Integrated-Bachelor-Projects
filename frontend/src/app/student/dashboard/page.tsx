@@ -6,8 +6,6 @@ import { useRouter } from "next/navigation"
 interface Student {
   _id: string
   username: string
-  grade_level: string
-  preferred_language: string
 }
 
 export default function Dashboard() {
@@ -207,9 +205,9 @@ export default function Dashboard() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
         <div>
           <h1 style={{ margin: 0 }}>Welcome, {student.username}</h1>
-          <p style={{ margin: "4px 0 0", color: "#666" }}>
+          {/* <p style={{ margin: "4px 0 0", color: "#666" }}>
             Grade: {student.grade_level} · Language: {student.preferred_language}
-          </p>
+          </p> */}
         </div>
         <button onClick={handleLogout} style={{ padding: "8px 18px", cursor: "pointer" }}>
           Logout

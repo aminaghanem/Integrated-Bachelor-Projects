@@ -21,7 +21,7 @@ export interface SignupData {
   date_of_birth: string
 
   parent_email: string
-  grade_level: string
+  //grade_level: string
 
   preferred_language: string
   region: string
@@ -63,7 +63,7 @@ export default function SignupWizard() {
   // school_class: "",
   date_of_birth: "",
   parent_email: "",
-  grade_level: "",
+  //grade_level: "",
 
   preferred_language: "",
   region: "",
@@ -199,8 +199,8 @@ export default function SignupWizard() {
       // if (!formData.school_class)
       //   newErrors.school_class = "School class is required"
 
-      if (!formData.grade_level)
-        newErrors.grade_level = "Grade level is required"
+      // if (!formData.grade_level)
+      //   newErrors.grade_level = "Grade level is required"
 
       if (!formData.region)
         newErrors.region = "Please select a region"

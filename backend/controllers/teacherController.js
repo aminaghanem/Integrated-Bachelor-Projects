@@ -33,7 +33,7 @@ const addTeachableSubject = async (req, res) => {
       {
         $addToSet: { teachable_subjects: subject_id }
       },
-      { new: true }
+      { returnDocument: 'after' }
     )
 
     res.json(teacher)
@@ -42,4 +42,29 @@ const addTeachableSubject = async (req, res) => {
   }
 }
 
-module.exports = { createTeacher, getTeachers, addTeachableSubject };
+const getTeacherProfile = async (req, res) => {
+  try {
+    const teacher = await Teacher.findById(req.user.id)
+      .populate("teachable_subjects")
+      .populate({
+        path: "teaching_assignments.class_id",
+        model: "SchoolClass",
+        populate: {
+          path: "students subjects.subject",
+        }
+      })
+      .populate("teaching_assignments.subject")
+
+    if (!teacher) return res.status(404).json({ error: "Teacher not found" })
+    res.json(teacher)
+  } catch (err) {
+    res.status(500).json({ error: "Server error" })
+  }
+}
+
+const updateTeacher = async (req, res) => {
+  const teacher = await Teacher.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after'})
+  res.json(teacher)
+}
+
+module.exports = { createTeacher, getTeachers, addTeachableSubject, getTeacherProfile, updateTeacher };

@@ -136,7 +136,7 @@ router.post("/", protect, authorizeRoles("student"), async (req, res) => {
     const activity = new BrowserActivity({
       student_id,
       age,
-      grade: student.grade_level,
+      grade: student.class_id ? student.class_id.grade_level : undefined,
       interests: student.interests || [],
       url,
       category,

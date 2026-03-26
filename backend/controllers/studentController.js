@@ -14,7 +14,6 @@ const createStudent = async (req, res) => {
     preferred_language,
     school_type,
     password,
-    grade_level,
     learning_preferences,
     interest_scores,
     accessibility } = req.body;
@@ -59,7 +58,7 @@ const createStudent = async (req, res) => {
       // ...(school_name && { school_name }),
       // ...(school_class && { school_class }),
 
-      ...(grade_level && { grade_level: parseInt(grade_level) }),
+      //...(grade_level && { grade_level: parseInt(grade_level) }),
       ...(preferred_language && { preferred_language }),
       ...(learning_preferences && { learning_preferences }),
 
@@ -91,7 +90,6 @@ const createStudent = async (req, res) => {
 const getStudents = async (req, res) => {
   const students = await Student.find()
     .populate("parent_id")
-    .populate("teacher_ids");
 
   res.json(students);
 };
@@ -100,7 +98,6 @@ const getStudents = async (req, res) => {
 const getStudent = async (req, res) => {
   const student = await Student.findById(req.params.id)
     .populate("parent_id")
-    .populate("teacher_ids");
 
   if (!student)
     return res.status(404).json({ message: "Student not found" });
