@@ -62,7 +62,7 @@ const login = async (req, res) => {
         { expiresIn: "7d" }
       )
 
-      res.json({
+      return res.json({
         token,
         role,
         userId: user._id

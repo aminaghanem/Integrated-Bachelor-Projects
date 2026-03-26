@@ -7,6 +7,19 @@ const browserActivitySchema = new mongoose.Schema({
     required: true
   },
 
+  age: Number,
+  grade: String,
+  
+  interests: {
+    interest_scores: [
+      {
+        category: String,
+        score: { type: Number, default: 0 }
+      }
+    ],
+    last_updated: { type: Date, default: Date.now }
+  },
+
   url: { type: String, required: true },
   category: { type: String, required: true },
 

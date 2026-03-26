@@ -17,8 +17,14 @@ export default function Dashboard() {
   const [activeUrl, setActiveUrl] = useState<string | null>(null)
   const [iframeError, setIframeError] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+
   const visitStart = useRef<number | null>(null)
   const router = useRouter()
+
+  const loadingRef = useRef(false)
 
   useEffect(() => {
     const token = localStorage.getItem("token")
@@ -36,6 +42,27 @@ export default function Dashboard() {
     const handleBeforeUnload = () => { if (activeUrl) handleClose() }
     window.addEventListener("beforeunload", handleBeforeUnload)
     return () => window.removeEventListener("beforeunload", handleBeforeUnload)
+  }, [activeUrl])
+
+  useEffect(() => {
+    if (!activeUrl) return
+
+    const timeout = setTimeout(() => {
+      if (loadingRef.current) {
+        console.log("Iframe failed → fallback")
+
+        const originalUrl = new URL(activeUrl).searchParams.get("url")
+
+        if (originalUrl) {
+          window.open(originalUrl, "_blank")
+        }
+
+        setLoading(false)
+        loadingRef.current = false
+      }
+    }, 4000)
+
+    return () => clearTimeout(timeout)
   }, [activeUrl])
 
   const logActivity = async (url: string, interactionType: string, duration: number = 0) => {
@@ -60,27 +87,69 @@ export default function Dashboard() {
     }
   }
 
-  const handleVisit = async () => {
-    if (!urlInput.trim()) return
-    let url = urlInput.trim()
-    if (!/^https?:\/\//i.test(url)) url = "https://" + url
-
-    if (activeUrl) handleClose()
-
-    setIframeError(false)
-    setLoading(true)
-    setActiveUrl(null)
-
-    // Log the "view" interaction
-    await logActivity(url, "view")
-    visitStart.current = Date.now()
-
-    // Use backend proxy to avoid X-Frame-Options blocks
-    setActiveUrl(`http://localhost:4000/api/proxy?url=${encodeURIComponent(url)}`)
-    setLoading(false)
+  const isValidUrl = (input: string) => {
+    return /^(https?:\/\/)/i.test(input)
   }
 
-  const handleIframeLoad = () => setLoading(false)
+  const isProbablyUrl = (input: string) => {
+    return /^(https?:\/\/)/i.test(input) || /^[^\s]+\.[^\s]+$/.test(input)
+  }
+
+  const handleVisit = async () => {
+    if (!urlInput.trim()) return
+
+    let input = urlInput.trim()
+
+    setSearchResults([])
+    setIframeError(false)
+    setActiveUrl(null)
+
+    if (isProbablyUrl(input)) {
+      let url = urlInput.trim()
+      if (!/^https?:\/\//i.test(url)) url = "https://" + url
+
+      if (activeUrl) handleClose()
+
+      setIframeError(false)
+      setLoading(true)
+      loadingRef.current = true
+      setActiveUrl(null)
+
+      // Log the "view" interaction
+      await logActivity(url, "view")
+      visitStart.current = Date.now()
+
+      // Use backend proxy to avoid X-Frame-Options blocks
+      setActiveUrl(`http://localhost:4000/api/proxy?url=${encodeURIComponent(url)}`)
+      //setLoading(false)
+    }
+
+    else {
+      setIsSearching(true)
+      setActiveUrl(null)
+
+      try {
+        const res = await fetch(
+          `http://localhost:4000/api/search?q=${encodeURIComponent(input)}`
+        )
+
+        const data = await res.json()
+        console.log("SEARCH DATA:", data)
+        setSearchResults(data.results || [])
+      } catch (err) {
+        console.error("Search failed:", err)
+      }
+
+      setIsSearching(false)
+    } 
+    
+  }
+
+  const handleIframeLoad = () => {
+    console.log("IFRAME LOADED ✅")
+    setLoading(false)
+    loadingRef.current = false
+  }
 
   const handleIframeError = () => {
     setIframeError(true)
@@ -100,7 +169,32 @@ export default function Dashboard() {
 
   const handleLogout = () => {
     localStorage.removeItem("token")
-    router.push("/login")
+    router.push("/")
+  }
+
+  const handleResultClick = async (url: string) => {
+    if (activeUrl) handleClose()
+
+    setSearchResults([])
+    setIframeError(false)
+    setLoading(true)
+    loadingRef.current = true
+
+    await logActivity(url, "click")
+
+    visitStart.current = Date.now()
+
+    // try iframe first
+    setActiveUrl(`http://localhost:4000/api/proxy?url=${encodeURIComponent(url)}`)
+
+    // ⛔ fallback after 2 sec if broken
+    setTimeout(() => {
+      if (loadingRef.current) {
+        window.open(url, "_blank")
+        setLoading(false)
+        loadingRef.current = false
+      }
+    }, 2000)
   }
 
   if (error) return <p style={{ color: "red" }}>Error: {error}</p>
@@ -145,6 +239,41 @@ export default function Dashboard() {
           Visit
         </button>
       </div>
+
+      {isSearching && <p>Searching...</p>}
+      {searchResults.length > 0 && !activeUrl && (
+        <>
+          <p style={{ marginBottom: 8, color: "#666" }}>
+            Search results:
+          </p>
+
+          <div style={{ marginBottom: "1rem" }}>
+            {searchResults.map((result, i) => (
+              <div
+                key={i}
+                onClick={() => handleResultClick(result.link)}
+                style={{
+                  padding: "12px",
+                  borderBottom: "1px solid #eee",
+                  cursor: "pointer"
+                }}
+              >
+                <h3 style={{ margin: 0, color: "#2563eb" }}>
+                  {result.title}
+                </h3>
+                <p style={{ margin: "4px 0", color: "#555" }}>
+                  {result.snippet}
+                </p>
+                <small style={{ color: "#888" }}>{result.link}</small>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {!isSearching && searchResults.length === 0 && urlInput && !isProbablyUrl(urlInput) && (
+        <p style={{ color: "#888" }}>No results found</p>
+      )}
 
       {/* Inline browser frame */}
       {(activeUrl || loading) && (
@@ -191,18 +320,34 @@ export default function Dashboard() {
             </div>
           )}
 
-          {!loading && !iframeError && activeUrl && (
+          {activeUrl && !iframeError && (
+            <div style={{ position: "relative", height: 600 }}>
+            {loading && (
+              <div style={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "#fff",
+                zIndex: 10
+              }}>
+                Loading...
+              </div>
+            )}
+
             <iframe
               src={activeUrl}
               title="Web Viewer"
               width="100%"
               height="600"
-              style={{ display: "block", border: "none" }}
-              sandbox="allow-scripts allow-same-origin allow-forms"
+              style={{ border: "none" }}
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
               onLoad={handleIframeLoad}
-              onError={handleIframeError}
             />
-          )}
+          </div>
+                    )}
+
         </div>
       )}
 
