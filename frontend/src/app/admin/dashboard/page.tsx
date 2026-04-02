@@ -6,7 +6,7 @@ import { useEffect, useState, useCallback } from "react"
 
 const API = "http://localhost:4000"
 
-type Section = "overview" | "students" | "teachers" | "parents" | "create"
+type Section = "overview" | "students" | "teachers" | "parents" | "classes" | "subjects" | "admins" | "create"
 
 interface Student {
   _id: string
@@ -43,11 +43,11 @@ interface Parent {
 function StatCard({ label, value, color }: { label: string; value: number | string; color: string }) {
   return (
     <div style={{
-      background: "#16181d", border: `1px solid ${color}33`,
+      background: "#ffffff", border: `1px solid #e5e7eb`,
       borderRadius: 12, padding: "1.25rem 1.5rem", borderLeft: `3px solid ${color}`,
     }}>
       <p style={{ margin: 0, fontSize: 12, color: "#6b7280", letterSpacing: "0.06em", textTransform: "uppercase" }}>{label}</p>
-      <p style={{ margin: "6px 0 0", fontSize: 32, fontWeight: 700, color: "#f1f5f9", fontFamily: "monospace" }}>{value}</p>
+      <p style={{ margin: "6px 0 0", fontSize: 32, fontWeight: 700, color: "#111827", fontFamily: "monospace" }}>{value}</p>
     </div>
   )
 }
@@ -77,7 +77,7 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
           padding: "1.25rem 1.5rem", borderBottom: "1px solid #2d3140",
           position: "sticky", top: 0, background: "#16181d", zIndex: 1
         }}>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: "#f1f5f9" }}>{title}</h3>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: "#111827" }}>{title}</h3>
           <button onClick={onClose} style={{
             background: "none", border: "none", color: "#6b7280",
             cursor: "pointer", fontSize: 22, lineHeight: 1, padding: 4
@@ -111,8 +111,8 @@ function EditField({ label, name, value, onChange, type = "text" }: {
       <input
         type={type} value={value} onChange={e => onChange(name, e.target.value)}
         style={{
-          width: "100%", padding: "9px 12px", background: "#0f1117",
-          border: "1px solid #2d3140", borderRadius: 8, color: "#f1f5f9",
+          width: "100%", padding: "9px 12px", background: "#f9fafb",
+          border: "1px solid #2d3140", borderRadius: 8, color: "#111827",
           fontSize: 13, outline: "none", boxSizing: "border-box"
         }}
       />
@@ -138,6 +138,9 @@ export default function AdminDashboard() {
   const [students, setStudents] = useState<Student[]>([])
   const [teachers, setTeachers] = useState<Teacher[]>([])
   const [parents, setParents] = useState<Parent[]>([])
+  const [classes, setClasses] = useState<any[]>([])
+  const [subjects, setSubjects] = useState<any[]>([])
+  const [admins, setAdmins] = useState<any[]>([])
   const [allSubjects, setAllSubjects] = useState<Subject[]>([])
   const [loading, setLoading] = useState(false)
 
@@ -155,6 +158,11 @@ export default function AdminDashboard() {
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState<string | null>(null)
   const [search, setSearch] = useState("")
+
+  useEffect(() => {
+    const token = localStorage.getItem("token")
+    if (!token) { router.push("/"); return }
+  }, [router])
 
   // Fix hydration: date only set client-side
   useEffect(() => {
@@ -182,6 +190,21 @@ export default function AdminDashboard() {
       if (sec === "parents" || sec === "overview") {
         const r = await fetch(`${API}/api/parents`, { headers: authHeaders() })
         if (r.ok) setParents(await r.json())
+      }
+
+      if (sec === "classes") {
+        const r = await fetch(`${API}/api/classes`, { headers: authHeaders() })
+        if (r.ok) setClasses(await r.json())
+      }
+
+      if (sec === "subjects") {
+        const r = await fetch(`${API}/api/subjects`, { headers: authHeaders() })
+        if (r.ok) setSubjects(await r.json())
+      }
+
+      if (sec === "admins") {
+        const r = await fetch(`${API}/api/admins`, { headers: authHeaders() })
+        if (r.ok) setAdmins(await r.json())
       }
     } catch { /* silent */ }
     setLoading(false)
@@ -231,7 +254,7 @@ export default function AdminDashboard() {
   const handleSave = async () => {
     if (!editTarget) return
     setSaving(true)
-    const map: Record<string, string> = { student: "students", teacher: "teachers", parent: "parents" }
+    const map: Record<string, string> = { student: "students", teacher: "teachers", parent: "parents", class: "classes", subject: "subjects", admin: "admins"}
     try {
       const res = await fetch(`${API}/api/${map[editTarget.type]}/${editTarget.id}`, {
         method: "PUT", headers: authHeaders(), body: JSON.stringify(editForm)
@@ -311,7 +334,7 @@ export default function AdminDashboard() {
 
   const handleDelete = async (type: string, id: string) => {
     if (!confirm(`Delete this ${type}? This cannot be undone.`)) return
-    const map: Record<string, string> = { student: "students", teacher: "teachers", parent: "parents" }
+    const map: Record<string, string> = { student: "students", teacher: "teachers", parent: "parents", class: "classes", subject: "subjects", admin: "admins" }
     await fetch(`${API}/api/${map[type]}/${id}`, { method: "DELETE", headers: authHeaders() })
     fetchData(section)
   }
@@ -334,6 +357,9 @@ export default function AdminDashboard() {
     { key: "students", label: "Students", icon: "⊙" },
     { key: "teachers", label: "Teachers", icon: "⊕" },
     { key: "parents",  label: "Parents",  icon: "⊗" },
+    { key: "classes", label: "Classes", icon: "▣" },
+    { key: "subjects", label: "Subjects", icon: "◎" },
+    { key: "admins", label: "Admins", icon: "⚑" },
     { key: "create",   label: "Create",   icon: "⊞" },
   ]
 
@@ -359,11 +385,11 @@ export default function AdminDashboard() {
   )
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#0f1117", fontFamily: "'Segoe UI', sans-serif" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "#f9fafb", fontFamily: "'Segoe UI', sans-serif" }}>
 
       {/* Sidebar */}
       <aside style={{
-        width: 220, background: "#16181d", borderRight: "1px solid #2d3140",
+        width: 220, background: "#f9fafb", borderRight: "1px solid #2d3140",
         display: "flex", flexDirection: "column", padding: "1.5rem 0",
         flexShrink: 0, position: "sticky", top: 0, height: "100vh"
       }}>
@@ -375,7 +401,7 @@ export default function AdminDashboard() {
               display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16
             }}>⚙</div>
             <div>
-              <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>SmartGuard</p>
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#111827" }}>SmartGuard</p>
               <p style={{ margin: 0, fontSize: 10, color: "#6b7280" }}>Admin Panel</p>
             </div>
           </div>
@@ -388,7 +414,7 @@ export default function AdminDashboard() {
               padding: "9px 12px", marginBottom: 2, borderRadius: 8, border: "none",
               cursor: "pointer", textAlign: "left", fontSize: 13, fontWeight: 500,
               background: section === item.key ? "#3b82f611" : "transparent",
-              color: section === item.key ? "#60a5fa" : "#94a3b8",
+              color: section === item.key ? "#60a5fa" : "#111827",
               borderLeft: section === item.key ? "2px solid #3b82f6" : "2px solid transparent",
             }}>
               <span style={{ fontSize: 15 }}>{item.icon}</span>
@@ -411,7 +437,7 @@ export default function AdminDashboard() {
       {/* Main */}
       <main style={{ flex: 1, padding: "2rem 2.5rem", overflowY: "auto" }}>
         <div style={{ marginBottom: "2rem" }}>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "#f1f5f9" }}>
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "#111827" }}>
             {navItems.find(n => n.key === section)?.label}
           </h1>
           <p style={{ margin: "4px 0 0", fontSize: 13, color: "#6b7280" }}>{dateStr}</p>
@@ -428,32 +454,32 @@ export default function AdminDashboard() {
               <StatCard label="Total Parents"  value={parents.length}  color="#10b981" />
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-              <div style={{ background: "#16181d", borderRadius: 12, border: "1px solid #2d3140", overflow: "hidden" }}>
+              <div style={{ background: "#ffffff", borderRadius: 12, border: "1px solid #2d3140", overflow: "hidden" }}>
                 <div style={{ padding: "1rem 1.25rem", borderBottom: "1px solid #2d3140", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <p style={{ margin: 0, fontWeight: 600, fontSize: 13, color: "#f1f5f9" }}>Recent Students</p>
+                  <p style={{ margin: 0, fontWeight: 600, fontSize: 13, color: "#111827" }}>Recent Students</p>
                   <button onClick={() => setSection("students")} style={{ background: "none", border: "none", color: "#60a5fa", cursor: "pointer", fontSize: 12 }}>View all →</button>
                 </div>
                 {students.slice(0, 5).map(s => (
                   <div key={s._id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 1.25rem", borderBottom: "1px solid #1e2130" }}>
-                    {avatarDiv((s.full_name || s.username || "?").charAt(0).toUpperCase(), "#3b82f622", "#60a5fa")}
+                    {avatarDiv((s.full_name || s.username || "?").charAt(0).toUpperCase(), "rgba(15, 64, 106, 0.13)", "#60a5fa")}
                     <div>
-                      <p style={{ margin: 0, fontSize: 13, color: "#e2e8f0" }}>{s.full_name || s.username}</p>
+                      <p style={{ margin: 0, fontSize: 13, color: "#111827" }}>{s.full_name || s.username}</p>
                       {/* <p style={{ margin: 0, fontSize: 11, color: "#6b7280" }}>Grade {s.grade_level ?? "—"}</p> */}
                     </div>
                   </div>
                 ))}
               </div>
-              <div style={{ background: "#16181d", borderRadius: 12, border: "1px solid #2d3140", overflow: "hidden" }}>
+              <div style={{ background: "#ffffff", borderRadius: 12, border: "1px solid #2d3140", overflow: "hidden" }}>
                 <div style={{ padding: "1rem 1.25rem", borderBottom: "1px solid #2d3140", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <p style={{ margin: 0, fontWeight: 600, fontSize: 13, color: "#f1f5f9" }}>Recent Teachers</p>
+                  <p style={{ margin: 0, fontWeight: 600, fontSize: 13, color: "#111827" }}>Recent Teachers</p>
                   <button onClick={() => setSection("teachers")} style={{ background: "none", border: "none", color: "#c084fc", cursor: "pointer", fontSize: 12 }}>View all →</button>
                 </div>
                 {teachers.slice(0, 5).map(t => (
                   <div key={t._id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 1.25rem", borderBottom: "1px solid #1e2130" }}>
                     {avatarDiv((t.username || "?").charAt(0).toUpperCase(), "#a855f722", "#c084fc")}
                     <div>
-                      <p style={{ margin: 0, fontSize: 13, color: "#e2e8f0" }}>{t.username}</p>
-                      <p style={{ margin: 0, fontSize: 11, color: "#6b7280" }}>{t.email}</p>
+                      <p style={{ margin: 0, fontSize: 13, color: "#111827" }}>{t.username}</p>
+                      <p style={{ margin: 0, fontSize: 11, color: "#111827" }}>{t.email}</p>
                     </div>
                   </div>
                 ))}
@@ -468,8 +494,8 @@ export default function AdminDashboard() {
             <input value={search} onChange={e => setSearch(e.target.value)}
               placeholder={`Search ${section}...`}
               style={{
-                width: 320, padding: "9px 14px", background: "#16181d",
-                border: "1px solid #2d3140", borderRadius: 8, color: "#f1f5f9", fontSize: 13, outline: "none"
+                width: 320, padding: "9px 14px", background: "#f9fafb",
+                border: "1px solid #2d3140", borderRadius: 8, color: "#111827", fontSize: 13, outline: "none"
               }}
             />
           </div>
@@ -477,7 +503,7 @@ export default function AdminDashboard() {
 
         {/* Students */}
         {section === "students" && !loading && (
-          <div style={{ background: "#16181d", borderRadius: 12, border: "1px solid #2d3140", overflow: "hidden" }}>
+          <div style={{ background: "#ffffff", borderRadius: 12, border: "1px solid #2d3140", overflow: "hidden" }}>
             <table style={tableStyle}>
               <thead><tr>{["Name","Username","Language","Region","Actions"].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
               <tbody>
@@ -486,13 +512,13 @@ export default function AdminDashboard() {
                     <td style={tdStyle}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         {avatarDiv((s.full_name || s.username || "?").charAt(0).toUpperCase(), "#3b82f622", "#60a5fa")}
-                        <span style={{ color: "#e2e8f0" }}>{s.full_name || "—"}</span>
+                        <span style={{ color: "#111827" }}>{s.full_name || "—"}</span>
                       </div>
                     </td>
-                    <td style={{ ...tdStyle, color: "#94a3b8" }}>@{s.username}</td>
+                    <td style={{ ...tdStyle, color: "#111827" }}>@{s.username}</td>
                     {/* <td style={tdStyle}><Badge text={`Grade ${s.grade_level ?? "—"}`} color="#3b82f6" /></td> */}
-                    <td style={{ ...tdStyle, color: "#94a3b8" }}>{s.preferred_language || "—"}</td>
-                    <td style={{ ...tdStyle, color: "#94a3b8" }}>{s.context?.region || "—"}</td>
+                    <td style={{ ...tdStyle, color: "#111827" }}>{s.preferred_language || "—"}</td>
+                    <td style={{ ...tdStyle, color: "#111827" }}>{s.context?.region || "—"}</td>
                     <td style={tdStyle}>
                       <button style={actionBtn("#60a5fa")} onClick={() => setViewTarget({ type: "Student", data: s as unknown as Record<string, unknown> })}>View</button>
                       <button style={actionBtn("#a78bfa")} onClick={() => openEdit("student", s._id, s as unknown as Record<string, unknown>)}>Edit</button>
@@ -508,7 +534,7 @@ export default function AdminDashboard() {
 
         {/* Teachers */}
         {section === "teachers" && !loading && (
-          <div style={{ background: "#16181d", borderRadius: 12, border: "1px solid #2d3140", overflow: "hidden" }}>
+          <div style={{ background: "#ffffff", borderRadius: 12, border: "1px solid #2d3140", overflow: "hidden" }}>
             <table style={tableStyle}>
               <thead><tr>{["Username","Email","Joined","Actions"].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
               <tbody>
@@ -517,11 +543,11 @@ export default function AdminDashboard() {
                     <td style={tdStyle}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         {avatarDiv((t.username || "?").charAt(0).toUpperCase(), "#a855f722", "#c084fc")}
-                        <span style={{ color: "#e2e8f0" }}>{t.username}</span>
+                        <span style={{ color: "#111827" }}>{t.username}</span>
                       </div>
                     </td>
-                    <td style={{ ...tdStyle, color: "#94a3b8" }}>{t.email}</td>
-                    <td style={{ ...tdStyle, color: "#94a3b8" }}>{t.created_at ? new Date(t.created_at).toLocaleDateString("en-GB") : "—"}</td>
+                    <td style={{ ...tdStyle, color: "#111827" }}>{t.email}</td>
+                    <td style={{ ...tdStyle, color: "#111827" }}>{t.created_at ? new Date(t.created_at).toLocaleDateString("en-GB") : "—"}</td>
                     <td style={tdStyle}>
                       <button style={actionBtn("#60a5fa")} onClick={() => setViewTarget({ type: "Teacher", data: t as unknown as Record<string, unknown> })}>View</button>
                       <button style={actionBtn("#a78bfa")} onClick={() => openEdit("teacher", t._id, t as unknown as Record<string, unknown>)}>Edit</button>
@@ -537,7 +563,7 @@ export default function AdminDashboard() {
 
         {/* Parents */}
         {section === "parents" && !loading && (
-          <div style={{ background: "#16181d", borderRadius: 12, border: "1px solid #2d3140", overflow: "hidden" }}>
+          <div style={{ background: "#ffffff", borderRadius: 12, border: "1px solid #2d3140", overflow: "hidden" }}>
             <table style={tableStyle}>
               <thead><tr>{["Username","Email","Relationship","Children","Actions"].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
               <tbody>
@@ -567,6 +593,77 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {section === "classes" && (
+          <table style={tableStyle}>
+            <thead>
+              <tr>
+                <th style={thStyle}>Class</th>
+                <th style={thStyle}>Grade</th>
+                <th style={thStyle}>School</th>
+                <th style={thStyle}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {classes.map(c => (
+                <tr key={c._id}>
+                  <td style={tdStyle}>{c.class_name}</td>
+                  <td style={tdStyle}>{c.grade_level}</td>
+                  <td style={tdStyle}>{c.school_name}</td>
+                  <td style={tdStyle}>
+                    <button onClick={() => openEdit("class", c._id, c)}>Edit</button>
+                    <button onClick={() => handleDelete("class", c._id)}>Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+
+        {section === "subjects" && (
+          <table style={tableStyle}>
+            <thead>
+              <tr>
+                <th style={thStyle}>Name</th>
+                <th style={thStyle}>Category</th>
+                <th style={thStyle}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {subjects.map(s => (
+                <tr key={s._id}>
+                  <td style={tdStyle}>{s.name}</td>
+                  <td style={tdStyle}>{s.category}</td>
+                  <td style={tdStyle}>
+                    <button onClick={() => openEdit("subject", s._id, s)}>Edit</button>
+                    <button onClick={() => handleDelete("subject", s._id)}>Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+
+        {section === "admins" && (
+          <table style={tableStyle}>
+            <thead>
+              <tr>
+                <th style={thStyle}>Username</th>
+                <th style={thStyle}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {admins.map(a => (
+                <tr key={a._id}>
+                  <td style={tdStyle}>{a.username}</td>
+                  <td style={tdStyle}>
+                    <button onClick={() => handleDelete("admin", a._id)}>Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+
         {/* Create */}
         {section === "create" && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, maxWidth: 700 }}>
@@ -579,12 +676,12 @@ export default function AdminDashboard() {
             ].map(item => (
               <Link key={item.href} href={item.href} style={{ textDecoration: "none" }}>
                 <div style={{
-                  background: "#16181d", border: `1px solid ${item.color}33`,
+                  background: "#ffffff", border: `1px solid ${item.color}33`,
                   borderRadius: 12, padding: "1.5rem", cursor: "pointer",
                   borderTop: `3px solid ${item.color}`
                 }}>
                   <div style={{ fontSize: 28, marginBottom: 10, color: item.color }}>{item.icon}</div>
-                  <p style={{ margin: 0, fontWeight: 600, fontSize: 14, color: "#f1f5f9" }}>{item.label}</p>
+                  <p style={{ margin: 0, fontWeight: 600, fontSize: 14, color: "#111827" }}>{item.label}</p>
                   <p style={{ margin: "4px 0 0", fontSize: 12, color: "#6b7280" }}>Create new record →</p>
                 </div>
               </Link>
@@ -652,7 +749,7 @@ export default function AdminDashboard() {
               </div>
               <div style={{ display: "flex", gap: 8 }}>
                 <select value={addingSubjectId} onChange={e => setAddingSubjectId(e.target.value)}
-                  style={{ flex: 1, padding: "8px 10px", background: "#0f1117", border: "1px solid #2d3140", borderRadius: 8, color: "#f1f5f9", fontSize: 13, outline: "none" }}>
+                  style={{ flex: 1, padding: "8px 10px", background: "#f9fafb", border: "1px solid #2d3140", borderRadius: 8, color: "#111827", fontSize: 13, outline: "none" }}>
                   <option value="">Select subject to add...</option>
                   {allSubjects.filter(s => !teacherSubjects.includes(s._id)).map(s => (
                     <option key={s._id} value={s._id}>{s.name} ({s.category})</option>
@@ -674,7 +771,7 @@ export default function AdminDashboard() {
               <div style={{ marginBottom: 14 }}>
                 <label style={{ display: "block", fontSize: 12, color: "#94a3b8", marginBottom: 5 }}>Relationship Type</label>
                 <select value={editForm.relationship_type ?? ""} onChange={e => handleEditChange("relationship_type", e.target.value)}
-                  style={{ width: "100%", padding: "9px 12px", background: "#0f1117", border: "1px solid #2d3140", borderRadius: 8, color: "#f1f5f9", fontSize: 13, outline: "none" }}>
+                  style={{ width: "100%", padding: "9px 12px", background: "#f9fafb", border: "1px solid #2d3140", borderRadius: 8, color: "#111827", fontSize: 13, outline: "none" }}>
                   <option value="mother">Mother</option>
                   <option value="father">Father</option>
                 </select>
@@ -698,7 +795,7 @@ export default function AdminDashboard() {
               </div>
               <div style={{ display: "flex", gap: 8 }}>
                 <select value={addingChildId} onChange={e => setAddingChildId(e.target.value)}
-                  style={{ flex: 1, padding: "8px 10px", background: "#0f1117", border: "1px solid #2d3140", borderRadius: 8, color: "#f1f5f9", fontSize: 13, outline: "none" }}>
+                  style={{ flex: 1, padding: "8px 10px", background: "#f9fafb", border: "1px solid #2d3140", borderRadius: 8, color: "#111827", fontSize: 13, outline: "none" }}>
                   <option value="">Select student to link...</option>
                   {availableStudents.map(s => (
                     <option key={s._id} value={s._id}>{s.full_name || s.username}</option>

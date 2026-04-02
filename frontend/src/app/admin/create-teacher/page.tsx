@@ -25,12 +25,11 @@ export default function TeacherSignup() {
 
   const validateForm = () => {
 
-    // email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const teacherEmailRegex = /^[^\s@]+@teacher\.school\.edu\.eg$/
 
-    if (!emailRegex.test(form.email)) {
-      return "Invalid email format"
-    }
+  if (!teacherEmailRegex.test(form.email)) {
+    return "Please use your school email"
+  }
 
     // password match
     if (form.password !== form.confirmPassword) {

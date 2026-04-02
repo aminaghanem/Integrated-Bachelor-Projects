@@ -208,9 +208,37 @@ const addStudentToClass = async (req, res) => {
   }
 };
 
+// GET ALL
+const getAllClasses = async (req, res) => {
+  const classes = await SchoolClass.find()
+    .populate("subjects.subject")
+    .populate("subjects.teacher_id")
+    .populate("students");
+  res.json(classes);
+};
+
+// UPDATE
+const updateClass = async (req, res) => {
+  const updated = await SchoolClass.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    { new: true }
+  );
+  res.json(updated);
+};
+
+// DELETE
+const deleteClass = async (req, res) => {
+  await SchoolClass.findByIdAndDelete(req.params.id);
+  res.json({ message: "Deleted" });
+};
+
 
 module.exports = {
   createClass,
+  getAllClasses,
   getClassById,
-  addStudentToClass
+  addStudentToClass,
+  updateClass,
+  deleteClass
 };

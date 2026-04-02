@@ -33,6 +33,7 @@ app.use("/api/classes", require("./routes/classRoutes"));
 app.use("/api/proxy", require("./routes/proxy"));
 app.use("/api/subjects", require("./routes/subjectRoutes"));
 app.use("/api/search", require("./routes/search"));
+app.use("/api/learning-history", require("./routes/learningHistoryRoutes"))
 
 console.log('Set up routes...')
 

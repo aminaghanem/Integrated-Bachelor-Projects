@@ -13,6 +13,14 @@ const createTeacher = async (req, res) => {
       password_hash
     });
 
+    const teacherEmailRegex = /^[^\s@]+@teacher\.school\.edu\.eg$/;
+
+    if (!teacherEmailRegex.test(req.body.email)) {
+      return res.status(400).json({
+        message: "Invalid teacher email domain"
+      });
+    }
+
     res.status(201).json(teacher);
   } catch (error) {
     res.status(400).json({ error: error.message });

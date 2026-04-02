@@ -44,3 +44,18 @@ exports.getSubjectsByGrade = async (req, res) => {
     res.status(500).json({ error: err.message })
   }
 }
+
+exports.updateSubject = async (req, res) => {
+  const updated = await Subject.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    { new: true }
+  );
+  res.json(updated);
+};
+
+// DELETE
+exports.deleteSubject = async (req, res) => {
+  await Subject.findByIdAndDelete(req.params.id);
+  res.json({ message: "Deleted" });
+};

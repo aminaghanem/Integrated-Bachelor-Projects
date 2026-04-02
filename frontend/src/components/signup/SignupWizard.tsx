@@ -181,17 +181,20 @@ export default function SignupWizard() {
       if (!formData.date_of_birth)
         newErrors.date_of_birth = "Date of birth is required"
 
-      if (formData.personal_email && !/\S+@\S+\.\S+/.test(formData.personal_email)) {
-        newErrors.personal_email = "Invalid email format"
-        }
+      const studentEmailRegex = /^[^\s@]+@student\.school\.edu\.eg$/
+
+      if (!studentEmailRegex.test(formData.personal_email)) {
+        newErrors.personal_email = "Please use your school email"
+      }
 
       if (!formData.parent_email)
         newErrors.parent_email = "Parent email is required"
 
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-      if (!emailRegex.test(formData.parent_email))
+      if (!emailRegex.test(formData.parent_email)) {
         newErrors.parent_email = "Invalid email address"
+      }
 
       // if (!formData.school_name)
       //   newErrors.school_name = "School name is required"

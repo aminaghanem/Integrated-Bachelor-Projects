@@ -29,10 +29,15 @@ const createStudent = async (req, res) => {
   }
 
   // Validate email format
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const studentEmailRegex = /^[^\s@]+@student\.school\.edu\.eg$/
+  const parentEmailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-  if (personal_email && !emailRegex.test(personal_email) && !emailRegex.test(parent_email)) {
-    return res.status(400).json({ error: "Invalid email format" })
+  if (personal_email && !studentEmailRegex.test(personal_email)) {
+    return res.status(400).json({ error: "Please use your school email" })
+  }
+
+  if (!parentEmailRegex.test(parent_email)) {
+    return res.status(400).json({ error: "Invalid parent email address" })
   }
 
   // Validate password length

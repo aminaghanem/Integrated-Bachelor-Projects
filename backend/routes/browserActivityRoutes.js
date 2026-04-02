@@ -132,6 +132,29 @@ router.post("/", protect, authorizeRoles("student"), async (req, res) => {
 
   const age = calculateAge(student.date_of_birth);
 
+  // try {
+  //   const orchestratorPayload = {
+  //     url: url,
+  //     profile: {
+  //       user_id: student_id,
+  //       age: age,
+  //       grade_level: student.class_id ? student.class_id.grade_level : undefined,
+  //       interests: student.interests || []
+  //     }
+  //   };
+
+  //   await axios.post("http://127.0.0.1:8000/evaluate", orchestratorPayload, {
+  //     headers: { "Content-Type": "application/json" }
+  //   });
+
+  //   console.log("Data forwarded to Orchestrator");
+
+  // } catch (orchError) {
+
+  //   console.error("Orchestrator unreachable:", orchError.message);
+
+  // }
+
   try {
     const activity = new BrowserActivity({
       student_id,

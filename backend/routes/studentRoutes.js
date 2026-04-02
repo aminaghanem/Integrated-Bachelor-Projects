@@ -19,11 +19,11 @@ router.post("/signup", createStudent);
 
 router.get("/", protect, authorizeRoles("admin"), getStudents);
 
-router.put("/:id", protect, updateStudent);
+router.put("/:id", protect, authorizeRoles("admin"), updateStudent);
 
-router.delete("/:id", protect, authorizeRoles("teacher", "admin"), deleteStudent);
+router.delete("/:id", protect, authorizeRoles("admin"), deleteStudent);
 
-router.post("/login", loginStudent);
+//router.post("/login", loginStudent);
 
 router.get("/profile", protect, getStudentProfile);
 

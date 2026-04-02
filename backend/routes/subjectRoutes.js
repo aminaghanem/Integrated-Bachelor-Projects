@@ -4,7 +4,9 @@ const router = express.Router()
 const {
   createSubject,
   getAllSubjects,
-  getSubjectsByGrade
+  getSubjectsByGrade,
+  updateSubject,
+  deleteSubject
 } = require("../controllers/subjectController")
 
 // POST /api/subjects
@@ -15,5 +17,9 @@ router.get("/", getAllSubjects)
 
 // GET /api/subjects/grade/10
 router.get("/grade/:grade", getSubjectsByGrade)
+
+router.put("/:id", updateSubject);
+
+router.delete("/:id", deleteSubject);
 
 module.exports = router
