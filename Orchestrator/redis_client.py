@@ -5,6 +5,5 @@ r = redis.Redis(
     port=17865,
     username='default',
     password='AOZDvGzQVEGhiYTfACW4sUGBoYKiMT7h',
-    decode_responses=True,
-    ssl=True
+    decode_responses=True
 )

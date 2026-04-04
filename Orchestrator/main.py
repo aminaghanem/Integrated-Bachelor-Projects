@@ -10,8 +10,10 @@ from urllib.request import Request, urlopen
 
 import uvicorn
 import validators
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field, model_validator
 
 from state_manager import RedisStateManager
 from states import ControlState
@@ -27,6 +29,7 @@ class StudentProfile:
 	user_id: str
 	age: int
 	grade_level: int
+	interests: List[Dict[str, Any]]
 
 
 @dataclass
@@ -212,30 +215,34 @@ class Orchestrator:
 			self.state_manager.update_state(request_id, ControlState.FAILED)
 			raise InvalidUrlError(request_id=request_id, message="URL is not valid")
 
-		self.state_manager.update_state(request_id, ControlState.CACHE_CHECK)
-		policy = self.cache_client.get_policy(normalized_url)
-		source = "cache"
+		try:
+			self.state_manager.update_state(request_id, ControlState.CACHE_CHECK)
+			policy = self.cache_client.get_policy(normalized_url)
+			source = "cache"
 
-		if policy is None:
-			self.state_manager.update_state(request_id, ControlState.AI_ANALYSIS)
-			policy = self.ai_client.classify_url(normalized_url)
-			self.cache_client.post_policy(policy)
-			source = "ai"
+			if policy is None:
+				self.state_manager.update_state(request_id, ControlState.AI_ANALYSIS)
+				policy = self.ai_client.classify_url(normalized_url)
+				self.cache_client.post_policy(policy)
+				source = "ai"
 
-		decision = self._decide(profile, policy)
-		self.state_manager.update_state(request_id, ControlState.ACCESS_DECIDED)
-		self.state_manager.update_state(request_id, ControlState.COMPLETED)
+			decision = self._decide(profile, policy)
+			self.state_manager.update_state(request_id, ControlState.ACCESS_DECIDED)
+			self.state_manager.update_state(request_id, ControlState.COMPLETED)
 
-		return OrchestrationResult(
-			request_id=request_id,
-			normalized_url=normalized_url,
-			profile=profile,
-			policy=policy,
-			decision=decision,
-			ui_message=self._build_ui_feedback(decision, policy),
-			retrigger_browser=False,
-			source=source,
-		)
+			return OrchestrationResult(
+				request_id=request_id,
+				normalized_url=normalized_url,
+				profile=profile,
+				policy=policy,
+				decision=decision,
+				ui_message=self._build_ui_feedback(decision, policy),
+				retrigger_browser=False,
+				source=source,
+			)
+		except Exception:
+			self.state_manager.update_state(request_id, ControlState.FAILED)
+			raise
 
 	@staticmethod
 	def _normalize_url(raw_url: str) -> str:
@@ -282,15 +289,17 @@ class Orchestrator:
 		return f"Blocked: {policy.reason}"
 
 
-class StudentProfileInput(BaseModel):
-	user_id: str = Field(..., min_length=1)
-	age: int = Field(..., ge=1)
-	grade_level: int = Field(..., ge=1)
+class InterestInput(BaseModel):
+	interest: str = Field(..., min_length=1)
+	rating: int
 
 
 class EvaluateRequest(BaseModel):
 	url: str
-	profile: StudentProfileInput
+	user_id: str = Field(..., min_length=1, pattern=r"^[a-fA-F0-9]{24}$")
+	age: int = Field(..., ge=1)
+	grade_level: int = Field(..., ge=1)
+	interests: List[InterestInput] = Field(default_factory=list)
 
 
 class AccessPolicyResponse(BaseModel):
@@ -308,7 +317,7 @@ class AccessPolicyResponse(BaseModel):
 class EvaluateResponse(BaseModel):
 	request_id: str
 	normalized_url: str
-	profile: StudentProfileInput
+	profile: Dict[str, Any]
 	policy: Optional[AccessPolicyResponse]
 	decision: str
 	ui_message: str
@@ -326,10 +335,28 @@ orchestrator = Orchestrator(
 )
 
 
+@app.exception_handler(RequestValidationError)
+async def request_validation_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+	return JSONResponse(
+		status_code=400,
+		content={
+			"error": "Invalid payload",
+			"message": "Expected url, user_id, age, grade_level, interests[]",
+			"details": exc.errors(),
+			"path": str(request.url.path),
+		},
+	)
+
+
 @app.post("/evaluate", response_model=EvaluateResponse)
 def evaluate_url(request: EvaluateRequest) -> EvaluateResponse:
-	"""Evaluate URL access using student profile supplied directly by the browser UI."""
-	profile = StudentProfile(**request.profile.model_dump())
+	"""Evaluate URL access using browser payload with profile fields at root level."""
+	profile = StudentProfile(
+		user_id=request.user_id,
+		age=request.age,
+		grade_level=request.grade_level,
+		interests=[interest.model_dump() for interest in request.interests],
+	)
 
 	try:
 		result = orchestrator.handle_url_request(profile=profile, raw_url=request.url)
@@ -337,7 +364,7 @@ def evaluate_url(request: EvaluateRequest) -> EvaluateResponse:
 		return EvaluateResponse(
 			request_id=exc.request_id,
 			normalized_url="",
-			profile=request.profile,
+			profile=asdict(profile),
 			policy=None,
 			decision=Decision.BLOCKED.value,
 			ui_message=f"Invalid URL: {str(exc)}",
@@ -349,7 +376,7 @@ def evaluate_url(request: EvaluateRequest) -> EvaluateResponse:
 	return EvaluateResponse(
 		request_id=result.request_id,
 		normalized_url=result.normalized_url,
-		profile=StudentProfileInput(**asdict(result.profile)),
+		profile=asdict(result.profile),
 		policy=AccessPolicyResponse(**asdict(result.policy), source=result.source),
 		decision=result.decision.value,
 		ui_message=result.ui_message,
