@@ -421,12 +421,67 @@ def check_admin_override(url: str, school_level: str = None, grade: str = None,
         return None
 
     url_norm = re.sub(r"^https?://", "", url.strip().lower().rstrip("/"))
+    # Normalize interest ("Computer Science" → "Computer") for consistent matching
+    if interest:
+        interest = _normalize_interest(interest)
 
-    # 1. Exact full-context match (highest priority)
+    # 1. Try exact match first (fast path - for Create/Edit tab specific overrides)
     if all([school_level, grade, age, interest, disability]):
         key = _make_policy_key(url, school_level, grade, age, interest, disability)
         if key in _policy_database:
             return _policy_database[key]
+
+    # 2. Try range-based matching (for Browse tab overrides with ranges like "6-8")
+    if all([school_level, grade, age, interest, disability]):
+        for policy in _policy_database.values():
+            # Check school level
+            if policy.get("school_level") != school_level:
+                continue
+            
+            # Check interest (normalized)
+            if policy.get("interest") != interest:
+                continue
+            
+            # Check disability
+            if policy.get("disability") != disability:
+                continue
+            
+            # Check grade range (handles "6-8" vs "7")
+            policy_grade = policy.get("grade", "Any")
+            if policy_grade != "Any" and str(grade) != str(policy_grade):
+                if "-" in str(policy_grade):
+                    try:
+                        g_start, g_end = map(int, str(policy_grade).split("-"))
+                        if not (g_start <= int(grade) <= g_end):
+                            continue
+                    except (ValueError, TypeError):
+                        continue
+                else:
+                    continue
+            
+            # Check age range (handles "11-14" vs "12")
+            policy_age = policy.get("age", "Any")
+            if policy_age != "Any" and str(age) != str(policy_age):
+                if "-" in str(policy_age):
+                    try:
+                        a_start, a_end = map(int, str(policy_age).split("-"))
+                        if not (a_start <= int(age) <= a_end):
+                            continue
+                    except (ValueError, TypeError):
+                        continue
+                else:
+                    continue
+            
+            # Check URL match
+            policy_url_norm = re.sub(r"^https?://", "", policy["url"].strip().lower().rstrip("/"))
+            if policy_url_norm == url_norm:
+                return policy
+
+    # # 1. Exact full-context match (highest priority)
+    # if all([school_level, grade, age, interest, disability]):
+    #     key = _make_policy_key(url, school_level, grade, age, interest, disability)
+    #     if key in _policy_database:
+    #         return _policy_database[key]
 
     # 2. URL-only match (only for GLOBAL policies - see load_admin_overrides)
     if url_norm in _policy_database:
@@ -438,22 +493,22 @@ def check_admin_override(url: str, school_level: str = None, grade: str = None,
             return policy
 
     # 3. www / non-www variants (only for exact matches)
-    for var in [
-        url_norm,
-        url_norm[4:] if url_norm.startswith("www.") else "www." + url_norm,
-    ]:
-        # Try to find any exact match with this URL variant
-        for key, policy in _policy_database.items():
-            if key.endswith(f"|{var}") or key == var:
-                # Check if this policy matches our context
-                if (policy.get("school_level") == school_level and
-                    policy.get("grade") == grade and
-                    policy.get("age") == age and
-                    policy.get("interest") == interest and
-                    policy.get("disability") == disability):
-                    return policy
+    # for var in [
+    #     url_norm,
+    #     url_norm[4:] if url_norm.startswith("www.") else "www." + url_norm,
+    # ]:
+    #     # Try to find any exact match with this URL variant
+    #     for key, policy in _policy_database.items():
+    #         if key.endswith(f"|{var}") or key == var:
+    #             # Check if this policy matches our context
+    #             if (policy.get("school_level") == school_level and
+    #                 policy.get("grade") == grade and
+    #                 policy.get("age") == age and
+    #                 policy.get("interest") == interest and
+    #                 policy.get("disability") == disability):
+    #                 return policy
 
-    return None
+    # return None
 
 
 def save_policy_override(url: str, school_level: str, grade: str, age: str,
@@ -461,7 +516,8 @@ def save_policy_override(url: str, school_level: str, grade: str, age: str,
                          alternatives: List[tuple] = None, reason: str = None):
     """Persist a policy override to memory and to the log file."""
     global _rule_counter
-
+    # Normalize interest to ensure consistency (Computer Science → Computer)
+    interest = _normalize_interest(interest)
     key = _make_policy_key(url, school_level, grade, age, interest, disability)
     alts = alternatives or []
 
@@ -1211,17 +1267,17 @@ class AdminLogViewer(tk.Toplevel):
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill="both", expand=True, padx=10, pady=10)
 
-        self.log_tab    = tk.Frame(self.notebook, bg=COLORS["card"])
-        self.policy_tab = tk.Frame(self.notebook, bg=COLORS["card"])
-        self.alts_tab   = tk.Frame(self.notebook, bg=COLORS["card"])
+        self.log_tab      = tk.Frame(self.notebook, bg=COLORS["card"])
+        self.policy_tab   = tk.Frame(self.notebook, bg=COLORS["card"])
+        self.pipeline_tab = tk.Frame(self.notebook, bg=COLORS["card"])
 
-        self.notebook.add(self.log_tab,    text="📄 View Log File")
-        self.notebook.add(self.policy_tab, text="✏️ Create/Edit Policy")
-        self.notebook.add(self.alts_tab,   text="🔗 Manage Alternatives")
+        self.notebook.add(self.log_tab,      text="📄 View Log File")
+        self.notebook.add(self.policy_tab,   text="✏️ Create/Edit Policy")
+        self.notebook.add(self.pipeline_tab, text="🗂️ Browse Pipeline Policies")
 
         self._build_log_tab()
         self._build_policy_tab()
-        self._build_alternatives_tab()
+        self._build_pipeline_policies_tab()
 
     # ── Tab 1: View / Edit Log ─────────────────────────────────────────────
     def _build_log_tab(self):
@@ -1289,8 +1345,71 @@ class AdminLogViewer(tk.Toplevel):
             self.text_widget.delete("1.0", "end")
             self.text_widget.insert("1.0", content)
             load_admin_overrides()
+    
+    def _parse_policy_output_file(self, filepath):
+        """Parse policy_output_agentvlm.txt to extract all 264 policies."""
+        policies = []
+        if not os.path.exists(filepath):
+            return policies
+        
+        with open(filepath, "r", encoding="utf-8") as f:
+            content = f.read()
+        
+        # Split by long separator lines (60+ dashes/box chars) to separate policy blocks
+        blocks = re.split(r"\n\s*[\-─]{60,}.*?\n", content)
+        
+        for block in blocks:
+            # Only process blocks that contain a Rule ID
+            if "Rule ID" not in block:
+                continue
+                
+            # Extract fields using regex
+            rule_match = re.search(r"Rule ID\s*:\s*(POL-\d+)", block)
+            url_match = re.search(r"URL\s*:\s*(https?://\S+)", block)
+            interest_match = re.search(r"Interest\s*:\s*(.+?)(?:\n|$)", block, re.MULTILINE)
+            level_match = re.search(r"School Level\s*:\s*(.+?)(?:\n|$)", block, re.MULTILINE)
+            grade_match = re.search(r"Grade Range\s*:\s*(.+?)(?:\n|$)", block, re.MULTILINE)
+            age_match = re.search(r"Age Range\s*:\s*(.+?)(?:\n|$)", block, re.MULTILINE)
+            decision_match = re.search(r"Decision\s*:\s*(ALLOWED|DENIED)", block)
+            
+            
+            if rule_match and url_match:
+                rule_id = rule_match.group(1)
+                url = url_match.group(1)
+                interest = interest_match.group(1).strip() if interest_match else "–"
+                level_raw = level_match.group(1).strip() if level_match else "Any"
+                grade = grade_match.group(1).strip() if grade_match else "Any"
+                age = age_match.group(1).strip() if age_match else "Any"
+                decision = decision_match.group(1) if decision_match else "–"
+                
+                # Map internal level names to GUI display names
+                level_map = {
+                    "Elementary": "Elementary School",
+                    "Middle": "Middle School",
+                    "High (9-10)": "High School (9-10)",
+                    "High (11-12)": "High School (11-12)",
+                }
+                level_display = level_map.get(level_raw, level_raw)
+                
+                # Extract index from POL-XXXX
+                try:
+                    idx = int(rule_id.split("-")[1])
+                except (IndexError, ValueError):
+                    idx = 0
+                    
+                policies.append({
+                    "idx": idx,
+                    "url": url,
+                    "interest": interest,
+                    "level": level_display,
+                     "grade": grade,
+                    "age": age,
+                    "decision": decision,
+                })
+        
+        return sorted(policies, key=lambda x: x["idx"])
 
-    # ── Tab 2: Create / Edit Policy ────────────────────────────────────────
+        # ── Tab 2: Create / Edit Policy ────────────────────────────────────────
     def _build_policy_tab(self):
         canvas    = tk.Canvas(self.policy_tab, bg=COLORS["card"], highlightthickness=0)
         scrollbar = ttk.Scrollbar(self.policy_tab, orient="vertical", command=canvas.yview)
@@ -1527,100 +1646,397 @@ class AdminLogViewer(tk.Toplevel):
         self.alternatives_text.insert("1.0",
                                        "https://www.khanacademy.org|Educational alternative")
 
-    # ── Tab 3: Manage Alternatives ─────────────────────────────────────────
-    def _build_alternatives_tab(self):
-        canvas    = tk.Canvas(self.alts_tab, bg=COLORS["card"], highlightthickness=0)
-        scrollbar = ttk.Scrollbar(self.alts_tab, orient="vertical", command=canvas.yview)
-        form      = tk.Frame(canvas, bg=COLORS["card"], padx=20, pady=20)
+    # ── Tab 3: Browse Pipeline Policies ───────────────────────────────────────
+    def _build_pipeline_policies_tab(self):
+        """Tab for browsing, searching, and overriding all 250 pipeline policies."""
+        # ── Build the full policy list from the pipeline table ─────────────
+        self._all_pipeline_policies = self._load_pipeline_policy_table()
 
-        form.bind("<Configure>",
-                  lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-        canvas.create_window((0, 0), window=form, anchor="nw", width=860)
-        canvas.configure(yscrollcommand=scrollbar.set)
+        outer = tk.Frame(self.pipeline_tab, bg=COLORS["card"])
+        outer.pack(fill="both", expand=True, padx=10, pady=10)
 
-        scrollbar.pack(side="right", fill="y")
-        canvas.pack(side="left", fill="both", expand=True)
-
-        tk.Label(form, text="Manage Alternative URL Recommendations",
+        # ── Title + subtitle ──────────────────────────────────────────────
+        tk.Label(outer, text="Browse & Override Pipeline Policies",
                  font=("Segoe UI", 14, "bold"), bg=COLORS["card"],
-                 fg=COLORS["primary"]).pack(anchor="w", pady=(0, 10))
-        tk.Label(form,
-                 text="Add or remove alternative URLs for specific blocked websites.",
-                 font=("Segoe UI", 10), bg=COLORS["card"],
-                 fg=COLORS["text_light"], wraplength=800, justify="left"
-                 ).pack(anchor="w", pady=(0, 20))
+                 fg=COLORS["primary"]).pack(anchor="w", pady=(0, 4))
+        tk.Label(outer,
+                 text=f"All {len(self._all_pipeline_policies)} policies generated by the AGentVLM pipeline. "
+                      "Search by keyword, then click a row to edit and override it.",
+                 font=("Segoe UI", 9), bg=COLORS["card"],
+                 fg=COLORS["text_light"], wraplength=860, justify="left"
+                 ).pack(anchor="w", pady=(0, 8))
+   
+    
 
-        tk.Label(form, text="Website URL *", font=("Segoe UI", 11, "bold"),
-                 bg=COLORS["card"], fg=COLORS["text"]).pack(anchor="w")
-        self.alt_url_var = tk.StringVar(value="https://")
-        tk.Entry(form, textvariable=self.alt_url_var,
-                 font=("Consolas", 11), bg=COLORS["bg"],
-                 relief="solid", bd=1).pack(fill="x", pady=(5, 15), ipady=5)
+        # ── Search bar ────────────────────────────────────────────────────
+        search_outer = tk.Frame(outer, bg=COLORS["card"])
+        search_outer.pack(fill="x", pady=(0, 8))
 
-        tk.Label(form,
-                 text="Alternative URLs (one per line, format: URL|description)",
-                 font=("Segoe UI", 11, "bold"),
-                 bg=COLORS["card"], fg=COLORS["text"]).pack(anchor="w")
-        self.alts_list_text = tk.Text(form, wrap="word", padx=10, pady=10,
-                                       font=("Consolas", 10), bg=COLORS["bg"],
-                                       relief="solid", bd=1, height=8)
-        self.alts_list_text.pack(fill="x", pady=(5, 20))
+        tk.Label(search_outer, text="🔍 Search:", font=("Segoe UI", 10, "bold"),
+                 bg=COLORS["card"], fg=COLORS["text"]).pack(side="left")
 
-        btn_frame = tk.Frame(form, bg=COLORS["card"])
-        btn_frame.pack(fill="x")
+        self.pipeline_search_var = tk.StringVar()
+        self.pipeline_search_var.trace("w", self._on_pipeline_search)
+        search_entry = tk.Entry(search_outer, textvariable=self.pipeline_search_var,
+                                font=("Segoe UI", 10), bg=COLORS["bg"],
+                                relief="solid", bd=1, width=45)
+        search_entry.pack(side="left", padx=(6, 10), ipady=4)
 
-        tk.Button(btn_frame, text="💾 Save Alternatives",
-                  font=("Segoe UI", 12, "bold"),
+        tk.Label(search_outer,
+                 text="Try: elementary, middle, high, math, english, …",
+                 font=("Segoe UI", 8), bg=COLORS["card"],
+                 fg=COLORS["text_light"]).pack(side="left")
+
+        # ── Stat label ────────────────────────────────────────────────────
+        self.pipeline_stat_var = tk.StringVar(
+            value=f"Showing {len(self._all_pipeline_policies)} / {len(self._all_pipeline_policies)} policies")
+        tk.Label(outer, textvariable=self.pipeline_stat_var,
+                 font=("Segoe UI", 9), bg=COLORS["card"],
+                 fg=COLORS["text_light"]).pack(anchor="w", pady=(0, 4))
+
+        # ── Treeview ──────────────────────────────────────────────────────
+        cols = ("#", "URL", "Interest", "Level", "Decision", "Overridden")
+        tree_frame = tk.Frame(outer, bg=COLORS["card"])
+        tree_frame.pack(fill="both", expand=True)
+
+        style = ttk.Style()
+        style.configure("Pipeline.Treeview",
+                        font=("Segoe UI", 9), rowheight=22,
+                        background=COLORS["card"], fieldbackground=COLORS["card"])
+        style.configure("Pipeline.Treeview.Heading",
+                        font=("Segoe UI", 9, "bold"))
+        style.map("Pipeline.Treeview",
+                  background=[("selected", COLORS["primary"])],
+                  foreground=[("selected", "white")])
+
+        self.pipeline_tree = ttk.Treeview(tree_frame, columns=cols,
+                                           show="headings", style="Pipeline.Treeview",
+                                           selectmode="browse")
+        col_widths = {"#": 38, "URL": 290, "Interest": 95,
+                      "Level": 120, "Decision": 78, "Overridden": 80}
+        for c in cols:
+            self.pipeline_tree.heading(c, text=c)
+            self.pipeline_tree.column(c, width=col_widths[c], anchor="w", stretch=(c == "URL"))
+
+        vsb = ttk.Scrollbar(tree_frame, orient="vertical",   command=self.pipeline_tree.yview)
+        hsb = ttk.Scrollbar(tree_frame, orient="horizontal", command=self.pipeline_tree.xview)
+        self.pipeline_tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
+
+        self.pipeline_tree.grid(row=0, column=0, sticky="nsew")
+        vsb.grid(row=0, column=1, sticky="ns")
+        hsb.grid(row=1, column=0, sticky="ew")
+        tree_frame.grid_rowconfigure(0, weight=1)
+        tree_frame.grid_columnconfigure(0, weight=1)
+
+        # Row tags for colour coding
+        self.pipeline_tree.tag_configure("allowed",    foreground=COLORS["success"])
+        self.pipeline_tree.tag_configure("denied",     foreground=COLORS["danger"])
+        self.pipeline_tree.tag_configure("overridden", foreground=COLORS["accent"],
+                                          font=("Segoe UI", 9, "bold"))
+
+        self.pipeline_tree.bind("<Double-1>", self._on_pipeline_row_double_click)
+
+        # ── Bottom button bar ─────────────────────────────────────────────
+        btn_bar = tk.Frame(outer, bg=COLORS["card"], pady=8)
+        btn_bar.pack(fill="x")
+
+        tk.Button(btn_bar, text="✏️ Edit / Override Selected",
+                  font=("Segoe UI", 10, "bold"),
                   bg=COLORS["primary"], fg="white", relief="flat",
-                  padx=30, pady=10, cursor="hand2",
-                  command=self._save_alternatives).pack(side="left", padx=(0, 10))
+                  padx=18, pady=6, cursor="hand2",
+                  command=self._pipeline_edit_selected).pack(side="left", padx=(0, 8))
 
-        tk.Button(btn_frame, text="🔍 Load Current",
-                  font=("Segoe UI", 11),
+        tk.Button(btn_bar, text="🔄 Refresh",
+                  font=("Segoe UI", 10),
                   bg=COLORS["bg"], fg=COLORS["text"], relief="solid", bd=1,
-                  padx=20, pady=10, cursor="hand2",
-                  command=self._load_alternatives).pack(side="left")
+                  padx=14, pady=6, cursor="hand2",
+                  command=self._pipeline_refresh).pack(side="left")
 
-    def _save_alternatives(self):
-        url = self.alt_url_var.get().strip()
-        if not url or url == "https://":
-            messagebox.showerror("Error", "Please enter a valid URL", parent=self)
+        tk.Label(btn_bar,
+                 text="Double-click a row to edit it quickly.",
+                 font=("Segoe UI", 8), bg=COLORS["card"],
+                 fg=COLORS["text_light"]).pack(side="right")
+
+        # Populate table
+        self._pipeline_populate(self._all_pipeline_policies)
+
+    # ── Pipeline helpers ──────────────────────────────────────────────────
+    def _load_pipeline_policy_table(self) -> list:
+        "Build policy table from output file (264 policies) instead of fallback (82)."
+        # Look for the output file in the same directory as the script
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        output_file = os.path.join(script_dir, "policy_output_agentvlm.txt")
+    
+    # If the file exists, parse it
+        if os.path.exists(output_file):
+          return self._parse_policy_output_file(output_file)
+    
+    # Fallback to the hardcoded 82 policies if file not found
+        rows = []
+        try:
+           from agentvlm_pipeline_v2 import _FALLBACK_DESCRIPTIONS
+           for idx, url_key in enumerate(sorted(_FALLBACK_DESCRIPTIONS.keys()), start=1):
+                rows.append({
+                "idx": idx,
+                "url": "https://" + url_key if not url_key.startswith("http") else url_key,
+                "interest": "–",
+                "level": "All Levels",
+                "decision": None,
+            })
+        except Exception:
+            pass
+        return rows
+
+    def _pipeline_is_overridden(self, url: str) -> bool:
+        return bool(check_admin_override(url))
+    
+    def _pipeline_decision_for(self, url: str, interest: str, level: str) -> str:
+        """Return decision for a URL/interest/level, checking admin overrides first."""
+        # Check admin override (global or any school level)
+        override = check_admin_override(url)
+        if override:
+            return override.get("decision", "–")
+
+        # Try a quick heuristic using the pipeline's fallback text
+        try:
+            from agentvlm_pipeline_v2 import _FALLBACK_DESCRIPTIONS, ContentSignalAnalyzer
+            url_key = url.lower().replace("https://", "").replace("http://", "").replace("www.", "")
+            desc = ""
+            for k, v in _FALLBACK_DESCRIPTIONS.items():
+                if k in url_key:
+                    desc = v
+                    break
+            if desc:
+                csa = ContentSignalAnalyzer()
+                sig = csa.analyze(desc, [desc], url, interest)
+                return sig["suggested_decision"]
+        except Exception:
+            pass
+        return "–"
+
+    def _pipeline_populate(self, rows: list):
+        """Clear and repopulate the treeview with the given rows."""
+        self.pipeline_tree.delete(*self.pipeline_tree.get_children())
+        for r in rows:
+             # Check for admin override with this specific context
+            # This will find both global and specific overrides
+            admin_override = check_admin_override(
+                r["url"], 
+                r["level"], 
+                r.get("grade", "Any"), 
+                r.get("age", "Any"), 
+                r["interest"], 
+                "NA"
+            )
+            
+            if admin_override:
+                # Use the overridden decision
+                decision = admin_override["decision"]
+                is_override = True
+            else:
+                # Use the original decision from the file
+                decision = r.get("decision") or "–"
+                is_override = False
+                
+            tag = "overridden" if is_override else ("allowed" if decision == "ALLOWED" else "denied")
+            override_label = "✅ Yes" if is_override else ""
+            
+            self.pipeline_tree.insert("", "end",
+                values=(r["idx"], r["url"], r["interest"], r["level"], decision, override_label),
+                tags=(tag,))
+
+    def _on_pipeline_search(self, *_):
+        query = self.pipeline_search_var.get().strip().lower()
+        if not query:
+            filtered = self._all_pipeline_policies
+        else:
+            terms = query.split()
+            filtered = [
+                r for r in self._all_pipeline_policies
+                if all(
+                    t in r["url"].lower()
+                    or t in r["interest"].lower()
+                    or t in r["level"].lower()
+                    for t in terms
+                )
+            ]
+        total = len(self._all_pipeline_policies)
+        self.pipeline_stat_var.set(f"Showing {len(filtered)} / {total} policies")
+        self._pipeline_populate(filtered)
+
+    def _pipeline_refresh(self):
+        load_admin_overrides()
+        self._on_pipeline_search()
+
+    def _on_pipeline_row_double_click(self, event):
+        self._pipeline_edit_selected()
+
+    def _pipeline_edit_selected(self):
+        sel = self.pipeline_tree.selection()
+        if not sel:
+            messagebox.showinfo("Select a Row",
+                                "Please select a policy row first.", parent=self)
             return
+        vals = self.pipeline_tree.item(sel[0], "values")
+        # vals: (#, URL, Interest, Level, Decision, Overridden)
+        url      = vals[1]
+        interest = vals[2]
+        level    = vals[3]
+        decision = vals[4]
+        self._open_pipeline_override_dialog(url, interest, level, decision)
 
-        alts     = []
-        alt_text = self.alts_list_text.get("1.0", "end-1c").strip()
-        if alt_text:
-            for line in alt_text.split("\n"):
+    def _open_pipeline_override_dialog(self, url: str, interest: str,
+                                        level: str, current_decision: str):
+        """Show a dialog allowing the admin to override any pipeline policy."""
+        dlg = tk.Toplevel(self)
+        dlg.title("Override Pipeline Policy")
+        dlg.geometry("620x560")
+        dlg.configure(bg=COLORS["card"])
+        dlg.transient(self)
+        dlg.grab_set()
+
+        # ── Header ────────────────────────────────────────────────────────
+        hdr = tk.Frame(dlg, bg=COLORS["admin"], padx=15, pady=10)
+        hdr.pack(fill="x")
+        tk.Label(hdr, text="🔐 Override Pipeline Policy",
+                 font=("Segoe UI", 13, "bold"), bg=COLORS["admin"],
+                 fg="white").pack(side="left")
+
+        # ── Body ──────────────────────────────────────────────────────────
+        body = tk.Frame(dlg, bg=COLORS["card"], padx=25, pady=15)
+        body.pack(fill="both", expand=True)
+
+        def lbl(text, bold=False, color=None):
+            tk.Label(body, text=text,
+                     font=("Segoe UI", 10, "bold" if bold else "normal"),
+                     bg=COLORS["card"],
+                     fg=color or COLORS["text"]).pack(anchor="w", pady=(6, 0))
+
+        lbl("Website URL", bold=True)
+        tk.Label(body, text=url, font=("Consolas", 10),
+                 bg=COLORS["bg"], fg=COLORS["primary"],
+                 relief="solid", bd=1, padx=8, pady=4,
+                 wraplength=560, justify="left").pack(fill="x", pady=(4, 0))
+
+        row_info = tk.Frame(body, bg=COLORS["card"])
+        row_info.pack(fill="x", pady=(10, 0))
+        for header_txt, val_txt in [("Interest / Subject", interest), ("School Level", level)]:
+            col = tk.Frame(row_info, bg=COLORS["card"])
+            col.pack(side="left", padx=(0, 30))
+            tk.Label(col, text=header_txt, font=("Segoe UI", 9, "bold"),
+                     bg=COLORS["card"], fg=COLORS["text_light"]).pack(anchor="w")
+            tk.Label(col, text=val_txt, font=("Segoe UI", 10),
+                     bg=COLORS["card"], fg=COLORS["text"]).pack(anchor="w")
+
+        # Current decision badge
+        curr_col = COLORS["success"] if current_decision == "ALLOWED" else COLORS["danger"]
+        tk.Label(body,
+                 text=f"Current decision: {current_decision}",
+                 font=("Segoe UI", 10, "bold"),
+                 bg=curr_col, fg="white",
+                 padx=10, pady=3).pack(anchor="w", pady=(10, 0))
+
+        # New decision radio
+        lbl("New Decision", bold=True)
+        dec_var = tk.StringVar(value="ALLOWED" if current_decision == "DENIED" else "DENIED")
+        dec_frame = tk.Frame(body, bg=COLORS["card"])
+        dec_frame.pack(anchor="w", pady=(4, 0))
+        tk.Radiobutton(dec_frame, text="✅ ALLOWED", variable=dec_var,
+                       value="ALLOWED", font=("Segoe UI", 11, "bold"),
+                       bg=COLORS["card"], fg=COLORS["success"],
+                       selectcolor=COLORS["card"]).pack(side="left", padx=(0, 25))
+        tk.Radiobutton(dec_frame, text="🚫 DENIED", variable=dec_var,
+                       value="DENIED", font=("Segoe UI", 11, "bold"),
+                       bg=COLORS["card"], fg=COLORS["danger"],
+                       selectcolor=COLORS["card"]).pack(side="left")
+
+        # Reason
+        lbl("Override Reason", bold=True)
+        reason_var = tk.StringVar(
+            value=f"Admin override: {current_decision} → {dec_var.get()}")
+        tk.Entry(body, textvariable=reason_var,
+                 font=("Segoe UI", 10), bg=COLORS["bg"],
+                 relief="solid", bd=1).pack(fill="x", pady=(4, 0), ipady=4)
+
+        # Scope selector (which student profile levels to apply to)
+        lbl("Apply Override To", bold=True)
+        scope_var = tk.StringVar(value="global")
+        scope_frame = tk.Frame(body, bg=COLORS["card"])
+        scope_frame.pack(anchor="w", pady=(4, 0))
+        tk.Radiobutton(scope_frame, text="🌐 All levels (global)",
+                       variable=scope_var, value="global",
+                       font=("Segoe UI", 10), bg=COLORS["card"],
+                       selectcolor=COLORS["card"]).pack(side="left", padx=(0, 20))
+        tk.Radiobutton(scope_frame, text=f"🎯 This level only ({level})",
+                       variable=scope_var, value="specific",
+                       font=("Segoe UI", 10), bg=COLORS["card"],
+                       selectcolor=COLORS["card"]).pack(side="left")
+
+        # Alternatives
+        lbl("Alternative URLs (optional, one per line: URL|description)", bold=True)
+        alts_text = tk.Text(body, wrap="word", padx=8, pady=6,
+                            font=("Consolas", 9), bg=COLORS["bg"],
+                            relief="solid", bd=1, height=4)
+        alts_text.pack(fill="x", pady=(4, 0))
+        # Pre-fill from existing override if any
+        existing = check_admin_override(url)
+        if existing and existing.get("alternatives"):
+            alts_text.insert("1.0",
+                "\n".join(f"{a[0]}|{a[1]}" for a in existing["alternatives"]))
+
+        # ── Action buttons ────────────────────────────────────────────────
+        def apply():
+            new_dec = dec_var.get()
+            reason  = reason_var.get().strip() or f"Admin override: {current_decision} → {new_dec}"
+            alts    = []
+            for line in alts_text.get("1.0", "end-1c").strip().split("\n"):
                 line = line.strip()
                 if not line:
                     continue
                 if "|" in line:
-                    parts = line.split("|", 1)
-                    alts.append((parts[0].strip(), parts[1].strip()))
+                    p = line.split("|", 1)
+                    alts.append((p[0].strip(), p[1].strip()))
                 else:
                     alts.append((line, "Alternative resource"))
 
-        save_policy_override(url, "Any", "Any", "Any", "Any", "NA",
-                             "DENIED", alts, f"Admin configured alternatives for {url}")
-        messagebox.showinfo("Success", f"Alternatives saved for {url}", parent=self)
-        self._reload_log()
+            scope = scope_var.get()
+            if scope == "global":
+                save_policy_override(url, "Any", "Any", "Any", "Any", "NA",
+                                     new_dec, alts, reason)
+            else:
+                # Map display level back to grade/age for the specific-context save
+                _lvl_map = {
+                    "Elementary School":    ("Elementary School", "1-5",   "6-11"),
+                    "Middle School":        ("Middle School",     "6-8",   "11-14"),
+                    "High School (9-10)":   ("High School",       "9-10",  "14-15"),
+                    "High School (11-12)":  ("High School",       "11-12", "16-18"),
+                    "High School":          ("High School",       "9-12",  "14-18"),
+                }
+                sl, gr, ar = _lvl_map.get(level, ("Any", "Any", "Any"))
+                save_policy_override(url, sl, gr, ar, interest, "NA",
+                                     new_dec, alts, reason)
 
-    def _load_alternatives(self):
-        url = self.alt_url_var.get().strip()
-        if not url or url == "https://":
-            messagebox.showerror("Error", "Please enter a URL", parent=self)
-            return
+            load_admin_overrides()
+            messagebox.showinfo("Override Saved",
+                                f"Policy for {url} set to {new_dec}.\n"
+                                f"Scope: {'All levels (global)' if scope == 'global' else level}",
+                                parent=dlg)
+            dlg.destroy()
+            self._pipeline_refresh()
 
-        policy = check_admin_override(url)
-        if policy and policy.get("alternatives"):
-            alts     = policy["alternatives"]
-            alt_text = "\n".join([f"{a[0]}|{a[1]}" for a in alts])
-            self.alts_list_text.delete("1.0", "end")
-            self.alts_list_text.insert("1.0", alt_text)
-            messagebox.showinfo("Loaded", f"Loaded {len(alts)} alternatives", parent=self)
-        else:
-            messagebox.showinfo("No Alternatives",
-                                "No alternatives found for this URL", parent=self)
+        btn_row = tk.Frame(body, bg=COLORS["card"])
+        btn_row.pack(fill="x", pady=(15, 0))
+        tk.Button(btn_row, text="💾 Apply Override",
+                  font=("Segoe UI", 11, "bold"),
+                  bg=COLORS["admin"], fg="white", relief="flat",
+                  padx=22, pady=8, cursor="hand2",
+                  command=apply).pack(side="left", padx=(0, 10))
+        tk.Button(btn_row, text="Cancel",
+                  font=("Segoe UI", 10),
+                  bg=COLORS["bg"], fg=COLORS["text"], relief="solid", bd=1,
+                  padx=16, pady=8, cursor="hand2",
+                  command=dlg.destroy).pack(side="left")
+       
 
 # ═══════════════════════════════════════════════════════════════════════════
 # GUI – RESULT WINDOW

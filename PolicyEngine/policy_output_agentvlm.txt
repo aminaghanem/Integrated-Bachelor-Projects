@@ -1,0 +1,4478 @@
+================================================================================
+  AGentVLM – ACCESS CONTROL POLICY OUTPUT  (v5)
+  Step 3        : PolicyGenerator (rule extractor)
+
+  Total Rules   : 264
+  ALLOWED       : 194
+  DENIED        : 70
+  Total URLs    : 95
+
+================================================================================
+
+
+  DISABILITY-SPECIFIC RECOMMENDED URLs
+  Source: Disabilities sheet – policy_output_v5.xlsx
+  ────────────────────────────────────────────────────────────────────────────────
+
+  ┌─ ADHD ─
+  │  Math:
+  │    • https://www.coolmathgames.com
+  │      Reason : Gamified math practice with interactive challenges helps maintain focus
+  │    • https://www.khanacademy.org/math
+  │      Reason : Short structured lessons with progress badges and clear goals
+  │    • https://www.desmos.com/calculator
+  │      Reason : Visual interactive graphing with immediate feedback
+  │  Science:
+  │    • https://phet.colorado.edu
+  │      Reason : Interactive hands-on simulations reduce passive reading
+  │    • https://www.pbslearningmedia.org
+  │      Reason : Short engaging video content with varied pacing
+  │  Reading:
+  │    • https://www.readworks.org
+  │      Reason : Structured reading with audio support and clear pacing
+  │    • https://www.storylineonline.net
+  │      Reason : Audio-read picture books for engagement and focus
+  │  English:
+  │    • https://www.readworks.org
+  │      Reason : Levelled passages with structured comprehension questions
+  │    • https://www.commonlit.org
+  │      Reason : Guided reading with clear scaffolding and short texts
+  │  Social Studies:
+  │    • https://www.ducksters.com/history
+  │      Reason : Short digestible articles with clear headings
+  │    • https://www.britannica.com
+  │      Reason : Well-structured entries with concise summaries
+  │  History:
+  │    • https://www.ducksters.com/history
+  │      Reason : Concise history articles with clear structure
+  │    • https://www.britannica.com
+  │      Reason : Reliable encyclopaedia with concise well-organised entries
+  │  Art:
+  │    • https://www.artsonia.com
+  │      Reason : Hands-on creative platform with short project-based tasks
+  │    • https://www.tate.org.uk/kids
+  │      Reason : Interactive art activities with short focused tasks
+  │  Computer:
+  │    • https://scratch.mit.edu
+  │      Reason : Visual block-based programming with immediate visual results
+  │    • https://code.org
+  │      Reason : Short structured coding missions with reward badges
+  │  Arabic:
+  │    • https://www.duolingo.com/course/ar
+  │      Reason : Gamified short lessons with streaks and rewards for motivation
+  │    • https://www.arabicpod101.com
+  │      Reason : Short audio/visual lessons with varied formats
+  │  Biology:
+  │    • https://phet.colorado.edu
+  │      Reason : Interactive simulations for biology concepts
+  │    • https://www.khanacademy.org/science/biology
+  │      Reason : Short modular lessons with visual diagrams
+  │  Physics:
+  │    • https://phet.colorado.edu
+  │      Reason : Interactive physics simulations with hands-on learning
+  │    • https://www.physicsclassroom.com
+  │      Reason : Short structured lessons with visual explanations
+  │  Chemistry:
+  │    • https://phet.colorado.edu
+  │      Reason : Interactive chemistry simulations reduce boredom
+  │    • https://www.khanacademy.org/science/chemistry
+  │      Reason : Short focused chemistry modules with progress tracking
+  │  Sports:
+  │    • https://www.pe4life.org
+  │      Reason : Short structured physical education activities
+  │    • https://www.olympic.org/education
+  │      Reason : Engaging sports education with video and interactive content
+  │  Chess:
+  │    • https://www.chesskid.com
+  │      Reason : Kid-friendly chess with gamified learning for focus
+  │    • https://www.chessable.com
+  │      Reason : Short interactive chess lessons with spaced repetition
+  │  Music:
+  │    • https://www.musictheory.net
+  │      Reason : Visual music theory with short interactive exercises
+  │    • https://www.musicca.com
+  │      Reason : Real-time visual feedback keeps attention
+  └────────────────────────────────────────
+
+  ┌─ Color Blindness ─
+  │  Math:
+  │    • https://www.desmos.com
+  │      Reason : Graphing with patterns and labels instead of just colours
+  │    • https://www.khanacademy.org/math
+  │      Reason : Text descriptions alongside visual content
+  │    • https://mathworld.wolfram.com
+  │      Reason : Text-heavy math reference with minimal colour dependency
+  │  Science:
+  │    • https://phet.colorado.edu
+  │      Reason : Simulations with colour-blind friendly modes and pattern overlays
+  │    • https://www.physicsclassroom.com
+  │      Reason : Text-based physics with pattern-based diagrams
+  │  Reading:
+  │    • https://www.gutenberg.org
+  │      Reason : Plain text format with no colour dependency
+  │    • https://www.readworks.org
+  │      Reason : High-contrast accessible reading interface
+  │  English:
+  │    • https://www.gutenberg.org
+  │      Reason : Plain text books with no colour dependency
+  │    • https://www.commonlit.org
+  │      Reason : High-contrast accessible reading interface
+  │  Social Studies:
+  │    • https://www.ducksters.com/history
+  │      Reason : Text-based layout with minimal colour-coded content
+  │    • https://www.britannica.com
+  │      Reason : High-contrast encyclopaedia with text-first design
+  │  History:
+  │    • https://www.britannica.com
+  │      Reason : Text-first encyclopaedia design with high contrast
+  │    • https://www.ducksters.com/history
+  │      Reason : Simple accessible layout not reliant on colour
+  │  Art:
+  │    • https://www.metmuseum.org/art/online-resources
+  │      Reason : Provides detailed text descriptions of artworks
+  │    • https://www.tate.org.uk/kids
+  │      Reason : Includes text descriptions and accessibility options
+  │  Computer:
+  │    • https://code.org
+  │      Reason : Colour-blind accessible coding interface with pattern cues
+  │    • https://scratch.mit.edu
+  │      Reason : Block labels supplement colour coding
+  │  Arabic:
+  │    • https://www.madinaharabic.com
+  │      Reason : Text-heavy layout with no colour dependency
+  │    • https://arabic.desert-sky.net
+  │      Reason : Simple black-and-white text layout for Arabic study
+  │  Biology:
+  │    • https://www.khanacademy.org/science/biology
+  │      Reason : Text descriptions supplement all diagrams
+  │    • https://www.biologycorner.com
+  │      Reason : Pattern-labelled biological diagrams available
+  │  Physics:
+  │    • https://www.physicsclassroom.com
+  │      Reason : Text-based explanations with labelled diagrams
+  │    • https://phet.colorado.edu
+  │      Reason : Colour-blind friendly simulation modes
+  │  Chemistry:
+  │    • https://phet.colorado.edu
+  │      Reason : Interactive periodic table with shape/pattern indicators
+  │    • https://www.periodic-table.org
+  │      Reason : Text-based element information with symbol labels
+  │  Sports:
+  │    • https://www.pe4life.org
+  │      Reason : Text and image-based PE resources, not colour-dependent
+  │    • https://www.olympic.org/education
+  │      Reason : Educational content with labelled visuals
+  │  Chess:
+  │    • https://lichess.org
+  │      Reason : Supports colour-blind board themes and pattern pieces
+  │    • https://www.chess.com/play/computer
+  │      Reason : Offers colour-blind piece sets and board themes
+  │  Music:
+  │    • https://www.musictheory.net
+  │      Reason : Music notation relies on shape/position not just colour
+  │    • https://www.noteflight.com
+  │      Reason : Score notation accessible without colour distinction
+  └────────────────────────────────────────
+
+  ┌─ Hearing Impairment ─
+  │  Math:
+  │    • https://www.khanacademy.org/math
+  │      Reason : Full captions on all video lessons
+  │    • https://www.desmos.com/calculator
+  │      Reason : Visual-only tool with no audio dependency
+  │  Science:
+  │    • https://www.pbslearningmedia.org
+  │      Reason : All videos fully captioned for hearing-impaired learners
+  │    • https://phet.colorado.edu
+  │      Reason : Visual interactive simulations with no audio requirement
+  │  Reading:
+  │    • https://www.gutenberg.org
+  │      Reason : Full text content without audio dependencies
+  │    • https://www.readworks.org
+  │      Reason : Text-based reading with visual supports
+  │  English:
+  │    • https://www.gutenberg.org
+  │      Reason : Pure text literary content with no audio required
+  │    • https://www.commonlit.org
+  │      Reason : Text-based English literature with captioned videos
+  │  Social Studies:
+  │    • https://www.ducksters.com/history
+  │      Reason : Text-only format, no audio required
+  │    • https://www.britannica.com
+  │      Reason : Fully text-based reference with no audio dependency
+  │  History:
+  │    • https://www.britannica.com
+  │      Reason : Fully text-based reference encyclopaedia
+  │    • https://www.ducksters.com/history
+  │      Reason : Text articles fully accessible without audio
+  │  Art:
+  │    • https://www.metmuseum.org/art/online-resources
+  │      Reason : Text-based art education with no audio dependency
+  │    • https://www.artsonia.com
+  │      Reason : Visual platform with text descriptions throughout
+  │  Computer:
+  │    • https://code.org
+  │      Reason : Visual step-by-step coding with no audio required
+  │    • https://scratch.mit.edu
+  │      Reason : Visual programming fully accessible without sound
+  │  Arabic:
+  │    • https://www.madinaharabic.com
+  │      Reason : Text and visual Arabic grammar with no audio dependency
+  │    • https://arabic.desert-sky.net
+  │      Reason : Written Arabic lessons accessible without audio
+  │  Biology:
+  │    • https://www.khanacademy.org/science/biology
+  │      Reason : Captioned video lessons for biology
+  │    • https://www.biologycorner.com
+  │      Reason : Text and diagram-based biology resources
+  │  Physics:
+  │    • https://www.physicsclassroom.com
+  │      Reason : Text-based physics resources with visual diagrams
+  │    • https://phet.colorado.edu
+  │      Reason : Visual simulations with no audio dependency
+  │  Chemistry:
+  │    • https://www.periodic-table.org
+  │      Reason : Visual and text periodic table with no audio needed
+  │    • https://www.khanacademy.org/science/chemistry
+  │      Reason : Captioned video chemistry lessons
+  │  Sports:
+  │    • https://www.olympic.org/education
+  │      Reason : Captioned sports education videos and visual content
+  │    • https://www.pe4life.org
+  │      Reason : Text and image-based physical education resources
+  │  Music:
+  │    • https://www.musictheory.net
+  │      Reason : Visual music theory lessons with no audio requirement
+  │    • https://www.noteflight.com
+  │      Reason : Visual music notation tool for hearing-impaired learners
+  │  Chess:
+  │    • https://lichess.org
+  │      Reason : Fully visual chess platform with no audio required
+  │    • https://www.chesskid.com
+  │      Reason : Visual chess interface with text instructions
+  └────────────────────────────────────────
+
+  ┌─ Dyslexia ─
+  │  Math:
+  │    • https://www.khanacademy.org/math
+  │      Reason : TTS-compatible with clear text layout and audio explanations
+  │    • https://www.coolmathgames.com
+  │      Reason : Visual and interactive math reduces reading load
+  │  Science:
+  │    • https://phet.colorado.edu
+  │      Reason : Hands-on simulations reduce reliance on text reading
+  │    • https://www.pbslearningmedia.org
+  │      Reason : Audio-visual content reduces reading barriers
+  │  Reading:
+  │    • https://www.readworks.org
+  │      Reason : Text-to-speech compatible passages with levelled support
+  │    • https://www.gutenberg.org
+  │      Reason : Plain text format compatible with screen readers
+  │    • https://www.commonlit.org
+  │      Reason : TTS-enabled literary texts with scaffolding
+  │  English:
+  │    • https://www.readworks.org
+  │      Reason : TTS-compatible English passages with audio support
+  │    • https://www.commonlit.org
+  │      Reason : TTS-enabled English literature with scaffolding
+  │    • https://www.gutenberg.org
+  │      Reason : Plain text format for use with screen readers
+  │  Social Studies:
+  │    • https://www.ducksters.com/history
+  │      Reason : Short clear articles compatible with TTS tools
+  │    • https://www.britannica.com
+  │      Reason : Clean layout compatible with browser TTS extensions
+  │  History:
+  │    • https://www.ducksters.com/history
+  │      Reason : Short simple history articles easy for TTS reading
+  │    • https://www.britannica.com
+  │      Reason : Compatible with browser TTS extensions
+  │  Art:
+  │    • https://www.artsonia.com
+  │      Reason : Visual creative platform minimising reading demand
+  │    • https://www.tate.org.uk/kids
+  │      Reason : Visual art activities with audio descriptions
+  │  Computer:
+  │    • https://scratch.mit.edu
+  │      Reason : Visual block-based coding reduces reading demand
+  │    • https://code.org
+  │      Reason : Visual programming with minimal text reliance
+  │  Arabic:
+  │    • https://www.arabicpod101.com
+  │      Reason : Audio-first Arabic lessons reduce reading pressure
+  │    • https://www.duolingo.com/course/ar
+  │      Reason : Gamified audio-visual Arabic learning
+  │  Biology:
+  │    • https://www.khanacademy.org/science/biology
+  │      Reason : Audio-visual biology lessons with TTS support
+  │    • https://phet.colorado.edu
+  │      Reason : Visual simulations reduce biology reading load
+  │  Physics:
+  │    • https://phet.colorado.edu
+  │      Reason : Interactive physics simulations reduce text dependency
+  │    • https://www.khanacademy.org/science/physics
+  │      Reason : Audio-visual lessons with TTS-compatible text
+  │  Chemistry:
+  │    • https://phet.colorado.edu
+  │      Reason : Visual chemistry simulations with minimal text
+  │    • https://www.khanacademy.org/science/chemistry
+  │      Reason : Audio-visual chemistry content with TTS support
+  │  Sports:
+  │    • https://www.olympic.org/education
+  │      Reason : Video-based sports education reduces reading load
+  │    • https://www.pe4life.org
+  │      Reason : Clear structured PE with visual guides
+  │  Chess:
+  │    • https://www.chesskid.com
+  │      Reason : Visual chess learning with minimal reading demand
+  │    • https://lichess.org
+  │      Reason : Clean visual chess interface with screen reader support
+  │  Music:
+  │    • https://www.musicca.com
+  │      Reason : Visual instruments with minimal text dependency
+  │    • https://www.musictheory.net
+  │      Reason : Visual lessons reduce reading pressure
+  └────────────────────────────────────────
+
+  ┌─ Autism ─
+  │  Math:
+  │    • https://www.khanacademy.org/math
+  │      Reason : Predictable structured lessons with consistent layout
+  │    • https://www.desmos.com
+  │      Reason : Visual predictable interface with clear interactions
+  │  Science:
+  │    • https://phet.colorado.edu
+  │      Reason : Structured predictable simulations with clear controls
+  │    • https://www.pbslearningmedia.org
+  │      Reason : Consistent structured science content
+  │  Reading:
+  │    • https://www.gutenberg.org
+  │      Reason : Clean minimal text format without distracting elements
+  │    • https://www.readworks.org
+  │      Reason : Structured reading with predictable layout
+  │  English:
+  │    • https://www.readworks.org
+  │      Reason : Predictable structured English reading passages
+  │    • https://www.commonlit.org
+  │      Reason : Consistent layout with structured literary analysis
+  │  Social Studies:
+  │    • https://www.ducksters.com/history
+  │      Reason : Simple consistent layout with predictable structure
+  │    • https://www.britannica.com
+  │      Reason : Consistent structured reference format
+  │  History:
+  │    • https://www.britannica.com
+  │      Reason : Highly consistent structured encyclopaedia format
+  │    • https://www.ducksters.com/history
+  │      Reason : Simple predictable article structure
+  │  Art:
+  │    • https://www.artsonia.com
+  │      Reason : Structured moderated art platform with predictable navigation
+  │    • https://www.metmuseum.org/art/online-resources
+  │      Reason : Consistent museum-quality layout
+  │  Computer:
+  │    • https://scratch.mit.edu
+  │      Reason : Visual block-based programming with consistent interface
+  │    • https://code.org
+  │      Reason : Structured step-by-step coding with predictable progression
+  │  Arabic:
+  │    • https://www.madinaharabic.com
+  │      Reason : Structured classical Arabic with predictable lesson format
+  │    • https://arabic.desert-sky.net
+  │      Reason : Clear consistent lesson structure for Arabic
+  │  Biology:
+  │    • https://www.khanacademy.org/science/biology
+  │      Reason : Structured modules with predictable progression
+  │    • https://www.biologycorner.com
+  │      Reason : Organised consistent biology resources
+  │  Physics:
+  │    • https://www.physicsclassroom.com
+  │      Reason : Structured clear physics lessons with consistent format
+  │    • https://phet.colorado.edu
+  │      Reason : Predictable simulation interface
+  │  Chemistry:
+  │    • https://www.khanacademy.org/science/chemistry
+  │      Reason : Structured chemistry modules with clear progression
+  │    • https://www.periodic-table.org
+  │      Reason : Consistent visual periodic table layout
+  │  Sports:
+  │    • https://www.pe4life.org
+  │      Reason : Structured PE resources with clear predictable instructions
+  │    • https://www.olympic.org/education
+  │      Reason : Organised educational sports content
+  │  Chess:
+  │    • https://www.chesskid.com
+  │      Reason : Structured safe chess environment with predictable interface
+  │    • https://www.chess.com/learn-how-to-play-chess
+  │      Reason : Step-by-step chess learning with consistent format
+  │  Music:
+  │    • https://www.musictheory.net
+  │      Reason : Predictable structured music theory lessons
+  │    • https://www.noteflight.com
+  │      Reason : Consistent visual score-based music tool
+  └────────────────────────────────────────
+
+  ┌─ Other ─
+  │  Math:
+  │    • https://www.khanacademy.org/math
+  │      Reason : Comprehensive accessibility features including TTS and captions
+  │    • https://www.desmos.com/calculator
+  │      Reason : Accessible visual math tool with multiple input methods
+  │  Science:
+  │    • https://www.pbslearningmedia.org
+  │      Reason : Multiple accessibility options including captions and transcripts
+  │    • https://phet.colorado.edu
+  │      Reason : Accessible simulations with keyboard navigation support
+  │  Reading:
+  │    • https://www.readworks.org
+  │      Reason : TTS-compatible accessible reading platform
+  │    • https://www.gutenberg.org
+  │      Reason : Plain text format works with all assistive technologies
+  │  English:
+  │    • https://www.commonlit.org
+  │      Reason : Accessible English platform with TTS and structured support
+  │    • https://www.readworks.org
+  │      Reason : Multi-modal accessible English reading resources
+  │  Social Studies:
+  │    • https://www.britannica.com
+  │      Reason : Accessible encyclopaedia with screen-reader compatibility
+  │    • https://www.ducksters.com/history
+  │      Reason : Simple accessible layout for all needs
+  │  History:
+  │    • https://www.britannica.com
+  │      Reason : Accessible reference with screen reader support
+  │    • https://www.ducksters.com/history
+  │      Reason : Simple accessible history articles for all needs
+  │  Art:
+  │    • https://www.metmuseum.org/art/online-resources
+  │      Reason : Accessible art education with alt text and descriptions
+  │    • https://www.artsonia.com
+  │      Reason : Accessible creative platform with simple navigation
+  │  Computer:
+  │    • https://code.org
+  │      Reason : Highly accessible coding platform supporting multiple needs
+  │    • https://scratch.mit.edu
+  │      Reason : Accessible visual programming with multiple input methods
+  │  Arabic:
+  │    • https://www.arabicpod101.com
+  │      Reason : Multiple learning formats to suit varied accessibility needs
+  │    • https://www.duolingo.com/course/ar
+  │      Reason : Accessible gamified learning with multiple modalities
+  │  Biology:
+  │    • https://www.khanacademy.org/science/biology
+  │      Reason : Fully accessible biology content with TTS and captions
+  │    • https://phet.colorado.edu
+  │      Reason : Accessible biology simulations with keyboard support
+  │  Physics:
+  │    • https://phet.colorado.edu
+  │      Reason : Accessible physics simulations supporting multiple needs
+  │    • https://www.khanacademy.org/science/physics
+  │      Reason : Accessible physics with captions and TTS
+  │  Chemistry:
+  │    • https://www.khanacademy.org/science/chemistry
+  │      Reason : Accessible chemistry with TTS and visual support
+  │    • https://www.periodic-table.org
+  │      Reason : Accessible periodic table with text and visual formats
+  │  Sports:
+  │    • https://www.olympic.org/education
+  │      Reason : Accessible sports education with captions and text
+  │    • https://www.pe4life.org
+  │      Reason : Accessible physical education resources
+  │  Chess:
+  │    • https://lichess.org
+  │      Reason : Open-source accessible chess with full keyboard support
+  │    • https://www.chesskid.com
+  │      Reason : Accessible chess platform with simple navigation
+  │  Music:
+  │    • https://www.musictheory.net
+  │      Reason : Accessible music theory with keyboard navigation
+  │    • https://www.noteflight.com
+  │      Reason : Accessible visual music composition tool
+  └────────────────────────────────────────
+
+
+================================================================================
+
+  ACCESS CONTROL RULES
+  (Ordered: Elementary → Middle → High (9-10) → High (11-12))
+
+
+  ──────────────────────────────
+  ◆  ELEMENTARY SCHOOL POLICIES
+  ──────────────────────────────
+
+  Rule ID                  : POL-0001
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Math
+  URL                      : https://www.khanacademy.org/math
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0002
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Math
+  URL                      : https://www.coolmathgames.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (general, wcag)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 3
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0003
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Math
+  URL                      : https://www.mathway.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0004
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Math
+  URL                      : https://www.gambling-math.com
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: gambling, betting, casino
+  Recommended Alternatives : https://www.khanacademy.org/math
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0005
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Science
+  URL                      : https://www.pbslearningmedia.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (tts, captions)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0006
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Science
+  URL                      : https://kids.nationalgeographic.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0007
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Science
+  URL                      : https://www.nasa.gov/learning-resources
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 5
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0008
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Science
+  URL                      : https://www.khanacademy.org/science/biology
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0009
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Science
+  URL                      : https://www.periodic-table.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0010
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Science
+  URL                      : https://www.reddit.com/r/science
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : This social platform is not suitable for students under 16
+  Recommended Alternatives : https://www.pbslearningmedia.org | https://kids.nationalgeographic.com
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0011
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Science
+  URL                      : https://www.youtube.com/results?search_query=science
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : This social platform is not suitable for students under 16
+  Recommended Alternatives : https://www.pbslearningmedia.org | https://www.khanacademy.org/science
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0012
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Science
+  URL                      : https://www.webmd.com
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: drug
+  Recommended Alternatives : https://kids.nationalgeographic.com | https://www.khanacademy.org/science/biology
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0013
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Science
+  URL                      : https://www.nuclear-weapons.info
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: weapon, nuclear weapon, dangerous
+  Recommended Alternatives : https://phet.colorado.edu | https://www.physicsclassroom.com
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0014
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Science
+  URL                      : https://www.erowid.org
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: drug, psychoactive
+  Recommended Alternatives : https://www.rsc.org/learn-chemistry | https://www.periodic-table.org
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0015
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Science
+  URL                      : https://www.instructables.com/chemistry
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : Policy sentences indicate restricted or inappropriate content
+  Recommended Alternatives : https://www.rsc.org/learn-chemistry | https://phet.colorado.edu
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0016
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Science
+  URL                      : https://www.wikipedia.org/wiki/Human_reproduction
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 3
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0017
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Sports
+  URL                      : https://www.nfl.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 4
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0018
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Sports
+  URL                      : https://www.olympic.org/education
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (captions, general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0019
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Sports
+  URL                      : https://www.pe4life.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0020
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Sports
+  URL                      : https://www.draftkings.com
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: gambling, illegal, dangerous
+  Recommended Alternatives : https://www.nfl.com | https://www.olympic.org/education
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0021
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Sports
+  URL                      : https://www.betway.com
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: gambling, betting, casino
+  Recommended Alternatives : https://www.nfl.com | https://www.olympic.org/education
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0022
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Reading
+  URL                      : https://www.readworks.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (tts, captions)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0023
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Reading
+  URL                      : https://www.gutenberg.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (tts)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0024
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Reading
+  URL                      : https://www.storylineonline.net
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0025
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Reading
+  URL                      : https://www.wattpad.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0026
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Reading
+  URL                      : https://www.reddit.com/r/books
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : This social platform is not suitable for students under 16
+  Recommended Alternatives : https://www.readworks.org | https://www.commonlit.org
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0027
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Reading
+  URL                      : https://www.amazon.com/books
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (keyboardnav)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0028
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Music
+  URL                      : https://www.musictheory.net
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0029
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Music
+  URL                      : https://www.nyphilkids.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (captions, general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0030
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Music
+  URL                      : https://www.musicca.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0031
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Music
+  URL                      : https://www.spotify.com
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: explicit
+  Recommended Alternatives : https://www.musictheory.net | https://www.musicca.com
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0032
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Music
+  URL                      : https://www.youtube.com/music
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : This social platform is not suitable for students under 16
+  Recommended Alternatives : https://www.nyphilkids.org | https://www.musictheory.net
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0033
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Art
+  URL                      : https://www.artsonia.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 6
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0034
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Art
+  URL                      : https://www.tate.org.uk/kids
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0035
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Art
+  URL                      : https://www.metmuseum.org/art/online-resources
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0036
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Art
+  URL                      : https://www.deviantart.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0037
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Art
+  URL                      : https://www.pinterest.com
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : This social platform is not suitable for students under 16
+  Recommended Alternatives : https://www.artsonia.com | https://www.metmuseum.org/art/online-resources
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0038
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Social Studies
+  URL                      : https://www.ducksters.com/history
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0039
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Social Studies
+  URL                      : https://www.britannica.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (tts, general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0040
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Social Studies
+  URL                      : https://www.stormfront.org
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: extremist, white supremac, dangerous
+  Recommended Alternatives : https://www.ducksters.com/history | https://www.britannica.com
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0041
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Computer
+  URL                      : https://code.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 17
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0042
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Computer
+  URL                      : https://scratch.mit.edu
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (keyboardnav, general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0043
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Computer
+  URL                      : https://www.hackforums.net
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: illegal, exploit, hacking
+  Recommended Alternatives : https://code.org | https://scratch.mit.edu
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0044
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Computer
+  URL                      : https://www.exploit-db.com
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: exploit, hacking, malware
+  Recommended Alternatives : https://code.org | https://www.codecademy.com
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0045
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Arabic
+  URL                      : https://www.arabicpod101.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0046
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Arabic
+  URL                      : https://www.madinaharabic.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0047
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Arabic
+  URL                      : https://arabic.desert-sky.net
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0048
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Arabic
+  URL                      : https://www.learnarabiconline.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 6
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0049
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Arabic
+  URL                      : https://www.duolingo.com/course/ar
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0050
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Arabic
+  URL                      : https://www.youtube.com/results?search_query=arabic+lessons
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : This social platform is not suitable for students under 16
+  Recommended Alternatives : https://www.arabicpod101.com | https://www.madinaharabic.com
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0051
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Arabic
+  URL                      : https://www.reddit.com/r/learn_arabic
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : This social platform is not suitable for students under 16
+  Recommended Alternatives : https://www.arabicpod101.com | https://arabic.desert-sky.net
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0052
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Chess
+  URL                      : https://www.chesskid.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0053
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Chess
+  URL                      : https://www.chess.com/learn-how-to-play-chess
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 9
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0054
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Chess
+  URL                      : https://lichess.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0055
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Chess
+  URL                      : https://www.chess.com/play/computer
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0056
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Chess
+  URL                      : https://www.chess.com/live
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : This social platform is not suitable for students under 16
+  Recommended Alternatives : https://www.chesskid.com | https://lichess.org
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0057
+  School Level             : Elementary
+  Grade Range              : 1-5
+  Age Range                : 6-11
+  Interest                 : Chess
+  URL                      : https://www.chess.com/forum
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 3
+  ────────────────────────────────────────────────────────────────────────────────
+
+
+  ──────────────────────────────
+  ◆  MIDDLE SCHOOL POLICIES
+  ──────────────────────────────
+
+  Rule ID                  : POL-0058
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Math
+  URL                      : https://www.khanacademy.org/math
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0059
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Math
+  URL                      : https://www.coolmathgames.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (general, wcag)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 3
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0060
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Math
+  URL                      : https://mathworld.wolfram.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0061
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Math
+  URL                      : https://www.desmos.com/calculator
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (colourblind, highcontrast)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0062
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Math
+  URL                      : https://www.mathway.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0063
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Math
+  URL                      : https://www.gambling-math.com
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: gambling, betting, casino
+  Recommended Alternatives : https://www.khanacademy.org/math
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0064
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Science
+  URL                      : https://www.reddit.com/r/science
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : This social platform is not suitable for students under 16
+  Recommended Alternatives : https://www.pbslearningmedia.org | https://kids.nationalgeographic.com
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0065
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Biology
+  URL                      : https://www.khanacademy.org/science/biology
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0066
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Biology
+  URL                      : https://www.biologycorner.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0067
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Biology
+  URL                      : https://www.webmd.com
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: drug
+  Recommended Alternatives : https://kids.nationalgeographic.com | https://www.khanacademy.org/science/biology
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0068
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Biology
+  URL                      : https://www.wikipedia.org/wiki/Human_reproduction
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 3
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0069
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Physics
+  URL                      : https://phet.colorado.edu
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 4
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0070
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Physics
+  URL                      : https://www.physicsclassroom.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader, general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 9
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0071
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Physics
+  URL                      : https://www.nuclear-weapons.info
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: weapon, nuclear weapon, dangerous
+  Recommended Alternatives : https://phet.colorado.edu | https://www.physicsclassroom.com
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0072
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Chemistry
+  URL                      : https://www.rsc.org/learn-chemistry
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 5
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0073
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Chemistry
+  URL                      : https://www.khanacademy.org/science/chemistry
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0074
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Chemistry
+  URL                      : https://www.periodic-table.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0075
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Chemistry
+  URL                      : https://www.erowid.org
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: drug, psychoactive
+  Recommended Alternatives : https://www.rsc.org/learn-chemistry | https://www.periodic-table.org
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0076
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Chemistry
+  URL                      : https://www.instructables.com/chemistry
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : Policy sentences indicate restricted or inappropriate content
+  Recommended Alternatives : https://www.rsc.org/learn-chemistry | https://phet.colorado.edu
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0077
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Sports
+  URL                      : https://www.nfl.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 4
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0078
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Sports
+  URL                      : https://www.olympic.org/education
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (captions, general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0079
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Sports
+  URL                      : https://www.pe4life.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0080
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Sports
+  URL                      : https://www.espn.com
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : Content analysis detected: betting
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0081
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Sports
+  URL                      : https://www.draftkings.com
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: gambling, illegal, dangerous
+  Recommended Alternatives : https://www.nfl.com | https://www.olympic.org/education
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0082
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Sports
+  URL                      : https://www.betway.com
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: gambling, betting, casino
+  Recommended Alternatives : https://www.nfl.com | https://www.olympic.org/education
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0083
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : English
+  URL                      : https://www.readworks.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (tts, captions)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0084
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : English
+  URL                      : https://www.gutenberg.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (tts)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0085
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : English
+  URL                      : https://www.storylineonline.net
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0086
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : English
+  URL                      : https://www.commonlit.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 8
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0087
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : English
+  URL                      : https://www.wattpad.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0088
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : English
+  URL                      : https://www.reddit.com/r/books
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : This social platform is not suitable for students under 16
+  Recommended Alternatives : https://www.readworks.org | https://www.commonlit.org
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0089
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : English
+  URL                      : https://www.amazon.com/books
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (keyboardnav)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0090
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Music
+  URL                      : https://www.musictheory.net
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0091
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Music
+  URL                      : https://www.nyphilkids.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (captions, general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0092
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Music
+  URL                      : https://www.noteflight.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0093
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Music
+  URL                      : https://www.musicca.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0094
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Music
+  URL                      : https://www.spotify.com
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: explicit
+  Recommended Alternatives : https://www.musictheory.net | https://www.musicca.com
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0095
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Music
+  URL                      : https://www.youtube.com/music
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : This social platform is not suitable for students under 16
+  Recommended Alternatives : https://www.nyphilkids.org | https://www.musictheory.net
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0096
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Art
+  URL                      : https://www.artsonia.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 6
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0097
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Art
+  URL                      : https://www.tate.org.uk/kids
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0098
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Art
+  URL                      : https://www.metmuseum.org/art/online-resources
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0099
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Art
+  URL                      : https://www.deviantart.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0100
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Art
+  URL                      : https://www.pinterest.com
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : This social platform is not suitable for students under 16
+  Recommended Alternatives : https://www.artsonia.com | https://www.metmuseum.org/art/online-resources
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0101
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : History
+  URL                      : https://www.ducksters.com/history
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0102
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : History
+  URL                      : https://www.history.com/topics
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0103
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : History
+  URL                      : https://www.britannica.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (tts, general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0104
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : History
+  URL                      : https://www.stormfront.org
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: extremist, white supremac, dangerous
+  Recommended Alternatives : https://www.ducksters.com/history | https://www.britannica.com
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0105
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Computer
+  URL                      : https://code.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 17
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0106
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Computer
+  URL                      : https://scratch.mit.edu
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (keyboardnav, general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0107
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Computer
+  URL                      : https://www.codecademy.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0108
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Computer
+  URL                      : https://www.hackforums.net
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: illegal, exploit, hacking
+  Recommended Alternatives : https://code.org | https://scratch.mit.edu
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0109
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Computer
+  URL                      : https://www.exploit-db.com
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: exploit, hacking, malware
+  Recommended Alternatives : https://code.org | https://www.codecademy.com
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0110
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Arabic
+  URL                      : https://www.arabicpod101.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0111
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Arabic
+  URL                      : https://www.madinaharabic.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0112
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Arabic
+  URL                      : https://arabic.desert-sky.net
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0113
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Arabic
+  URL                      : https://www.learnarabiconline.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 6
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0114
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Arabic
+  URL                      : https://www.duolingo.com/course/ar
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0115
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Arabic
+  URL                      : https://www.youtube.com/results?search_query=arabic+lessons
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : This social platform is not suitable for students under 16
+  Recommended Alternatives : https://www.arabicpod101.com | https://www.madinaharabic.com
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0116
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Arabic
+  URL                      : https://www.reddit.com/r/learn_arabic
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : This social platform is not suitable for students under 16
+  Recommended Alternatives : https://www.arabicpod101.com | https://arabic.desert-sky.net
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0117
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Chess
+  URL                      : https://www.chesskid.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0118
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Chess
+  URL                      : https://www.chess.com/learn-how-to-play-chess
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 9
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0119
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Chess
+  URL                      : https://lichess.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0120
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Chess
+  URL                      : https://www.chess.com/play/computer
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0121
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Chess
+  URL                      : https://www.chess.com/live
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : This social platform is not suitable for students under 16
+  Recommended Alternatives : https://www.chesskid.com | https://lichess.org
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0122
+  School Level             : Middle
+  Grade Range              : 6-8
+  Age Range                : 11-14
+  Interest                 : Chess
+  URL                      : https://www.chess.com/forum
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 3
+  ────────────────────────────────────────────────────────────────────────────────
+
+
+  ──────────────────────────────
+  ◆  HIGH (9-10) SCHOOL POLICIES
+  ──────────────────────────────
+
+  Rule ID                  : POL-0123
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Math
+  URL                      : https://www.khanacademy.org/math
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0124
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Math
+  URL                      : https://www.coolmathgames.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (general, wcag)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 3
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0125
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Math
+  URL                      : https://mathworld.wolfram.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0126
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Math
+  URL                      : https://www.desmos.com/calculator
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (colourblind, highcontrast)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0127
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Math
+  URL                      : https://www.wolframalpha.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0128
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Math
+  URL                      : https://brilliant.org/math
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0129
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Math
+  URL                      : https://www.mathway.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0130
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Math
+  URL                      : https://www.gambling-math.com
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: gambling, betting, casino
+  Recommended Alternatives : https://www.khanacademy.org/math
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0131
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Science
+  URL                      : https://www.reddit.com/r/science
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : This social platform is not suitable for students under 16
+  Recommended Alternatives : https://www.pbslearningmedia.org | https://kids.nationalgeographic.com
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0132
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Biology
+  URL                      : https://www.khanacademy.org/science/biology
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0133
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Biology
+  URL                      : https://www.biologycorner.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0134
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Biology
+  URL                      : https://www.ncbi.nlm.nih.gov/books/NBK21054
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 8
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0135
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Biology
+  URL                      : https://www.hhmi.org/biointeractive
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (captions, general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0136
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Biology
+  URL                      : https://www.webmd.com
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: drug
+  Recommended Alternatives : https://kids.nationalgeographic.com | https://www.khanacademy.org/science/biology
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0137
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Physics
+  URL                      : https://phet.colorado.edu
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 4
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0138
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Physics
+  URL                      : https://www.physicsclassroom.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader, general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 9
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0139
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Physics
+  URL                      : https://www.khanacademy.org/science/physics
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0140
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Physics
+  URL                      : https://arxiv.org/physics
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0141
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Physics
+  URL                      : https://www.nuclear-weapons.info
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: weapon, nuclear weapon, dangerous
+  Recommended Alternatives : https://phet.colorado.edu | https://www.physicsclassroom.com
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0142
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Chemistry
+  URL                      : https://www.rsc.org/learn-chemistry
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 5
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0143
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Chemistry
+  URL                      : https://www.chemguide.co.uk
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0144
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Chemistry
+  URL                      : https://www.khanacademy.org/science/chemistry
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0145
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Chemistry
+  URL                      : https://www.periodic-table.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0146
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Chemistry
+  URL                      : https://www.erowid.org
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: drug, psychoactive
+  Recommended Alternatives : https://www.rsc.org/learn-chemistry | https://www.periodic-table.org
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0147
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Chemistry
+  URL                      : https://www.instructables.com/chemistry
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : Policy sentences indicate restricted or inappropriate content
+  Recommended Alternatives : https://www.rsc.org/learn-chemistry | https://phet.colorado.edu
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0148
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Sports
+  URL                      : https://www.nfl.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 4
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0149
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Sports
+  URL                      : https://www.olympic.org/education
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (captions, general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0150
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Sports
+  URL                      : https://www.pe4life.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0151
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Sports
+  URL                      : https://www.espn.com
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : Content analysis detected: betting
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0152
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Sports
+  URL                      : https://www.draftkings.com
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: gambling, illegal, dangerous
+  Recommended Alternatives : https://www.nfl.com | https://www.olympic.org/education
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0153
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Sports
+  URL                      : https://www.betway.com
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: gambling, betting, casino
+  Recommended Alternatives : https://www.nfl.com | https://www.olympic.org/education
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0154
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : English
+  URL                      : https://www.readworks.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (tts, captions)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0155
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : English
+  URL                      : https://www.gutenberg.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (tts)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0156
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : English
+  URL                      : https://www.commonlit.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 8
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0157
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : English
+  URL                      : https://www.wattpad.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0158
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : English
+  URL                      : https://www.reddit.com/r/books
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : This social platform is not suitable for students under 16
+  Recommended Alternatives : https://www.readworks.org | https://www.commonlit.org
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0159
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : English
+  URL                      : https://www.amazon.com/books
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (keyboardnav)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0160
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Music
+  URL                      : https://www.musictheory.net
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0161
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Music
+  URL                      : https://www.noteflight.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0162
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Music
+  URL                      : https://www.musicca.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0163
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Music
+  URL                      : https://www.spotify.com
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: explicit
+  Recommended Alternatives : https://www.musictheory.net | https://www.musicca.com
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0164
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Music
+  URL                      : https://www.youtube.com/music
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : This social platform is not suitable for students under 16
+  Recommended Alternatives : https://www.nyphilkids.org | https://www.musictheory.net
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0165
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Art
+  URL                      : https://www.artsonia.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 6
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0166
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Art
+  URL                      : https://www.tate.org.uk/kids
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0167
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Art
+  URL                      : https://www.metmuseum.org/art/online-resources
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0168
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Art
+  URL                      : https://www.deviantart.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0169
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Art
+  URL                      : https://www.pinterest.com
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : This social platform is not suitable for students under 16
+  Recommended Alternatives : https://www.artsonia.com | https://www.metmuseum.org/art/online-resources
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0170
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : History
+  URL                      : https://www.ducksters.com/history
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0171
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : History
+  URL                      : https://www.history.com/topics
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0172
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : History
+  URL                      : https://www.britannica.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (tts, general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0173
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : History
+  URL                      : https://www.smithsonianmag.com
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: drug
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0174
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : History
+  URL                      : https://www.stormfront.org
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: extremist, white supremac, dangerous
+  Recommended Alternatives : https://www.ducksters.com/history | https://www.britannica.com
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0175
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Computer
+  URL                      : https://code.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 17
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0176
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Computer
+  URL                      : https://scratch.mit.edu
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (keyboardnav, general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0177
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Computer
+  URL                      : https://www.codecademy.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0178
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Computer
+  URL                      : https://www.github.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 4
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0179
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Computer
+  URL                      : https://www.hackforums.net
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: illegal, exploit, hacking
+  Recommended Alternatives : https://code.org | https://scratch.mit.edu
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0180
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Computer
+  URL                      : https://www.exploit-db.com
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: exploit, hacking, malware
+  Recommended Alternatives : https://code.org | https://www.codecademy.com
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0181
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Arabic
+  URL                      : https://www.arabicpod101.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0182
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Arabic
+  URL                      : https://www.madinaharabic.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0183
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Arabic
+  URL                      : https://arabic.desert-sky.net
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0184
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Arabic
+  URL                      : https://www.learnarabiconline.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 6
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0185
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Arabic
+  URL                      : https://www.duolingo.com/course/ar
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0186
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Arabic
+  URL                      : https://www.youtube.com/results?search_query=arabic+lessons
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : This social platform is not suitable for students under 16
+  Recommended Alternatives : https://www.arabicpod101.com | https://www.madinaharabic.com
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0187
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Arabic
+  URL                      : https://www.reddit.com/r/learn_arabic
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : This social platform is not suitable for students under 16
+  Recommended Alternatives : https://www.arabicpod101.com | https://arabic.desert-sky.net
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0188
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Chess
+  URL                      : https://www.chesskid.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0189
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Chess
+  URL                      : https://www.chess.com/learn-how-to-play-chess
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 9
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0190
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Chess
+  URL                      : https://lichess.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0191
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Chess
+  URL                      : https://www.chess.com/play/computer
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0192
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Chess
+  URL                      : https://www.chessable.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 3
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0193
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Chess
+  URL                      : https://www.chess.com/live
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : This social platform is not suitable for students under 16
+  Recommended Alternatives : https://www.chesskid.com | https://lichess.org
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0194
+  School Level             : High (9-10)
+  Grade Range              : 9-10
+  Age Range                : 14-15
+  Interest                 : Chess
+  URL                      : https://www.chess.com/forum
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 3
+  ────────────────────────────────────────────────────────────────────────────────
+
+
+  ──────────────────────────────
+  ◆  HIGH (11-12) SCHOOL POLICIES
+  ──────────────────────────────
+
+  Rule ID                  : POL-0195
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Math
+  URL                      : https://www.khanacademy.org/math
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0196
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Math
+  URL                      : https://www.coolmathgames.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (general, wcag)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 3
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0197
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Math
+  URL                      : https://mathworld.wolfram.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0198
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Math
+  URL                      : https://www.desmos.com/calculator
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (colourblind, highcontrast)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0199
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Math
+  URL                      : https://www.wolframalpha.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0200
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Math
+  URL                      : https://brilliant.org/math
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0201
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Math
+  URL                      : https://www.mathway.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0202
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Math
+  URL                      : https://www.gambling-math.com
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: gambling, betting, casino
+  Recommended Alternatives : https://www.khanacademy.org/math
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0203
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Biology
+  URL                      : https://www.khanacademy.org/science/biology
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0204
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Biology
+  URL                      : https://www.biologycorner.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0205
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Biology
+  URL                      : https://www.ncbi.nlm.nih.gov/books/NBK21054
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 8
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0206
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Biology
+  URL                      : https://www.hhmi.org/biointeractive
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (captions, general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0207
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Physics
+  URL                      : https://phet.colorado.edu
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 4
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0208
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Physics
+  URL                      : https://www.physicsclassroom.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader, general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 9
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0209
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Physics
+  URL                      : https://www.khanacademy.org/science/physics
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0210
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Physics
+  URL                      : https://arxiv.org/physics
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0211
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Physics
+  URL                      : https://www.nuclear-weapons.info
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: weapon, nuclear weapon, dangerous
+  Recommended Alternatives : https://phet.colorado.edu | https://www.physicsclassroom.com
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0212
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Chemistry
+  URL                      : https://www.rsc.org/learn-chemistry
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 5
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0213
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Chemistry
+  URL                      : https://www.chemguide.co.uk
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0214
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Chemistry
+  URL                      : https://www.khanacademy.org/science/chemistry
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0215
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Chemistry
+  URL                      : https://www.periodic-table.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0216
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Chemistry
+  URL                      : https://www.erowid.org
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: drug, psychoactive
+  Recommended Alternatives : https://www.rsc.org/learn-chemistry | https://www.periodic-table.org
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0217
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Chemistry
+  URL                      : https://www.instructables.com/chemistry
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : Policy sentences indicate restricted or inappropriate content
+  Recommended Alternatives : https://www.rsc.org/learn-chemistry | https://phet.colorado.edu
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0218
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Sports
+  URL                      : https://www.nfl.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 4
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0219
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Sports
+  URL                      : https://www.olympic.org/education
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (captions, general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0220
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Sports
+  URL                      : https://www.pe4life.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0221
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Sports
+  URL                      : https://www.espn.com
+  Decision                 : DENIED
+  Risk Level               : Moderate
+  Reason                   : Content analysis detected: betting
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0222
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Sports
+  URL                      : https://www.draftkings.com
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: gambling, illegal, dangerous
+  Recommended Alternatives : https://www.nfl.com | https://www.olympic.org/education
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0223
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Sports
+  URL                      : https://www.betway.com
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: gambling, betting, casino
+  Recommended Alternatives : https://www.nfl.com | https://www.olympic.org/education
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0224
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : English
+  URL                      : https://www.readworks.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (tts, captions)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0225
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : English
+  URL                      : https://www.gutenberg.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (tts)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0226
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : English
+  URL                      : https://www.commonlit.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 8
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0227
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : English
+  URL                      : https://www.wattpad.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0228
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : English
+  URL                      : https://www.reddit.com/r/books
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Students aged 16 and above may use this platform responsibly
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0229
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : English
+  URL                      : https://www.amazon.com/books
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (keyboardnav)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0230
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Music
+  URL                      : https://www.musictheory.net
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0231
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Music
+  URL                      : https://www.noteflight.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0232
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Music
+  URL                      : https://www.musicca.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0233
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Music
+  URL                      : https://www.spotify.com
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: explicit
+  Recommended Alternatives : https://www.musictheory.net | https://www.musicca.com
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0234
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Music
+  URL                      : https://www.youtube.com/music
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Students aged 16 and above may use this platform responsibly
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0235
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Art
+  URL                      : https://www.artsonia.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 6
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0236
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Art
+  URL                      : https://www.tate.org.uk/kids
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0237
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Art
+  URL                      : https://www.metmuseum.org/art/online-resources
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0238
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Art
+  URL                      : https://www.deviantart.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0239
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Art
+  URL                      : https://www.pinterest.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Students aged 16 and above may use this platform responsibly
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0240
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : History
+  URL                      : https://www.ducksters.com/history
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0241
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : History
+  URL                      : https://www.history.com/topics
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0242
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : History
+  URL                      : https://www.britannica.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (tts, general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0243
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : History
+  URL                      : https://www.smithsonianmag.com
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: drug
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0244
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : History
+  URL                      : https://www.stormfront.org
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: extremist, white supremac, dangerous
+  Recommended Alternatives : https://www.ducksters.com/history | https://www.britannica.com
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0245
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Computer
+  URL                      : https://code.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 17
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0246
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Computer
+  URL                      : https://scratch.mit.edu
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (keyboardnav, general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0247
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Computer
+  URL                      : https://www.codecademy.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0248
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Computer
+  URL                      : https://www.github.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 4
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0249
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Computer
+  URL                      : https://www.hackforums.net
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: illegal, exploit, hacking
+  Recommended Alternatives : https://code.org | https://scratch.mit.edu
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0250
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Computer
+  URL                      : https://www.exploit-db.com
+  Decision                 : DENIED
+  Risk Level               : High
+  Reason                   : Content analysis detected: exploit, hacking, malware
+  Recommended Alternatives : https://code.org | https://www.codecademy.com
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0251
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Arabic
+  URL                      : https://www.arabicpod101.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0252
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Arabic
+  URL                      : https://www.madinaharabic.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0253
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Arabic
+  URL                      : https://arabic.desert-sky.net
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0254
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Arabic
+  URL                      : https://www.learnarabiconline.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 6
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0255
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Arabic
+  URL                      : https://www.duolingo.com/course/ar
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 2
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0256
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Arabic
+  URL                      : https://www.youtube.com/results?search_query=arabic+lessons
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Students aged 16 and above may use this platform responsibly
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0257
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Arabic
+  URL                      : https://www.reddit.com/r/learn_arabic
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Students aged 16 and above may use this platform responsibly
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0258
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Chess
+  URL                      : https://www.chesskid.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (general)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : fallback
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0259
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Chess
+  URL                      : https://www.chess.com/learn-how-to-play-chess
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 9
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0260
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Chess
+  URL                      : https://lichess.org
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 1
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0261
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Chess
+  URL                      : https://www.chess.com/play/computer
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Age-appropriate educational content verified
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0262
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Chess
+  URL                      : https://www.chessable.com
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 3
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0263
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Chess
+  URL                      : https://www.chess.com/live
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Students aged 16 and above may use this platform responsibly
+  Recommended Alternatives : N/A
+  Disability Accessible    : False
+  Fetch Source             : live
+  NLACP Sentences          : 0
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Rule ID                  : POL-0264
+  School Level             : High (11-12)
+  Grade Range              : 11-12
+  Age Range                : 16-18
+  Interest                 : Chess
+  URL                      : https://www.chess.com/forum
+  Decision                 : ALLOWED
+  Risk Level               : Safe
+  Reason                   : Educational content confirmed (screenreader)
+  Recommended Alternatives : N/A
+  Disability Accessible    : True
+  Fetch Source             : live
+  NLACP Sentences          : 3
+  ────────────────────────────────────────────────────────────────────────────────
+
