@@ -3,8 +3,15 @@ const Subject = require("../models/subjectModel.js")
 // CREATE SUBJECT
 exports.createSubject = async (req, res) => {
   try {
-
-    req.body.name = req.body.name.trim().toLowerCase()
+    const existing = await Subject.findOne({
+      name: req.body.name.trim()
+    })
+    if (existing) {
+      return res.status(400).json({
+        error: "Subject already exists"
+      })
+    }
+    req.body.name = req.body.name.trim()
     const subject = await Subject.create(req.body)
     res.status(201).json(subject)
     
@@ -12,7 +19,7 @@ exports.createSubject = async (req, res) => {
 
     if (err.code === 11000) {
       return res.status(400).json({
-        error: "Subject already exists"
+        error: "ERROR"
       })
     }
 

@@ -9,12 +9,6 @@ const subjectSchema = new mongoose.Schema({
     trim: true
   },
 
-  code: {
-    type: String,
-    //required: true,
-    unique: true
-  },
-
   category: {
     type: String,
     enum: ["STEM", "Humanities", "Languages", "Arts", "Mathematics", "Sciences"],

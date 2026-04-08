@@ -370,7 +370,7 @@ export default function AdminDashboard() {
     borderBottom: "1px solid #2d3140", whiteSpace: "nowrap"
   }
   const tdStyle: React.CSSProperties = {
-    padding: "11px 14px", fontSize: 13, color: "#cbd5e1", borderBottom: "1px solid #1e2130"
+    padding: "11px 14px", fontSize: 13, color: "#1e2130", borderBottom: "1px solid #1e2130"
   }
   const actionBtn = (color: string): React.CSSProperties => ({
     padding: "4px 12px", borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: "pointer",
@@ -673,6 +673,7 @@ export default function AdminDashboard() {
               { label: "New Parent",  href: "/admin/create-parent",  color: "#10b981", icon: "⊗" },
               { label: "New Subject", href: "/admin/create-subject", color: "#f59e0b", icon: "◎" },
               { label: "New Class",   href: "/admin/create-class",   color: "#ef4444", icon: "⊞" },
+              { label: "New Admin",   href: "/admin/create-admin", color: "#6366f1", icon: "⚑" },
             ].map(item => (
               <Link key={item.href} href={item.href} style={{ textDecoration: "none" }}>
                 <div style={{

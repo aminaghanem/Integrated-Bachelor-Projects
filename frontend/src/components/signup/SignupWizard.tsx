@@ -183,7 +183,7 @@ export default function SignupWizard() {
 
       const studentEmailRegex = /^[^\s@]+@student\.school\.edu\.eg$/
 
-      if (!studentEmailRegex.test(formData.personal_email)) {
+      if (formData.personal_email && !studentEmailRegex.test(formData.personal_email)) {
         newErrors.personal_email = "Please use your school email"
       }
 

@@ -6,7 +6,6 @@ export default function CreateSubject() {
 
   const [form, setForm] = useState({
     name: "",
-    code: "",
     category: "STEM",
     grade_levels: ""
   })
@@ -46,7 +45,6 @@ export default function CreateSubject() {
 
     setForm({
       name: "",
-      code: "",
       category: "STEM",
       grade_levels: ""
     })
@@ -65,14 +63,6 @@ export default function CreateSubject() {
           name="name"
           placeholder="Subject Name"
           value={form.name}
-          onChange={handleChange}
-          required
-        />
-
-        <input
-          name="code"
-          placeholder="Subject Code"
-          value={form.code}
           onChange={handleChange}
           required
         />

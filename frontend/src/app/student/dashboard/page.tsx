@@ -271,7 +271,7 @@ export default function Dashboard() {
   ) => {
     const token = localStorage.getItem("token")
     if (!token || !student) return
-    await fetch(`${API}/api/activity`, {
+    await fetch(`${API}/api/activity/log`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ student_id: student._id, url, interaction_type: interaction, visit_duration: duration })
@@ -416,11 +416,39 @@ export default function Dashboard() {
 
     if (isProbablyUrl(input)) {
       const url = /^https?:\/\//i.test(input) ? input : "https://" + input
-      // End any existing session as in_progress before starting new one
-      if (rootUrl.current) await endSession("in_progress")
-      setNavHistory([])
-      await loadPage(url, true)   // isRoot = true → new session
-    } else {
+
+      // --- NEW CHECK LOGIC ---
+      const token = localStorage.getItem("token");
+      try {
+        setLoading(true);
+        const checkRes = await fetch(`${API}/api/activity/check`, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json", 
+            Authorization: `Bearer ${token}` 
+          },
+          body: JSON.stringify({ url })
+        });
+
+        const checkData = await checkRes.json();
+
+        if (checkData.decision === "Blocked") {
+          alert(checkData.message || "Access to this site is restricted.");
+          setLoading(false);
+          return; // STOP HERE
+        }
+
+        // End any existing session as in_progress before starting new one
+        if (rootUrl.current) await endSession("in_progress")
+        setNavHistory([])
+        await loadPage(url, true)   // isRoot = true → new session
+
+      } catch (err) {
+        console.error("Security check failed", err);
+        setLoading(false);
+      }
+   }
+    else {
       setIsSearching(true)
       if (rootUrl.current) await endSession("in_progress")
       setActiveUrl(null)
@@ -434,11 +462,33 @@ export default function Dashboard() {
   }
 
   const handleResultClick = async (url: string) => {
-    setSearchResults([])
-    if (rootUrl.current) await endSession("in_progress")
-    setNavHistory([])
-    await loadPage(url, true)   // clicking a search result = new root session
-  }
+    setSearchResults([]);
+    setLoading(true);
+
+    const token = localStorage.getItem("token");
+    try {
+      const checkRes = await fetch(`${API}/api/activity/check`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ url })
+      });
+
+      const checkData = await checkRes.json();
+
+      if (checkData.decision === "Blocked") {
+        alert(checkData.message || "This search result is restricted.");
+        setLoading(false);
+        return;
+      }
+
+      if (rootUrl.current) await endSession("in_progress");
+      setNavHistory([]);
+      rootCategory.current = checkData.category || "General";
+      await loadPage(checkData.normalized_url || url, true);
+    } catch (err) {
+      setLoading(false);
+    }
+  };
 
   // ── Close viewer ──────────────────────────────────────────────
   const handleClose = useCallback(async () => {
