@@ -572,12 +572,12 @@ export default function AdminDashboard() {
                     <td style={tdStyle}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         {avatarDiv((p.username || "?").charAt(0).toUpperCase(), "#10b98122", "#34d399")}
-                        <span style={{ color: "#e2e8f0" }}>{p.username}</span>
+                        <span style={{ color: "#111827" }}>{p.username}</span>
                       </div>
                     </td>
-                    <td style={{ ...tdStyle, color: "#94a3b8" }}>{p.email}</td>
+                    <td style={{ ...tdStyle, color: "#111827" }}>{p.email}</td>
                     <td style={tdStyle}><Badge text={p.relationship_type} color="#10b981" /></td>
-                    <td style={{ ...tdStyle, color: "#94a3b8" }}>
+                    <td style={{ ...tdStyle, color: "#111827" }}>
                       {p.children_ids?.length > 0 ? p.children_ids.map(c => c.full_name || c.username).join(", ") : "—"}
                     </td>
                     <td style={tdStyle}>

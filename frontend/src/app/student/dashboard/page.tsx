@@ -17,6 +17,75 @@ interface LearningHistoryItem {
   source: string
 }
 
+// ── Notification types ───────────────────────────────────────────
+interface Notification {
+  type: "blocked" | "error" | "success"
+  message: string
+  url?: string           // the URL that was blocked, for display
+  retrigger?: boolean    // whether to offer "open anyway"
+}
+ 
+// ── Notification banner ──────────────────────────────────────────
+function NotificationBanner({
+  notification,
+  onDismiss,
+  onOpenAnyway,
+}: {
+  notification: Notification
+  onDismiss: () => void
+  onOpenAnyway?: (url: string) => void
+}) {
+  const colors = {
+    blocked: { bg: "#fef2f2", border: "#fecaca", text: "#dc2626", icon: "🚫" },
+    error:   { bg: "#fffbeb", border: "#fde68a", text: "#d97706", icon: "⚠️" },
+    success: { bg: "#f0fdf4", border: "#bbf7d0", text: "#16a34a", icon: "✅" },
+  }
+  const c = colors[notification.type]
+ 
+  return (
+    <div style={{
+      display: "flex", alignItems: "flex-start", justifyContent: "space-between",
+      padding: "12px 16px", marginBottom: 12, borderRadius: 10,
+      background: c.bg, border: `1px solid ${c.border}`,
+      animation: "slideDown 0.2s ease"
+    }}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 10, flex: 1 }}>
+        <span style={{ fontSize: 16, marginTop: 1 }}>{c.icon}</span>
+        <div>
+          <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: c.text }}>
+            {notification.type === "blocked" ? "Access Blocked" :
+             notification.type === "error" ? "Error" : "Success"}
+          </p>
+          <p style={{ margin: "2px 0 0", fontSize: 13, color: "#374151" }}>
+            {notification.message}
+          </p>
+          {notification.url && (
+            <p style={{ margin: "2px 0 0", fontSize: 11, color: "#9ca3af", wordBreak: "break-all" }}>
+              {notification.url}
+            </p>
+          )}
+          {/* {notification.retrigger && notification.url && onOpenAnyway && (
+            <button
+              onClick={() => onOpenAnyway(notification.url!)}
+              style={{
+                marginTop: 6, padding: "4px 12px", fontSize: 11, fontWeight: 600,
+                border: "1px solid #fca5a5", borderRadius: 6,
+                background: "#fff", color: "#dc2626", cursor: "pointer"
+              }}
+            >
+              Open in new tab anyway →
+            </button>
+          )} */}
+        </div>
+      </div>
+      <button onClick={onDismiss} style={{
+        background: "none", border: "none", cursor: "pointer",
+        color: "#9ca3af", fontSize: 18, lineHeight: 1, padding: "0 0 0 8px", flexShrink: 0
+      }}>×</button>
+    </div>
+  )
+}
+
 // ── Timer component — uses DOM directly, never causes re-renders ──
 function LiveTimer({ timerRef }: { timerRef: React.RefObject<HTMLSpanElement | null> }) {
   return <span ref={timerRef} style={{ fontSize: 12, color: "#6b7280", fontFamily: "monospace" }}>⏱ 0s</span>
@@ -200,6 +269,27 @@ export default function Dashboard() {
   const [pendingUrl, setPendingUrl] = useState("")
   const [navHistory, setNavHistory] = useState<string[]>([])
 
+  const [notification, setNotification] = useState<Notification | null>(null)
+
+  // Auto-dismiss non-blocked notifications after 5s
+  useEffect(() => {
+    if (notification && notification.type !== "blocked") {
+      const t = setTimeout(() => setNotification(null), 5000)
+      return () => clearTimeout(t)
+    }
+  }, [notification])
+ 
+  const showNotification = useCallback((n: Notification) => {
+    setNotification(n)
+  }, [])
+ 
+  const dismissNotification = useCallback(() => setNotification(null), [])
+ 
+  const handleOpenAnyway = useCallback((url: string) => {
+    window.open(url, "_blank")
+    setNotification(null)
+  }, [])
+
   // Session tracking — all refs, zero React state, zero re-renders
   const rootUrl = useRef<string | null>(null)              // the ORIGINAL url opened
   const rootCategory = useRef<string>("General")           // AI-classified category from backend response
@@ -361,6 +451,61 @@ export default function Dashboard() {
     return () => window.removeEventListener("beforeunload", handler)
   }, [endSession])
 
+    // ── Security check ────────────────────────────────────────────
+  const checkUrl = useCallback(async (url: string): Promise<{ allowed: boolean; normalizedUrl: string; category: string }> => {
+    const token = localStorage.getItem("token")
+    try {
+      const res = await fetch(`${API}/api/activity/check`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token ?? ""}` },
+        body: JSON.stringify({ url })
+      })
+      const data = await res.json()
+ 
+      // HTTP 400 — payload/profile problem (age, grade, etc.)
+      if (res.status === 400) {
+        showNotification({
+          type: "error",
+          message: data.error || "There was a problem with your profile. Please contact your school administrator.",
+        })
+        return { allowed: false, normalizedUrl: url, category: "General" }
+      }
+ 
+      // HTTP 403 — orchestrator blocked the URL
+      if (res.status === 403 || data.decision === "Blocked") {
+        showNotification({
+          type: "blocked",
+          message: data.message || "Access to this site is restricted.",
+          url,
+          retrigger: data.retrigger_browser === true,
+        })
+        return { allowed: false, normalizedUrl: url, category: "General" }
+      }
+ 
+      // HTTP 502 — orchestrator unreachable
+      if (res.status === 502) {
+        showNotification({
+          type: "error",
+          message: data.message || "The safety service is temporarily unavailable.",
+        })
+        return { allowed: false, normalizedUrl: url, category: "General" }
+      }
+ 
+      // Allowed
+      return {
+        allowed: true,
+        normalizedUrl: data.normalized_url || url,
+        category: data.policy?.category || "General",
+      }
+    } catch {
+      showNotification({
+        type: "error",
+        message: "Could not reach the safety service. Please check your connection.",
+      })
+      return { allowed: false, normalizedUrl: url, category: "General" }
+    }
+  }, [showNotification])
+
   // ── Load a page via proxy ─────────────────────────────────────
   const loadPage = useCallback(async (url: string, isRoot = false) => {
     setLoading(true)
@@ -432,10 +577,33 @@ export default function Dashboard() {
 
         const checkData = await checkRes.json();
 
+        if (checkRes.status === 400) {
+          showNotification({
+            type: "error",
+            message: checkData.error || "There was a problem with your profile. Please contact your school administrator.",
+          });
+          setLoading(false);
+          return;
+        }
+
         if (checkData.decision === "Blocked") {
-          alert(checkData.message || "Access to this site is restricted.");
+          showNotification({
+            type: "blocked",
+            message: checkData.message || "Access to this site is restricted.",
+            url,
+            retrigger: checkData.retrigger_browser === true,
+          });
           setLoading(false);
           return; // STOP HERE
+        }
+
+        if (checkRes.status === 502) {
+          showNotification({
+            type: "error",
+            message: checkData.message || "The safety service is temporarily unavailable.",
+          });
+          setLoading(false);
+          return;
         }
 
         // End any existing session as in_progress before starting new one
@@ -445,6 +613,10 @@ export default function Dashboard() {
 
       } catch (err) {
         console.error("Security check failed", err);
+        showNotification({
+          type: "error",
+          message: "Could not reach the safety service. Please check your connection.",
+        });
         setLoading(false);
       }
    }
@@ -475,8 +647,31 @@ export default function Dashboard() {
 
       const checkData = await checkRes.json();
 
+      if (checkRes.status === 400) {
+        showNotification({
+          type: "error",
+          message: checkData.error || "There was a problem with your profile. Please contact your school administrator.",
+        });
+        setLoading(false);
+        return;
+      }
+
       if (checkData.decision === "Blocked") {
-        alert(checkData.message || "This search result is restricted.");
+        showNotification({
+          type: "blocked",
+          message: checkData.message || "This search result is restricted.",
+          url,
+          retrigger: checkData.retrigger_browser === true,
+        });
+        setLoading(false);
+        return;
+      }
+
+      if (checkRes.status === 502) {
+        showNotification({
+          type: "error",
+          message: checkData.message || "The safety service is temporarily unavailable.",
+        });
         setLoading(false);
         return;
       }
@@ -486,6 +681,11 @@ export default function Dashboard() {
       rootCategory.current = checkData.category || "General";
       await loadPage(checkData.normalized_url || url, true);
     } catch (err) {
+      console.error("Security check or page load failed", err);
+      showNotification({
+        type: "error",
+        message: "Could not load this page. Please check your connection.",
+      });
       setLoading(false);
     }
   };
@@ -591,6 +791,15 @@ export default function Dashboard() {
           Go
         </button>
       </div>
+
+      {/* Notification banner — shown below search bar */}
+      {notification && (
+        <NotificationBanner
+          notification={notification}
+          onDismiss={dismissNotification}
+          onOpenAnyway={handleOpenAnyway}
+        />
+      )}
 
       {/* Search results */}
       {isSearching && <p style={{ color: "#888" }}>Searching...</p>}

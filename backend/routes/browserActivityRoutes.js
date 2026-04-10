@@ -50,6 +50,14 @@ const isExpired = (date) => {
 router.post("/check", protect, async (req, res) => {
   const { url } = req.body;
 
+  if (url === undefined || url === null) {
+    return res.status(400).json({ error: "URL is required" })
+  }
+
+  if (typeof url !== "string") {
+    return res.status(400).json({ error: "URL must be a string" })
+  }
+
   try {
 
     const student = await Student.findById(req.user.id).populate("class_id")
@@ -58,57 +66,73 @@ router.post("/check", protect, async (req, res) => {
       return res.status(404).json({ error: "Student not found" })
     }
 
-    // 2. Prepare Payload (Ensuring types match Judy's Pydantic expectations)
-    const age = Number(calculateAge(student.date_of_birth));
-    const grade_level = student.class_id ? Number(student.class_id.grade_level) : 1;
-    const interests = Array.isArray(student.interests) ? student.interests : [];
+    const age = Number(calculateAge(student.date_of_birth))
+    if (!age || age < 1) {
+      return res.status(400).json({ error: "Your age could not be determined. Please contact your school administrator!" })
+    }
+    
+    if (!student.class_id){
+      return res.status(400).json({ error: "Your grade level could not be determined. Please contact your school administrator!" })
+    }
 
-    //const age = calculateAge(student.date_of_birth);
-
-    // Update your payload structure in the /check route
+    // Payload structure in the /check route
     const orchestratorPayload = {
-      url: url, // URL remains at the root level
-      profile: {
-        user_id: student._id.toString(),
-        age: Number(calculateAge(student.date_of_birth)),
-        grade_level: student.class_id ? Number(student.class_id.grade_level) : 1,
-        interests: student.interests.interest_scores.map(item => ({
-          interest: item.category,
-          rating: Number(item.score)
+      url: url,
+      user_id: student._id.toString(),
+      age: age,
+      grade_level: Number(student.class_id.grade_level),
+      interests: (student.interests?.interest_scores ?? [])
+        .filter(item => item.category && String(item.category).length > 0)
+        .map(item => ({
+          interest: String(item.category),
+          rating: Math.max(1, Math.min(5, Math.round(Number(item.score))))
         }))
-      }
     };
         
+    console.log("Sending to orchestrator:", JSON.stringify(orchestratorPayload, null, 2))
+
     const orchResponse = await axios.post("http://127.0.0.1:8000/evaluate", orchestratorPayload, {
       headers: { "Content-Type": "application/json" }
     });
 
     console.log("Data forwarded to Orchestrator");
 
-    const { decision, ui_message, normalized_url } = orchResponse.data;
+    const { decision, ui_message} = orchResponse.data;
 
-    // 4. Handle BLOCKED decision (Test Cases 10, 12, 13, 17)
+    // Handle BLOCKED decision (Test Cases 10, 12, 13, 17)
     if (decision === "Blocked") {
-      console.log(`🚫 Blocked by Orchestrator: ${ui_message}`);
-      return res.status(403).json({ 
-        success: false, 
-        decision: "Blocked", 
-        message: ui_message 
-      });
+      return res.status(403).json({
+        success: false,
+        decision: "Blocked",
+        message: ui_message,
+        retrigger_browser: orchResponse.data.retrigger_browser ?? false
+      })
     }
 
-    res.json(orchResponse.data);
+    // Allowed — pass full orchestrator response to frontend
+    return res.json({
+      success: true,
+      ...orchResponse.data
+    })
 
   } 
   catch (err) {
-    console.error("DEBUG - Payload sent:", JSON.stringify(err.config?.data, null, 2));
-    console.error("DEBUG - Orchestrator Error:", err.response?.data || err.message);
-    
-    // If Python crashes, we block by default for safety
-    res.status(502).json({ 
-      decision: "Blocked", 
-      ui_message: "The security orchestrator is having trouble validating this request." 
-    });
+    // Orchestrator returned a 400 (payload validation error)
+    if (err.response?.status === 400) {
+      console.error("Orchestrator validation error:", err.response.data)
+      return res.status(400).json({
+        error: "Payload validation failed",
+        details: err.response.data
+      })
+    }
+
+    // Orchestrator unreachable or crashed — block by default for safety
+    console.error("Orchestrator error:", err.response?.data || err.message)
+    return res.status(502).json({
+      success: false,
+      decision: "Blocked",
+      message: "The security service is temporarily unavailable. Please try again."
+    })
   }
 });
 
@@ -143,7 +167,7 @@ router.post("/log", protect, async (req, res) => {
 
     const domain = normalizeUrl(url)
 
-    // 🔍 1. CHECK CACHE FIRST
+    // CHECK CACHE FIRST
     let cached = await CategoryCache.findOne({ url: domain })
 
     if (cached && !isExpired(cached.updatedAt)) {
@@ -153,7 +177,7 @@ router.post("/log", protect, async (req, res) => {
     else {
       console.log("⚠️ Not cached → calling AI")
         try {
-          // 1. Use the new model identifier: gemini-2.5-flash
+          // Use the new model identifier: gemini-2.5-flash
           const response = await ai.models.generateContent({
             model: "gemini-2.5-flash", 
             contents: [{ role: "user", parts: [{ text:
@@ -191,7 +215,7 @@ router.post("/log", protect, async (req, res) => {
           else category = "General" // fallback
         }
 
-        // 💾 SAVE TO CACHE
+        // SAVE TO CACHE
         await CategoryCache.findOneAndUpdate(
           { url: domain },
           { category, updatedAt: new Date() },
@@ -199,7 +223,7 @@ router.post("/log", protect, async (req, res) => {
         )
     }
 
-    // 6. Save activity to DB (Test Cases 11, 14, 15, 16)
+    // Save activity to DB (Test Cases 11, 14, 15, 16)
     const activity = new BrowserActivity({
       student_id,
       age: calculateAge(student.date_of_birth),

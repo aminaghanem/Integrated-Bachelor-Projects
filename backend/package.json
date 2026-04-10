@@ -13,6 +13,7 @@
   "description": "",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
+    "@faker-js/faker": "^8.4.1",
     "@google/genai": "^1.45.0",
     "axios": "^1.14.0",
     "bcryptjs": "^3.0.3",

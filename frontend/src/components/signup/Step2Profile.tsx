@@ -1,196 +1,145 @@
-import { SignupData } from "./SignupWizard";
+import { SignupData, inputStyle, labelStyle, fieldStyle, errorStyle } from "./SignupWizard"
 
 interface Props {
-  data: SignupData;
-  update: (data: Partial<SignupData>) => void;
-  next: () => void;
-  back: () => void;
-  errors: Record<string, string>;
+  data: SignupData
+  update: (data: Partial<SignupData>) => void
+  next: () => void
+  back: () => void
+  errors: Record<string, string>
+}
+
+const selectStyle: React.CSSProperties = {
+  ...({
+    width: "100%", padding: "10px 12px", fontSize: 14,
+    border: "1px solid #e5e7eb", borderRadius: 8,
+    background: "#f9fafb", color: "#111827",
+    outline: "none", boxSizing: "border-box",
+    appearance: "none"
+  } as React.CSSProperties)
+}
+
+const sectionDivider: React.CSSProperties = {
+  fontSize: 11, fontWeight: 700, color: "#6b7280",
+  textTransform: "uppercase", letterSpacing: "0.08em",
+  borderTop: "1px solid #e5e7eb", paddingTop: 16,
+  margin: "20px 0 14px"
 }
 
 export default function Step2Profile({ data, update, next, back, errors }: Props) {
+  const hasErrors = Object.keys(errors).length > 0
 
   return (
-    <div className="card">
+    <div>
+      <p style={{ margin: "0 0 20px", fontSize: 13, color: "#6b7280" }}>
+        Tell us a bit about yourself so we can personalise your experience.
+      </p>
 
-      <h2>Student Profile</h2>
-
-      <div className="form-group">
-        <label>Full Name</label>
-        <input
-          type="text"
-          value={data.full_name}
-          onChange={(e) => update({ full_name: e.target.value })}
-          required
-        />
-        {errors.full_name && (
-          <p className="error">{errors.full_name}</p>
-        )}
+      {/* Personal info */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+        <div>
+          <label style={labelStyle}>Full Name</label>
+          <input value={data.full_name} onChange={e => update({ full_name: e.target.value })}
+            placeholder="Your full name"
+            style={{ ...inputStyle, borderColor: errors.full_name ? "#fca5a5" : "#e5e7eb" }} />
+          {errors.full_name && <p style={errorStyle}>{errors.full_name}</p>}
+        </div>
+        <div>
+          <label style={labelStyle}>Date of Birth</label>
+          <input type="date" value={data.date_of_birth} onChange={e => update({ date_of_birth: e.target.value })}
+            style={{ ...inputStyle, borderColor: errors.date_of_birth ? "#fca5a5" : "#e5e7eb" }} />
+          {errors.date_of_birth && <p style={errorStyle}>{errors.date_of_birth}</p>}
+        </div>
       </div>
 
-      <div className="form-group">
-        <label>Date of Birth</label>
-        <input
-          type="date"
-          value={data.date_of_birth}
-          onChange={(e) => update({ date_of_birth: e.target.value })}
-          required
-        />
-        {errors.date_of_birth && (
-          <p className="error">{errors.date_of_birth}</p>
-        )}
+      <div style={fieldStyle}>
+        <label style={labelStyle}>Parent Email</label>
+        <input type="email" value={data.parent_email} onChange={e => update({ parent_email: e.target.value })}
+          placeholder="parent@email.com"
+          style={{ ...inputStyle, borderColor: errors.parent_email ? "#fca5a5" : "#e5e7eb" }} />
+        {errors.parent_email && <p style={errorStyle}>{errors.parent_email}</p>}
       </div>
 
-      <div className="form-group">
-        <label>Parent Email</label>
-        <input
-          type="email"
-          value={data.parent_email}
-          onChange={(e) => update({ parent_email: e.target.value })}
-          required
-        />
-        {errors.parent_email && (
-          <p className="error">{errors.parent_email}</p>
-        )}
+      <div style={fieldStyle}>
+        <label style={labelStyle}>School Email <span style={{ color: "#9ca3af", fontWeight: 400, textTransform: "none" }}>(optional)</span></label>
+        <input type="email" value={data.personal_email} onChange={e => update({ personal_email: e.target.value })}
+          placeholder="you@student.school.edu.eg"
+          style={{ ...inputStyle, borderColor: errors.personal_email ? "#fca5a5" : "#e5e7eb" }} />
+        {errors.personal_email && <p style={errorStyle}>{errors.personal_email}</p>}
+        <p style={{ margin: "5px 0 0", fontSize: 11, color: "#9ca3af" }}>Must end in @student.school.edu.eg if provided</p>
       </div>
 
-      <div className="form-group">
-        <label>Personal Email (Optional)</label>
-        <input
-          type="email"
-          value={data.personal_email}
-          onChange={(e) => update({ personal_email: e.target.value })}
-        />
-        {errors.personal_email && (
-          <p className="error">{errors.personal_email}</p>
-        )}
+      {/* School context */}
+      <p style={sectionDivider}>School & Region</p>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+        <div>
+          <label style={labelStyle}>School Type</label>
+          <select value={data.school_type} onChange={e => update({ school_type: e.target.value })}
+            style={{ ...selectStyle, borderColor: errors.school_type ? "#fca5a5" : "#e5e7eb" }}>
+            <option value="" disabled>Select type</option>
+            <option value="public">Public</option>
+            <option value="private">Private</option>
+            <option value="international">International</option>
+            <option value="homeschooled">Homeschool</option>
+          </select>
+          {errors.school_type && <p style={errorStyle}>{errors.school_type}</p>}
+        </div>
+        <div>
+          <label style={labelStyle}>Region</label>
+          <select value={data.region} onChange={e => update({ region: e.target.value })}
+            style={{ ...selectStyle, borderColor: errors.region ? "#fca5a5" : "#e5e7eb" }}>
+            <option value="" disabled>Select region</option>
+            <option value="Africa">Africa</option>
+            <option value="Middle East">Middle East</option>
+            <option value="Europe">Europe</option>
+            <option value="Asia">Asia</option>
+            <option value="North America">North America</option>
+          </select>
+          {errors.region && <p style={errorStyle}>{errors.region}</p>}
+        </div>
       </div>
 
-      {/* <div className="form-group">
-        <label>School Name</label>
-        <input
-          type="text"
-          value={data.school_name}
-          onChange={(e) => update({ school_name: e.target.value })}
-        />
-        {errors.school_name && (
-          <p className="error">{errors.school_name}</p>
-        )}
+      {/* Learning preferences */}
+      <p style={sectionDivider}>Learning Style</p>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
+        <div>
+          <label style={labelStyle}>Preferred Language</label>
+          <select value={data.preferred_language} onChange={e => update({ preferred_language: e.target.value })}
+            style={{ ...selectStyle, borderColor: errors.preferred_language ? "#fca5a5" : "#e5e7eb" }}>
+            <option value="" disabled>Select language</option>
+            <option value="Arabic">Arabic</option>
+            <option value="English">English</option>
+            <option value="French">French</option>
+            <option value="German">German</option>
+          </select>
+          {errors.preferred_language && <p style={errorStyle}>{errors.preferred_language}</p>}
+        </div>
+        <div>
+          <label style={labelStyle}>Learning Preference</label>
+          <select value={data.learning_preferences} onChange={e => update({ learning_preferences: e.target.value })}
+            style={{ ...selectStyle, borderColor: errors.learning_preferences ? "#fca5a5" : "#e5e7eb" }}>
+            <option value="" disabled>Select style</option>
+            <option value="Visual">Visual 👁</option>
+            <option value="Auditory">Auditory 👂</option>
+            <option value="Reading/Writing">Reading / Writing 📖</option>
+            <option value="Kinesthetic">Kinesthetic 🤲</option>
+          </select>
+          {errors.learning_preferences && <p style={errorStyle}>{errors.learning_preferences}</p>}
+        </div>
       </div>
 
-      <div className="form-group">
-        <label>School Class</label>
-        <input
-          type="text"
-          value={data.school_class}
-          onChange={(e) => update({ school_class: e.target.value })}
-        />
-        {errors.school_class && (
-          <p className="error">{errors.school_class}</p>
-        )}
-      </div> */}
-
-      {/* <div className="form-group">
-        <label>Grade Level</label>
-        <input
-          type="number"
-          value={data.grade_level}
-          onChange={(e) => update({ grade_level: e.target.value })}
-          required
-        />
-        {errors.grade_level && (
-          <p className="error">{errors.grade_level}</p>
-        )}
-      </div> */}
-
-      <div className="form-group">
-        <label>School Type</label>
-        <select
-          value={data.school_type}
-          onChange={(e) => update({ school_type: e.target.value })}
-          required
-        >
-          <option value="" disabled>
-            Select School Type
-          </option>
-          <option value="public">Public</option>
-          <option value="private">Private</option>
-          <option value="international">International</option>
-          <option value="homeschooled">Homeschool</option>
-        </select>
-        {errors.school_type && (
-          <p className="error">{errors.school_type}</p>
-        )}
+      {/* Nav buttons */}
+      <div style={{ display: "flex", gap: 10 }}>
+        <button onClick={back}
+          style={{ flex: 1, padding: "10px", borderRadius: 8, border: "1px solid #e5e7eb", background: "#fff", color: "#374151", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>
+          ← Back
+        </button>
+        <button onClick={next} disabled={hasErrors}
+          style={{ flex: 2, padding: "10px", borderRadius: 8, border: "none", background: hasErrors ? "#e5e7eb" : "linear-gradient(135deg, #3b82f6, #6366f1)", color: hasErrors ? "#9ca3af" : "#fff", fontWeight: 700, fontSize: 14, cursor: hasErrors ? "not-allowed" : "pointer" }}>
+          Next →
+        </button>
       </div>
-
-      <div className="form-group">
-        <label>Region</label>
-        <select
-          value={data.region}
-          onChange={(e) => update({ region: e.target.value })}
-          required
-        >
-          <option value="" disabled>
-            Select Region
-          </option>
-          <option value="Africa">Africa</option>
-          <option value="Middle East">Middle East</option>
-          <option value="Europe">Europe</option>
-          <option value="Asia">Asia</option>
-          <option value="North America">North America</option>
-        </select>
-        {errors.region && (
-          <p className="error">{errors.region}</p>
-        )}
-      </div>
-
-      <div className="form-group">
-        <label>Preferred Language</label>
-        <select
-          value={data.preferred_language}
-          onChange={(e) => update({ preferred_language: e.target.value })}
-          required
-        >
-          <option value="" disabled>
-            Select Language
-          </option>
-          <option value="Arabic">Arabic</option>
-          <option value="English">English</option>
-          <option value="French">French</option>
-          <option value="German">German</option>
-        </select>
-        {errors.preferred_language && (
-          <p className="error">{errors.preferred_language}</p>
-        )}
-      </div>
-
-      <div className="form-group">
-        <label>Learning Preference</label>
-        <select
-          value={data.learning_preferences}
-          onChange={(e) =>
-            update({ learning_preferences: e.target.value })
-          }
-          required
-        >
-          <option value="" disabled>
-            Select Learning Preference
-          </option>
-          <option value="Visual">Visual</option>
-          <option value="Auditory">Auditory</option>
-          <option value="Reading/Writing">Reading/Writing</option>
-          <option value="Kinesthetic">Kinesthetic</option>
-        </select>
-        {errors.learning_preferences && (
-          <p className="error">{errors.learning_preferences}</p>
-        )}
-      </div>
-
-      <div className="buttons">
-        <button onClick={back}>Back</button>
-        <button disabled={Object.keys(errors).length > 0} onClick={next}>Next</button>
-      </div>
-
     </div>
-  );
+  )
 }

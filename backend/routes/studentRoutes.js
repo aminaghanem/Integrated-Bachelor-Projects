@@ -27,7 +27,7 @@ router.delete("/:id", protect, authorizeRoles("admin"), deleteStudent);
 
 router.get("/profile", protect, getStudentProfile);
 
-router.get("/:id", protect, getStudent);
+router.get("/:id", getStudent);
 
 router.get("/check-username/:username", async (req, res) => {
   try {
