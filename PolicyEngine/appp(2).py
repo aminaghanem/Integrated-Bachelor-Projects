@@ -35,7 +35,118 @@ import tkinter.font as tkfont
 from tkinter import ttk, messagebox, simpledialog
 from typing import List, Dict, Optional
 from datetime import datetime
+# At the top of appp(2).py, add:
+from database import db
+# Add these to your existing imports
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from pymongo import MongoClient
+import threading
+import datetime
+# ═══════════════════════════════════════════════════════════════════════════
+# SINGLE API ENDPOINT
+# ═══════════════════════════════════════════════════════════════════════════
+class SimpleAPI:
+    def __init__(self):
+        self.app = Flask(__name__)
+        CORS(self.app)
+        
+        # Connect to MongoDB (adjust connection string as needed)
+        try:
+            self.client = MongoClient('mongodb://localhost:27017/')
+            self.db = self.client['agentvlm']
+            self.collection = self.db['policies']
+            print("✅ MongoDB Connected")
+        except:
+            self.client = None
+            print("⚠️ MongoDB not available")
+        
+        @self.app.route('/api/check', methods=['POST'])
+        def check():
+            """Single endpoint: Check access + save to MongoDB"""
+            data = request.get_json()
+            
+            # Required fields
+            url = data.get('url')
+            profile = {
+                'school_level': data.get('school_level', 'Any'),
+                'grade': data.get('grade', 'Any'), 
+                'age': data.get('age', 'Any'),
+                'interest': data.get('interest', 'Any'),
+                'disability': data.get('disability', 'NA')
+            }
+            
+            if not url:
+                return jsonify({'error': 'URL required'}), 400
+            
+            # Run evaluation (uses your existing logic)
+            result = evaluate_single(
+                url=url,
+                school_level=profile['school_level'],
+                grade=profile['grade'],
+                age=profile['age'],
+                interest=profile['interest'],
+                disability=profile['disability'],
+                other_disability=data.get('other_disability')
+            )
+            
+            # Add metadata
+            result['api_call_time'] = datetime.datetime.now()
+            result['student_profile'] = profile
+            
+            # Save to MongoDB for admin access
+            if self.client:
+                self.collection.insert_one(result)
+            
+            return jsonify(result)
+        
+        @self.app.route('/api/health', methods=['GET'])
+        def health():
+            return jsonify({
+                'status': 'ok', 
+                'gui_running': True,
+                'mongodb': self.client is not None
+            })
+    
+    def run(self):
+        # Run in background so GUI stays responsive
+        threading.Thread(
+            target=lambda: self.app.run(host='0.0.0.0', port=5000, debug=False),
+            daemon=True
+        ).start()
+        print("🚀 API running at http://localhost:5000/api/check")
 
+
+# KEEP the INTEREST_OPTIONS dictionary for now as a fallback reference, 
+# but we won't use it directly anymore. Or you can delete it if you prefer 
+# to rely solely on the fallback method in database.py.
+
+# REPLACE the _on_level_change method completely:
+def _on_level_change(self, event=None):
+    level = self.level_var.get()
+    
+    # Fetch subjects from MongoDB instead of hardcoded dictionary
+    subjects = db.get_subjects_by_school_level(level)
+    
+    # Update grade dropdown (keep existing logic)
+    self.grade_cb["values"] = GRADE_OPTIONS.get(level, [])
+    self.grade_cb["state"] = "readonly"
+    self.grade_var.set("")
+
+    # Update age dropdown (keep existing logic)
+    self.age_cb["values"] = AGE_OPTIONS.get(level, [])
+    self.age_cb["state"] = "readonly"
+    self.age_var.set("")
+
+    # Update interest dropdown with DB subjects
+    self.interest_cb["values"] = subjects
+    self.interest_cb["state"] = "readonly"
+    self.interest_var.set("")
+    
+    # Optional: Show status if using fallback
+    if not db.connected:
+        self.status_var.set("⚠️ Using offline mode - Database connection failed")
+        
 # ── Dependencies ───────────────────────────────────────────────────────────
 def _ensure(pkg, imp=None):
     import importlib, subprocess, sys
@@ -124,20 +235,20 @@ GRADE_OPTIONS = {
 }
 
 # NOTE: No trailing spaces – they were stripped to allow clean dict lookups.
-INTEREST_OPTIONS = {
-    "Elementary School": [
-        "Math", "Science", "Reading", "Art", "Music",
-        "Sports", "Social Studies", "Computer Science", "Arabic",
-    ],
-    "Middle School": [
-        "Math", "Biology", "Chemistry", "Physics", "English",
-        "History", "Computer Science", "Art", "Arabic", "Music", "Sports",
-    ],
-    "High School": [
-        "Math", "Physics", "Chemistry", "Biology", "English",
-        "History", "Sports", "Music", "Computer Science", "Arabic", "Art",
-    ],
-}
+# INTEREST_OPTIONS = {
+#     "Elementary School": [
+#         "Math", "Science", "Reading", "Art", "Music",
+#         "Sports", "Social Studies", "Computer Science", "Arabic",
+#     ],
+#     "Middle School": [
+#         "Math", "Biology", "Chemistry", "Physics", "English",
+#         "History", "Computer Science", "Art", "Arabic", "Music", "Sports",
+#     ],
+#     "High School": [
+#         "Math", "Physics", "Chemistry", "Biology", "English",
+#         "History", "Sports", "Music", "Computer Science", "Arabic", "Art",
+#     ],
+# }
 
 # ── GUI interest label → pipeline interest key ─────────────────────────────
 # "Computer Science" in the GUI maps to "Computer" in DISABILITY_RECOMMENDATIONS
@@ -146,9 +257,18 @@ _INTEREST_GUI_TO_PIPELINE = {
 }
 
 def _normalize_interest(raw: str) -> str:
-    """Strip whitespace and map GUI interest names to pipeline keys."""
+    """
+    Convert GUI display name to pipeline key.
+    If your DB uses 'Computer Science' but pipeline expects 'Computer', 
+    keep this mapping. Otherwise, just return raw.strip()
+    """
+    mappings = {
+        "Computer Science": "Computer",
+        # Add other mappings if needed
+    }
     clean = raw.strip()
-    return _INTEREST_GUI_TO_PIPELINE.get(clean, clean)
+    return mappings.get(clean, clean)
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # ALTERNATIVE DESCRIPTIONS (Fix for Gap 2)
@@ -1102,20 +1222,20 @@ class AgentVLMApp(tk.Tk):
                   relief="solid", bd=1, command=self._open_log
                   ).pack(anchor="se", padx=10, pady=5)
 
-    def _on_level_change(self, event=None):
-        level = self.level_var.get()
+    # def _on_level_change(self, event=None):
+    #     level = self.level_var.get()
 
-        self.grade_cb["values"] = GRADE_OPTIONS.get(level, [])
-        self.grade_cb["state"]  = "readonly"
-        self.grade_var.set("")
+    #     self.grade_cb["values"] = GRADE_OPTIONS.get(level, [])
+    #     self.grade_cb["state"]  = "readonly"
+    #     self.grade_var.set("")
 
-        self.age_cb["values"] = AGE_OPTIONS.get(level, [])
-        self.age_cb["state"]  = "readonly"
-        self.age_var.set("")
+    #     self.age_cb["values"] = AGE_OPTIONS.get(level, [])
+    #     self.age_cb["state"]  = "readonly"
+    #     self.age_var.set("")
 
-        self.interest_cb["values"] = INTEREST_OPTIONS.get(level, [])
-        self.interest_cb["state"]  = "readonly"
-        self.interest_var.set("")
+    #     self.interest_cb["values"] = INTEREST_OPTIONS.get(level, [])
+    #     self.interest_cb["state"]  = "readonly"
+    #     self.interest_var.set("")
 
     def _clear(self):
         self.level_var.set("")
@@ -2338,5 +2458,12 @@ class ResultWindow(tk.Toplevel):
 # ═══════════════════════════════════════════════════════════════════════════
 if __name__ == "__main__":
     load_admin_overrides()
+    
+    # Start API in background
+    api = SimpleAPI()
+    api.run()
+    
+    # Start GUI (main thread)
     app = AgentVLMApp()
     app.mainloop()
+    
