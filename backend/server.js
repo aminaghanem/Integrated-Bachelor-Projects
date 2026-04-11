@@ -35,6 +35,7 @@ app.use("/api/subjects", require("./routes/subjectRoutes"));
 app.use("/api/search", require("./routes/search"));
 app.use("/api/learning-history", require("./routes/learningHistoryRoutes"));
 app.use("/api/admins", require("./routes/adminRoutes"));
+app.use("/api/policies", require("./routes/policies"));
 
 console.log('Set up routes...')
 

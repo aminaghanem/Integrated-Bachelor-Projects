@@ -6,7 +6,7 @@ import { useEffect, useState, useCallback } from "react"
 
 const API = "http://localhost:4000"
 
-type Section = "overview" | "students" | "teachers" | "parents" | "classes" | "subjects" | "admins" | "create"
+type Section = "overview" | "students" | "teachers" | "parents" | "classes" | "subjects" | "admins" | "policies" |  "create"
 
 interface Student {
   _id: string
@@ -15,6 +15,7 @@ interface Student {
   preferred_language: string
   personal_email: string
   date_of_birth: string
+  class_id?: string
   context?: { region: string; school_type: string }
 }
 
@@ -155,6 +156,21 @@ export default function AdminDashboard() {
   const [availableStudents, setAvailableStudents] = useState<Student[]>([])
   const [addingChildId, setAddingChildId] = useState("")
 
+  const [classSubjects, setClassSubjects] = useState<Subject[]>([])
+  const [classTeachers, setClassTeachers] = useState<Teacher[]>([])
+  const [classStudents, setClassStudents] = useState<Student[]>([])
+  const [availableSubjectsForClass, setAvailableSubjectsForClass] = useState<Subject[]>([])
+  const [availableTeachersForClass, setAvailableTeachersForClass] = useState<Teacher[]>([])
+  const [availableStudentsForClass, setAvailableStudentsForClass] = useState<Student[]>([])
+  const [addingClassSubjectId, setAddingClassSubjectId] = useState("")
+  const [addingClassTeacherId, setAddingClassTeacherId] = useState("")
+  const [addingClassStudentId, setAddingClassStudentId] = useState("")
+
+  const [policies, setPolicies] = useState<any[]>([])
+  const [checkForm, setCheckForm] = useState({ url: "", school_level: "", grade: "", age: "", interest: "", disability: "NA" })
+  const [checking, setChecking] = useState(false)
+  const [checkResult, setCheckResult] = useState<any>(null)
+
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState<string | null>(null)
   const [search, setSearch] = useState("")
@@ -206,6 +222,11 @@ export default function AdminDashboard() {
         const r = await fetch(`${API}/api/admins`, { headers: authHeaders() })
         if (r.ok) setAdmins(await r.json())
       }
+
+      // if (sec === "policies") {
+      //   const r = await fetch(`${API}/api/policies`, { headers: authHeaders() });
+      //   if (r.ok) setPolicies(await r.json());
+      // }
     } catch { /* silent */ }
     setLoading(false)
   }, [authHeaders])
@@ -214,6 +235,24 @@ export default function AdminDashboard() {
     const r = await fetch(`${API}/api/teachers/subjects/all`, { headers: authHeaders() })
     if (r.ok) setAllSubjects(await r.json())
   }, [authHeaders])
+
+  const fetchClassData = useCallback(async (classId: string) => {
+    try {
+      const r = await fetch(`${API}/api/classes/${classId}`, { headers: authHeaders() })
+      if (r.ok) {
+        const cls = await r.json()
+        setClassSubjects(cls.subjects?.map((s: any) => s.subject).filter(Boolean) ?? [])
+        setClassTeachers(cls.subjects?.map((s: any) => s.teacher_id).filter(Boolean) ?? [])
+        // Map student IDs to full student objects
+        const classStudentIds = cls.students?.filter(Boolean) ?? []
+        const fullStudents = classStudentIds.map((id: string) => students.find(s => s._id === id)).filter(Boolean)
+        setClassStudents(fullStudents)
+      }
+      setAvailableSubjectsForClass(allSubjects)
+      setAvailableTeachersForClass(teachers)
+      setAvailableStudentsForClass(students)
+    } catch { /* silent */ }
+  }, [allSubjects, teachers, students, authHeaders])
 
   useEffect(() => { fetchData(section) }, [section, fetchData])
 
@@ -246,6 +285,14 @@ export default function AdminDashboard() {
       if (r.ok) setAvailableStudents(await r.json())
       setAddingChildId("")
     }
+
+    if (type === "class") {
+      await fetchSubjects()
+      await fetchClassData(id)
+      setAddingClassSubjectId("")
+      setAddingClassTeacherId("")
+      setAddingClassStudentId("")
+    }
   }
 
   const handleEditChange = (name: string, value: string) =>
@@ -254,10 +301,23 @@ export default function AdminDashboard() {
   const handleSave = async () => {
     if (!editTarget) return
     setSaving(true)
-    const map: Record<string, string> = { student: "students", teacher: "teachers", parent: "parents", class: "classes", subject: "subjects", admin: "admins"}
+    const map: Record<string, string> = { student: "students", teacher: "teachers", parent: "parents", class: "classes", subject: "subjects", admin: "admins" }
     try {
+      let body: Record<string, unknown> = { ...editForm }
+
+      if (editTarget.type === "class") {
+        body = {
+          ...editForm,
+          subjects: classSubjects.map((subj, i) => ({
+            subject: subj._id,
+            teacher_id: classTeachers[i]?._id ?? null
+          })),
+          students: classStudents.map(s => s._id)
+        }
+      }
+
       const res = await fetch(`${API}/api/${map[editTarget.type]}/${editTarget.id}`, {
-        method: "PUT", headers: authHeaders(), body: JSON.stringify(editForm)
+        method: "PUT", headers: authHeaders(), body: JSON.stringify(body)
       })
       if (!res.ok) throw new Error()
       setSaveMsg("Saved!")
@@ -360,6 +420,7 @@ export default function AdminDashboard() {
     { key: "classes", label: "Classes", icon: "▣" },
     { key: "subjects", label: "Subjects", icon: "◎" },
     { key: "admins", label: "Admins", icon: "⚑" },
+    { key: "policies", label: "Policies", icon: "⚖" },
     { key: "create",   label: "Create",   icon: "⊞" },
   ]
 
@@ -594,76 +655,125 @@ export default function AdminDashboard() {
         )}
 
         {section === "classes" && (
-          <table style={tableStyle}>
-            <thead>
-              <tr>
-                <th style={thStyle}>Class</th>
-                <th style={thStyle}>Grade</th>
-                <th style={thStyle}>School</th>
-                <th style={thStyle}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {classes.map(c => (
-                <tr key={c._id}>
-                  <td style={tdStyle}>{c.class_name}</td>
-                  <td style={tdStyle}>{c.grade_level}</td>
-                  <td style={tdStyle}>{c.school_name}</td>
-                  <td style={tdStyle}>
-                    <button onClick={() => openEdit("class", c._id, c)}>Edit</button>
-                    <button onClick={() => handleDelete("class", c._id)}>Delete</button>
-                  </td>
+          <div style={{ background: "#ffffff", borderRadius: 12, border: "1px solid #2d3140", overflow: "hidden" }}>
+            <table style={tableStyle}>
+              <thead>
+                <tr>
+                  <th style={thStyle}>Class</th>
+                  <th style={thStyle}>Grade</th>
+                  <th style={thStyle}>School</th>
+                  <th style={thStyle}>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {classes.map(c => (
+                  <tr key={c._id}>
+                    <td style={tdStyle}>{c.class_name}</td>
+                    <td style={tdStyle}>{c.grade_level}</td>
+                    <td style={tdStyle}>{c.school_name}</td>
+                    <td style={tdStyle}>
+                      <button style={actionBtn("#f59e0b")} onClick={() => setViewTarget({ type: "Class", data: c as unknown as Record<string, unknown> })}>View</button>
+                      <button style={actionBtn("#a78bfa")} onClick={() => openEdit("class", c._id, c)}>Edit</button>
+                      <button style={actionBtn("#f87171")} onClick={() => handleDelete("class", c._id)}>Delete</button>
+                    </td>
+                  </tr>
+                ))}
+                {classes.length === 0 && <tr key="empty"><td colSpan={4} style={{ ...tdStyle, textAlign: "center", color: "#4b5563", padding: "2rem" }}>No classes found</td></tr>}
+              </tbody>
+            </table>
+          </div>
         )}
 
         {section === "subjects" && (
-          <table style={tableStyle}>
-            <thead>
-              <tr>
-                <th style={thStyle}>Name</th>
-                <th style={thStyle}>Category</th>
-                <th style={thStyle}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {subjects.map(s => (
-                <tr key={s._id}>
-                  <td style={tdStyle}>{s.name}</td>
-                  <td style={tdStyle}>{s.category}</td>
-                  <td style={tdStyle}>
-                    <button onClick={() => openEdit("subject", s._id, s)}>Edit</button>
-                    <button onClick={() => handleDelete("subject", s._id)}>Delete</button>
-                  </td>
+          <div style={{ background: "#ffffff", borderRadius: 12, border: "1px solid #2d3140", overflow: "hidden" }}>
+            <table style={tableStyle}>
+              <thead>
+                <tr>
+                  <th style={thStyle}>Name</th>
+                  <th style={thStyle}>Category</th>
+                  <th style={thStyle}>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {subjects.map(s => (
+                  <tr key={s._id}>
+                    <td style={tdStyle}>{s.name}</td>
+                    <td style={tdStyle}>{s.category}</td>
+                    <td style={tdStyle}>
+                      <button style={actionBtn("#f59e0b")} onClick={() => setViewTarget({ type: "Subject", data: s as unknown as Record<string, unknown> })}>View</button>
+                      <button style={actionBtn("#a78bfa")} onClick={() => openEdit("subject", s._id, s)}>Edit</button>
+                      <button style={actionBtn("#f87171")} onClick={() => handleDelete("subject", s._id)}>Delete</button>
+                    </td>
+                  </tr>
+                ))}
+                {subjects.length === 0 && <tr key="empty"><td colSpan={3} style={{ ...tdStyle, textAlign: "center", color: "#4b5563", padding: "2rem" }}>No subjects found</td></tr>}
+              </tbody>
+            </table>
+          </div>
         )}
 
         {section === "admins" && (
-          <table style={tableStyle}>
-            <thead>
-              <tr>
-                <th style={thStyle}>Username</th>
-                <th style={thStyle}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {admins.map(a => (
-                <tr key={a._id}>
-                  <td style={tdStyle}>{a.username}</td>
-                  <td style={tdStyle}>
-                    <button onClick={() => handleDelete("admin", a._id)}>Delete</button>
-                  </td>
+          <div style={{ background: "#ffffff", borderRadius: 12, border: "1px solid #2d3140", overflow: "hidden" }}>
+            <table style={tableStyle}>
+              <thead>
+                <tr>
+                  <th style={thStyle}>Username</th>
+                  <th style={thStyle}>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {admins.map(a => (
+                  <tr key={a._id}>
+                    <td style={tdStyle}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        {avatarDiv((a.username || "?").charAt(0).toUpperCase(), "#6366f122", "#6366f1")}
+                        <span style={{ color: "#111827" }}>{a.username}</span>
+                      </div>
+                    </td>
+                    <td style={tdStyle}>
+                      <button style={actionBtn("#6366f1")} onClick={() => setViewTarget({ type: "Admin", data: a as unknown as Record<string, unknown> })}>View</button>
+                      <button style={actionBtn("#f87171")} onClick={() => handleDelete("admin", a._id)}>Delete</button>
+                    </td>
+                  </tr>
+                ))}
+                {admins.length === 0 && <tr key="empty"><td colSpan={2} style={{ ...tdStyle, textAlign: "center", color: "#4b5563", padding: "2rem" }}>No admins found</td></tr>}
+              </tbody>
+            </table>
+          </div>
         )}
 
+        {section==="policies" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <p style={{ color: "#6b7280" }}>The Policy Manager is a desktop application that allows you to create and manage AI policies for your school. You can define rules, restrictions, and guidelines for AI usage to ensure a safe and responsible environment for students and staff.</p>
+            <button onClick={async () => {
+              try {
+                const res = await fetch(`${API}/api/policies/launch-gui`, { 
+                  method: "POST", headers: authHeaders() 
+                });
+                let data;
+                try {
+                  data = await res.json();
+                } catch {
+                  data = { error: "Server error" };
+                }
+                
+                if (!res.ok) {
+                  alert(`Failed to launch Policy Manager:\n\n${data.detail || data.error || "Unknown error"}`);
+                } else {
+                  alert("Policy Manager launched successfully!");
+                }
+              } catch(e) {
+                console.error("Launch error:", e);
+                //alert(`Could not reach server: ${e.message}`);
+              }
+            }}
+            style={{ padding: "9px 20px", background: "#8b5cf6", color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+              🖥️ Open Policy Manager (Desktop App)
+            </button>
+          </div>
+        )}
+
+        
         {/* Create */}
         {section === "create" && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, maxWidth: 700 }}>
@@ -810,13 +920,125 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {/* Class */}
+          {editTarget.type === "class" && (
+            <div>
+              <EditField label="Class Name" name="class_name" value={editForm.class_name ?? ""} onChange={handleEditChange} />
+              <EditField label="Grade Level" name="grade_level" value={editForm.grade_level ?? ""} onChange={handleEditChange} />
+              <EditField label="School Name" name="school_name" value={editForm.school_name ?? ""} onChange={handleEditChange} />
+              {/* <EditField label="School Type" name="school_type" value={editForm.school_type ?? ""} onChange={handleEditChange} /> */}
+
+              <SectionLabel text="Subjects & Teachers" />
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
+                  {classSubjects.length === 0 && <span style={{ fontSize: 12, color: "#6b7280" }}>No subjects assigned yet.</span>}
+                  {classSubjects.map((subj, i) => (
+                    <div key={subj._id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", borderRadius: 8, background: "#f59e0b11", border: "1px solid #f59e0b33" }}>
+                      <div>
+                        <span style={{ fontSize: 13, color: "#f59e0b", fontWeight: 600 }}>{subj.name}</span>
+                        <span style={{ fontSize: 12, color: "#6b7280", marginLeft: 8 }}>
+                          → {classTeachers[i]?.username ?? <em>no teacher</em>}
+                        </span>
+                      </div>
+                      <button onClick={() => {
+                        setClassSubjects(prev => prev.filter((_, idx) => idx !== i))
+                        setClassTeachers(prev => prev.filter((_, idx) => idx !== i))
+                      }} style={{ background: "none", border: "1px solid #f8717144", borderRadius: 6, color: "#f87171", cursor: "pointer", fontSize: 12, padding: "3px 10px" }}>Remove</button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add subject+teacher pair */}
+                <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+                  <select value={addingClassSubjectId} onChange={e => setAddingClassSubjectId(e.target.value)}
+                    style={{ flex: 1, padding: "8px 10px", background: "#f9fafb", border: "1px solid #2d3140", borderRadius: 8, color: "#111827", fontSize: 13, outline: "none" }}>
+                    <option value="">Select subject...</option>
+                    {availableSubjectsForClass.filter(s => !classSubjects.find(cs => cs._id === s._id)).map(s => (
+                      <option key={s._id} value={s._id}>{s.name} ({s.category})</option>
+                    ))}
+                  </select>
+                  <select value={addingClassTeacherId} onChange={e => setAddingClassTeacherId(e.target.value)}
+                    style={{ flex: 1, padding: "8px 10px", background: "#f9fafb", border: "1px solid #2d3140", borderRadius: 8, color: "#111827", fontSize: 13, outline: "none" }}>
+                    <option value="">Select teacher...</option>
+                    {availableTeachersForClass.map(t => (
+                      <option key={t._id} value={t._id}>{t.username}</option>
+                    ))}
+                  </select>
+                  <button onClick={() => {
+                    const subj = availableSubjectsForClass.find(s => s._id === addingClassSubjectId)
+                    const teacher = availableTeachersForClass.find(t => t._id === addingClassTeacherId)
+                    if (subj && teacher) {
+                      setClassSubjects(prev => [...prev, subj])
+                      setClassTeachers(prev => [...prev, teacher])
+                      setAddingClassSubjectId("")
+                      setAddingClassTeacherId("")
+                    } else {
+                      setSaveMsg("Select both a subject and a teacher.")
+                      setTimeout(() => setSaveMsg(null), 2000)
+                    }
+                  }} disabled={!addingClassSubjectId || !addingClassTeacherId}
+                    style={{ padding: "8px 16px", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: (addingClassSubjectId && addingClassTeacherId) ? "pointer" : "not-allowed", background: "#f59e0b22", border: "1px solid #f59e0b55", color: "#f59e0b" }}>
+                    Add
+                  </button>
+                </div>
+
+              <SectionLabel text="Students in This Class" />
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
+                  {classStudents.length === 0 && <span style={{ fontSize: 12, color: "#6b7280" }}>No students in this class yet.</span>}
+                  {classStudents.map(student => (
+                    <div key={student._id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", borderRadius: 8, background: "#3b82f622", border: "1px solid #3b82f644" }}>
+                      <div>
+                        <span style={{ fontSize: 13, color: "#60a5fa" }}>{student.full_name || student.username}</span>
+                        <span style={{ fontSize: 11, color: "#6b7280", marginLeft: 8 }}>@{student.username}</span>
+                      </div>
+                      <button onClick={() => setClassStudents(prev => prev.filter(s => s._id !== student._id))} style={{ background: "none", border: "1px solid #f8717144", borderRadius: 6, color: "#f87171", cursor: "pointer", fontSize: 12, padding: "3px 10px" }}>Remove</button>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <select value={addingClassStudentId} onChange={e => setAddingClassStudentId(e.target.value)}
+                    style={{ flex: 1, padding: "8px 10px", background: "#f9fafb", border: "1px solid #2d3140", borderRadius: 8, color: "#111827", fontSize: 13, outline: "none" }}>
+                    <option value="">Select student to add...</option>
+                    {availableStudentsForClass.filter(s => !classStudents.find(cs => cs._id === s._id) && !s.class_id).map(s => (
+                      <option key={s._id} value={s._id}>{s.full_name || s.username} (@{s.username})</option>
+                    ))}
+                  </select>
+                  <button onClick={() => {
+                    const student = availableStudentsForClass.find(s => s._id === addingClassStudentId)
+                    if (!student) { setSaveMsg("Student not found."); setTimeout(() => setSaveMsg(null), 2000); return }
+                    if (classStudents.find(s => s._id === student._id)) { setSaveMsg("Already in class."); setTimeout(() => setSaveMsg(null), 2000); return }
+                    setClassStudents(prev => [...prev, student])
+                    setAddingClassStudentId("")
+                  }} disabled={!addingClassStudentId}
+                    style={{ padding: "8px 16px", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: addingClassStudentId ? "pointer" : "not-allowed", background: "#3b82f622", border: "1px solid #3b82f655", color: "#60a5fa" }}>
+                    Add
+                  </button>
+                </div>
+            </div>
+          )}
+
+          {/* Subject */}
+          {editTarget.type === "subject" && (
+            <div>
+              <EditField label="Subject Name" name="name" value={editForm.name ?? ""} onChange={handleEditChange} />
+              <EditField label="Category" name="category" value={editForm.category ?? ""} onChange={handleEditChange} />
+            </div>
+          )}
+
+          {/* Admin */}
+          {editTarget.type === "admin" && (
+            <div>
+              <EditField label="Username" name="username" value={editForm.username ?? ""} onChange={handleEditChange} />
+              <EditField label="Email" name="email" value={editForm.email ?? ""} onChange={handleEditChange} type="email" />
+            </div>
+          )}
+
           {saveMsg && (
             <p style={{ color: saveMsg.includes("Failed") ? "#f87171" : "#34d399", fontSize: 13, margin: "14px 0 0", fontWeight: 500 }}>
               {saveMsg}
             </p>
           )}
           <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-            <button onClick={handleSave} disabled={saving} style={{ padding: "9px 22px", background: "#3b82f622", border: "1px solid #3b82f655", borderRadius: 8, color: "#60a5fa", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            <button onClick={handleSave} disabled={saving} style={{ padding: "9px 22px", background: "#3b82f622", border: "1px solid #3b82f655", borderRadius: 8, color: "#60a5fa", fontSize: 13, fontWeight: 600, cursor: saving ? "not-allowed" : "pointer" }}>
               {saving ? "Saving..." : "Save Changes"}
             </button>
             <button onClick={() => setEditTarget(null)} style={{ padding: "9px 16px", background: "none", border: "1px solid #2d3140", borderRadius: 8, color: "#6b7280", fontSize: 13, cursor: "pointer" }}>
