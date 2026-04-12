@@ -111,10 +111,10 @@ class SimpleAPI:
     def run(self):
         # Run in background so GUI stays responsive
         threading.Thread(
-            target=lambda: self.app.run(host='0.0.0.0', port=5000, debug=False),
+            target=lambda: self.app.run(host='0.0.0.0', port=6000, debug=False),
             daemon=True
         ).start()
-        print("🚀 API running at http://localhost:5000/api/check")
+        print("🚀 API running at http://localhost:6000/api/check")
 
 
 # KEEP the INTEREST_OPTIONS dictionary for now as a fallback reference, 
@@ -122,30 +122,7 @@ class SimpleAPI:
 # to rely solely on the fallback method in database.py.
 
 # REPLACE the _on_level_change method completely:
-def _on_level_change(self, event=None):
-    level = self.level_var.get()
-    
-    # Fetch subjects from MongoDB instead of hardcoded dictionary
-    subjects = db.get_subjects_by_school_level(level)
-    
-    # Update grade dropdown (keep existing logic)
-    self.grade_cb["values"] = GRADE_OPTIONS.get(level, [])
-    self.grade_cb["state"] = "readonly"
-    self.grade_var.set("")
 
-    # Update age dropdown (keep existing logic)
-    self.age_cb["values"] = AGE_OPTIONS.get(level, [])
-    self.age_cb["state"] = "readonly"
-    self.age_var.set("")
-
-    # Update interest dropdown with DB subjects
-    self.interest_cb["values"] = subjects
-    self.interest_cb["state"] = "readonly"
-    self.interest_var.set("")
-    
-    # Optional: Show status if using fallback
-    if not db.connected:
-        self.status_var.set("⚠️ Using offline mode - Database connection failed")
         
 # ── Dependencies ───────────────────────────────────────────────────────────
 def _ensure(pkg, imp=None):
@@ -1221,6 +1198,31 @@ class AgentVLMApp(tk.Tk):
                   font=self.fonts["small"], bg=COLORS["bg"],
                   relief="solid", bd=1, command=self._open_log
                   ).pack(anchor="se", padx=10, pady=5)
+    
+    def _on_level_change(self, event=None):
+     level = self.level_var.get()
+    
+    # Fetch subjects from MongoDB instead of hardcoded dictionary
+     subjects = db.get_subjects_by_school_level(level)
+    
+    # Update grade dropdown (keep existing logic)
+     self.grade_cb["values"] = GRADE_OPTIONS.get(level, [])
+     self.grade_cb["state"] = "readonly"
+     self.grade_var.set("")
+
+    # Update age dropdown (keep existing logic)
+     self.age_cb["values"] = AGE_OPTIONS.get(level, [])
+     self.age_cb["state"] = "readonly"
+     self.age_var.set("")
+
+    # Update interest dropdown with DB subjects
+     self.interest_cb["values"] = subjects
+     self.interest_cb["state"] = "readonly"
+     self.interest_var.set("")
+    
+    # Optional: Show status if using fallback
+     if not db.connected:
+        self.status_var.set("⚠️ Using offline mode - Database connection failed")
 
     # def _on_level_change(self, event=None):
     #     level = self.level_var.get()
@@ -2458,12 +2460,12 @@ class ResultWindow(tk.Toplevel):
 # ═══════════════════════════════════════════════════════════════════════════
 if __name__ == "__main__":
     load_admin_overrides()
-    
+    # Start GUI (main thread)
+    app = AgentVLMApp()
+    app.mainloop()
     # Start API in background
     api = SimpleAPI()
     api.run()
     
-    # Start GUI (main thread)
-    app = AgentVLMApp()
-    app.mainloop()
+    
     
