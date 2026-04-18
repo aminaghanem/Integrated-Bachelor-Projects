@@ -8,7 +8,7 @@ from states import ControlState
 class RedisStateManager:
     def create_request(self, request_id, user_id, url):
         state = {
-            "control_state": ControlState.REQUEST_INITIATED,
+            "control_state": ControlState.REQUEST_INITIATED.value,
             "data_state": {
                 "request_id": request_id,
                 "user_id": user_id,

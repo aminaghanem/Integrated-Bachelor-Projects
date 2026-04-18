@@ -1,12 +1,13 @@
 import json
 import os
+import re
 import uuid
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set, Tuple
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode, urlparse
+from urllib.parse import unquote, urlencode, urlparse
 from urllib.request import Request as UrlRequest, urlopen
 
 import uvicorn
@@ -56,6 +57,15 @@ class StudentProfile:
 class AccessPolicy:
 	url: str
 	category: str
+	age_restriction: str
+	educational_genre: str
+	suitability_for_school: str
+	recommended_grade_level: Optional[str]
+	unsuitability_reasons: Optional[str]
+	ai_generated: str
+	accessibility_score: str
+	safe_alternatives: List[str]
+	timing_breakdown: Optional[Dict[str, float]]
 	reason: str
 	allowed_for_user_ids: List[str]
 	min_age: Optional[int]
@@ -163,18 +173,69 @@ class CacheApiClient:
 	@staticmethod
 	def _policy_from_payload(url: str, payload: Dict[str, Any]) -> AccessPolicy:
 		data = payload.get("data") if isinstance(payload.get("data"), dict) else payload
-		category = data.get("category") or data.get("genre") or "General"
-		reason = data.get("reason") or data.get("explanation") or "No reason provided."
+
+		age_restriction = str(data.get("age_restriction") or "All Ages")
+		min_age = _parse_age_restriction(age_restriction)
+		max_age = None
+
+		recommended_grade_level = data.get("recommended_grade_level")
+		min_grade_level, max_grade_level = _parse_grade_range(recommended_grade_level)
+
+		suitability_for_school = str(data.get("suitability_for_school") or "Suitable")
+
+		unsuitability_raw = data.get("unsuitability_reasons")
+		if isinstance(unsuitability_raw, list):
+			unsuitability_reasons = str(unsuitability_raw[0]).strip() if unsuitability_raw else None
+		elif unsuitability_raw is None:
+			unsuitability_reasons = None
+		else:
+			unsuitability_reasons = str(unsuitability_raw).strip() or None
+
+		ai_generated = str(data.get("ai_generated") or "Real")
+		accessibility_score = str(data.get("accessibility_score") or "Accessible")
+
+		safe_alternatives_raw = data.get("safe_alternatives")
+		safe_alternatives: List[str] = []
+		if isinstance(safe_alternatives_raw, list):
+			safe_alternatives = [str(value).strip() for value in safe_alternatives_raw if str(value).strip()]
+
+		timing_breakdown_raw = data.get("timing_breakdown")
+		timing_breakdown: Optional[Dict[str, float]] = None
+		if isinstance(timing_breakdown_raw, dict):
+			timing_breakdown = {
+				str(key): converted
+				for key, value in timing_breakdown_raw.items()
+				for converted in [_to_optional_float(value)]
+				if converted is not None
+			}
+
+		reason = str(data.get("reason") or data.get("explanation") or "").strip()
+		if not reason:
+			if suitability_for_school.lower() == "unsuitable":
+				reason = unsuitability_reasons or "Marked unsuitable for school use."
+			elif age_restriction.lower() != "all ages":
+				reason = f"Age restriction: {age_restriction}."
+			else:
+				reason = "No reason provided."
 
 		return AccessPolicy(
 			url=data.get("url", url),
-			category=str(category),
+			category=str(data.get("category") or "Other"),
+			age_restriction=age_restriction,
+			educational_genre=str(data.get("educational_genre") or "Other"),
+			suitability_for_school=suitability_for_school,
+			recommended_grade_level=str(recommended_grade_level) if recommended_grade_level else None,
+			unsuitability_reasons=unsuitability_reasons,
+			ai_generated=ai_generated,
+			accessibility_score=accessibility_score,
+			safe_alternatives=safe_alternatives,
+			timing_breakdown=timing_breakdown,
 			reason=str(reason),
 			allowed_for_user_ids=[str(user_id) for user_id in data.get("allowed_for_user_ids", [])],
-			min_age=_to_optional_int(data.get("min_age")),
-			max_age=_to_optional_int(data.get("max_age")),
-			min_grade_level=_to_optional_int(data.get("min_grade_level")),
-			max_grade_level=_to_optional_int(data.get("max_grade_level")),
+			min_age=min_age,
+			max_age=max_age,
+			min_grade_level=min_grade_level,
+			max_grade_level=max_grade_level,
 		)
 
 
@@ -201,7 +262,16 @@ class AIServiceClient:
 		if any(keyword in lowered for keyword in ["adult", "gambling", "violence"]):
 			policy = AccessPolicy(
 				url=url,
-				category="Sensitive Content",
+				category="Unsafe",
+				age_restriction="18+",
+				educational_genre="Other",
+				suitability_for_school="Unsuitable",
+				recommended_grade_level=None,
+				unsuitability_reasons="Inappropriate Content",
+				ai_generated="AI Generated",
+				accessibility_score="Not Accessible",
+				safe_alternatives=[],
+				timing_breakdown=None,
 				reason="AI fallback: restricted keyword detected.",
 				allowed_for_user_ids=[],
 				min_age=18,
@@ -225,7 +295,16 @@ class AIServiceClient:
 
 		policy = AccessPolicy(
 			url=url,
-			category="General",
+			category="Other",
+			age_restriction="All Ages",
+			educational_genre="Other",
+			suitability_for_school="Suitable",
+			recommended_grade_level=None,
+			unsuitability_reasons=None,
+			ai_generated="AI Generated",
+			accessibility_score="Accessible",
+			safe_alternatives=[],
+			timing_breakdown=None,
 			reason="AI fallback: allowed for all profiles.",
 			allowed_for_user_ids=[],
 			min_age=None,
@@ -265,15 +344,96 @@ class AIServiceClient:
 			return parsed
 
 
+class UrlKeywordFilter:
+	TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
+
+	def __init__(self, list_path: str) -> None:
+		self.list_path = list_path
+		self.single_terms: Set[str] = set()
+		self.phrases_by_length: Dict[int, Set[Tuple[str, ...]]] = {}
+		self._load_terms()
+
+	def match(self, url: str) -> Optional[str]:
+		decoded_url = self._decode_percent_encoding(url)
+		tokens = self._tokenize(decoded_url)
+		if not tokens:
+			return None
+
+		for token in tokens:
+			if token in self.single_terms:
+				return token
+
+		for phrase_length in sorted(self.phrases_by_length.keys(), reverse=True):
+			phrases = self.phrases_by_length[phrase_length]
+			if len(tokens) < phrase_length:
+				continue
+			for index in range(0, len(tokens) - phrase_length + 1):
+				candidate = tuple(tokens[index : index + phrase_length])
+				if candidate in phrases:
+					return " ".join(candidate)
+
+		return None
+
+	def _load_terms(self) -> None:
+		if not os.path.exists(self.list_path):
+			print(f"Keyword list not found at {self.list_path}; URL keyword filter disabled.")
+			return
+
+		try:
+			with open(self.list_path, "r", encoding="utf-8") as words_file:
+				content = words_file.read().strip()
+				raw_terms = json.loads(content)
+				if not isinstance(raw_terms, list):
+					raw_terms = []
+		except (OSError, json.JSONDecodeError) as error:
+			print(f"Failed to load keyword list: {error}")
+			return
+
+		for term in raw_terms:
+			tokens = self._tokenize(str(term))
+			if not tokens:
+				continue
+			if len(tokens) == 1:
+				self.single_terms.add(tokens[0])
+				continue
+
+			phrase = tuple(tokens)
+			phrase_length = len(phrase)
+			if phrase_length not in self.phrases_by_length:
+				self.phrases_by_length[phrase_length] = set()
+			self.phrases_by_length[phrase_length].add(phrase)
+
+		print(
+			f"Loaded URL keyword filter with {len(self.single_terms)} single terms and "
+			f"{sum(len(value) for value in self.phrases_by_length.values())} phrases."
+		)
+
+	@classmethod
+	def _tokenize(cls, value: str) -> List[str]:
+		return cls.TOKEN_PATTERN.findall(value.lower())
+
+	@staticmethod
+	def _decode_percent_encoding(value: str, max_passes: int = 3) -> str:
+		decoded = value
+		for _ in range(max_passes):
+			next_value = unquote(decoded)
+			if next_value == decoded:
+				break
+			decoded = next_value
+		return decoded
+
+
 class Orchestrator:
 	def __init__(
 		self,
 		cache_client: CacheApiClient,
 		ai_client: AIServiceClient,
+		keyword_filter: UrlKeywordFilter,
 		state_manager: RedisStateManager,
 	) -> None:
 		self.cache_client = cache_client
 		self.ai_client = ai_client
+		self.keyword_filter = keyword_filter
 		self.state_manager = state_manager
 
 	def handle_url_request(self, profile: StudentProfile, raw_url: str) -> OrchestrationResult:
@@ -286,6 +446,44 @@ class Orchestrator:
 		except ValueError:
 			self.state_manager.update_state(request_id, ControlState.FAILED)
 			raise InvalidUrlError(request_id=request_id, message="URL is not valid")
+
+		self.state_manager.update_state(request_id, ControlState.KEYWORD_FILTER_CHECK)
+		matched_term = self.keyword_filter.match(normalized_url)
+		if matched_term:
+			blocked_policy = AccessPolicy(
+				url=normalized_url,
+				category="URL Keyword Filter",
+				age_restriction="All Ages",
+				educational_genre="Other",
+				suitability_for_school="Unsuitable",
+				recommended_grade_level=None,
+				unsuitability_reasons="Inappropriate Content",
+				ai_generated="Real",
+				accessibility_score="Not Accessible",
+				safe_alternatives=[],
+				timing_breakdown=None,
+				reason=f"Blocked by URL keyword filter: detected '{matched_term}' as a URL segment.",
+				allowed_for_user_ids=[],
+				min_age=None,
+				max_age=None,
+				min_grade_level=None,
+				max_grade_level=None,
+			)
+			self.state_manager.update_state(request_id, ControlState.ACCESS_DECIDED)
+			self.state_manager.update_state(request_id, ControlState.COMPLETED)
+			return OrchestrationResult(
+				request_id=request_id,
+				normalized_url=normalized_url,
+				profile=profile,
+				policy=blocked_policy,
+				decision=Decision.BLOCKED,
+				ui_message=self._build_ui_feedback(Decision.BLOCKED, blocked_policy),
+				retrigger_browser=False,
+				source="keyword-filter",
+				cache_lookup_status="not_attempted",
+				cache_update_status="not_attempted",
+				ai_used=False,
+			)
 
 		try:
 			self.state_manager.update_state(request_id, ControlState.CACHE_CHECK)
@@ -329,7 +527,9 @@ class Orchestrator:
 		if not url:
 			raise ValueError("URL cannot be empty.")
 
-		if "://" not in url:
+		if url.startswith("//"):
+			url = f"https:{url}"
+		elif "://" not in url:
 			url = f"https://{url}"
 
 		parsed = urlparse(url)
@@ -349,6 +549,8 @@ class Orchestrator:
 
 	@staticmethod
 	def _decide(profile: StudentProfile, policy: AccessPolicy) -> Decision:
+		if policy.suitability_for_school.strip().lower() == "unsuitable":
+			return Decision.BLOCKED
 		if policy.allowed_for_user_ids and profile.user_id not in policy.allowed_for_user_ids:
 			return Decision.BLOCKED
 		if policy.min_age is not None and profile.age < policy.min_age:
@@ -370,13 +572,13 @@ class Orchestrator:
 
 class InterestInput(BaseModel):
 	interest: str = Field(..., min_length=1)
-	rating: int
+	rating: int = Field(..., ge=1, le=5)
 
 
 class EvaluateRequest(BaseModel):
 	url: str
 	user_id: str = Field(..., min_length=1, pattern=r"^[a-fA-F0-9]{24}$")
-	age: int = Field(..., ge=1)
+	age: int = Field(..., ge=1, le=20)
 	grade_level: int = Field(..., ge=1)
 	interests: List[InterestInput] = Field(default_factory=list)
 
@@ -384,6 +586,15 @@ class EvaluateRequest(BaseModel):
 class AccessPolicyResponse(BaseModel):
 	url: str
 	category: str
+	age_restriction: str
+	educational_genre: str
+	suitability_for_school: str
+	recommended_grade_level: Optional[str]
+	unsuitability_reasons: Optional[str]
+	ai_generated: str
+	accessibility_score: str
+	safe_alternatives: List[str]
+	timing_breakdown: Optional[Dict[str, float]]
 	reason: str
 	allowed_for_user_ids: List[str]
 	min_age: Optional[int]
@@ -419,6 +630,7 @@ orchestrator = Orchestrator(
 		post_endpoint=os.getenv("YASSIN_CACHE_UPDATE_URL", default_update_url),
 	),
 	ai_client=AIServiceClient(endpoint=os.getenv("AI_POLICY_API_URL", "")),
+	keyword_filter=UrlKeywordFilter(list_path=os.path.join(os.path.dirname(__file__), "blocked_keywords.json")),
 	state_manager=RedisStateManager(),
 )
 
@@ -499,6 +711,42 @@ def _to_optional_int(value: Any) -> Optional[int]:
 		return int(value)
 	except (TypeError, ValueError):
 		return None
+
+
+def _to_optional_float(value: Any) -> Optional[float]:
+	if value is None:
+		return None
+	try:
+		return float(value)
+	except (TypeError, ValueError):
+		return None
+
+
+def _parse_age_restriction(value: Optional[str]) -> Optional[int]:
+	if not value:
+		return None
+	normalized = value.strip().lower()
+	if normalized in {"all ages", "all-age", "all"}:
+		return None
+	match = re.search(r"(\d+)", normalized)
+	if not match:
+		return None
+	return _to_optional_int(match.group(1))
+
+
+def _parse_grade_range(value: Optional[str]) -> Tuple[Optional[int], Optional[int]]:
+	if not value:
+		return None, None
+	normalized = value.strip().lower().replace("\u2013", "-").replace("\u2014", "-")
+	matches = re.findall(r"(\d+)", normalized)
+	if not matches:
+		return None, None
+	if len(matches) == 1:
+		grade = _to_optional_int(matches[0])
+		return grade, grade
+	return _to_optional_int(matches[0]), _to_optional_int(matches[1])
+
+
 
 
 if __name__ == "__main__":
