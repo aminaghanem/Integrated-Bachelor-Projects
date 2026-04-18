@@ -29,7 +29,7 @@ async function updateInterestScores(studentId, { category, visit_duration, inter
   if (alreadyExists && alreadyExists.score > 0) delta += 0.2;
 
   // --- Apply interest decay to ALL categories not updated in 2 weeks ---
-  const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+  const twoWeeksAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   student.interests.interest_scores = student.interests.interest_scores.map(interest => {
     if (interest.category !== category && student.interests.last_updated < twoWeeksAgo) {
       return { ...interest.toObject(), score: Math.max(0, interest.score - 0.05) };

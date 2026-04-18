@@ -12,6 +12,10 @@ const Student = require("../models/studentModel");
 const CategoryCache = require("../models/categoryCacheModel");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 
+const { updateInterestScores } = require("../utils/interestInference");
+const { embedText } = require("../utils/embeddings");
+const { buildContextVector, updateArm, initArmState, rewardFromFeedback } = require("../utils/linucb");
+
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const calculateAge = (dob) => {
@@ -238,6 +242,42 @@ router.post("/log", protect, async (req, res) => {
     });
 
     await activity.save();
+
+    // Update interest scores using the resolved `category` (not req.body.category)
+    await updateInterestScores(req.user.id, {
+      category,
+      visit_duration,
+      interaction_type
+    });
+
+    const cachedForLinUCB = await CategoryCache.findOne({ url: domain });
+    if (cachedForLinUCB) {
+      const contextVector = buildContextVector(student);
+      const currentState = cachedForLinUCB.linucb || initArmState();
+      const reward = rewardFromFeedback({
+        completion_status: "in_progress",
+        visit_duration,
+        interaction_type
+      });
+      const updatedState = updateArm(currentState, contextVector, reward);
+      await CategoryCache.findOneAndUpdate({ url: domain }, { linucb: updatedState });
+    }
+
+    // Embed and cache: use `title` (from cheerio) and `domain` (from normalizeUrl)
+    try {
+      const text = `${title} ${category}`.trim();
+      const embedding = await embedText(text);
+
+      await CategoryCache.findOneAndUpdate(
+        { url: domain },
+        { url: domain, page_title: title, category, embedding, updatedAt: new Date() },
+        { upsert: true }
+      );
+    } catch (embedErr) {
+      console.error("Embedding failed (non-fatal):", embedErr.message);
+      // Don't block the response — embedding failure is recoverable
+    }
+
     res.status(201).json({ success: true, category, decision: "Allowed" });
 });
 

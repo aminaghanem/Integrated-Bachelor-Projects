@@ -14,8 +14,9 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
     "@faker-js/faker": "^8.4.1",
-    "@google/genai": "^1.45.0",
+    "@google/genai": "^1.49.0",
     "@google/generative-ai": "^0.24.1",
+    "@xenova/transformers": "^2.17.2",
     "axios": "^1.14.0",
     "bcryptjs": "^3.0.3",
     "cheerio": "^1.2.0",
@@ -23,6 +24,7 @@
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
+    "mathjs": "^15.2.0",
     "mongodb": "^7.1.0",
     "mongoose": "^9.2.3",
     "node-fetch": "^2.7.0"

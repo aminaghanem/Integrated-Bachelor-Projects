@@ -24,6 +24,14 @@ interface Notification {
   url?: string           // the URL that was blocked, for display
   retrigger?: boolean    // whether to offer "open anyway"
 }
+
+interface Recommendation {
+  url: string
+  title: string
+  category: string
+  cosineScore: string
+  finalScore: string
+}
  
 // ── Notification banner ──────────────────────────────────────────
 function NotificationBanner({
@@ -271,6 +279,9 @@ export default function Dashboard() {
 
   const [notification, setNotification] = useState<Notification | null>(null)
 
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([])
+  const [loadingRecs, setLoadingRecs] = useState(false)
+
   // Auto-dismiss non-blocked notifications after 5s
   useEffect(() => {
     if (notification && notification.type !== "blocked") {
@@ -307,12 +318,33 @@ export default function Dashboard() {
 
   const router = useRouter()
 
+  const loadRecommendations = useCallback(async () => {
+    const token = localStorage.getItem("token")
+    if (!token) return
+    setLoadingRecs(true)
+    try {
+      const res = await fetch(`${API}/api/recommendations`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setRecommendations(data.recommendations || [])
+      }
+    } catch (e) {
+      console.error("Failed to load recommendations:", e)
+    }
+    setLoadingRecs(false)
+  }, [])
+
   useEffect(() => {
     const token = localStorage.getItem("token")
     if (!token) { router.push("/"); return }
     fetch(`${API}/api/students/profile`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => { if (!r.ok) throw new Error(); return r.json() })
-      .then(setStudent)
+      .then(data => {
+        setStudent(data)
+        loadRecommendations()
+      })
       .catch(() => setPageError("Failed to load profile"))
   }, [])
 
@@ -357,14 +389,14 @@ export default function Dashboard() {
 
   // ── Log browser activity ──────────────────────────────────────
   const logActivity = useCallback(async (
-    url: string, interaction: "view" | "scroll" | "click", duration: number
+    url: string, interaction: "view" | "scroll" | "click", duration: number, category: string
   ) => {
     const token = localStorage.getItem("token")
     if (!token || !student) return
     await fetch(`${API}/api/activity/log`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ student_id: student._id, url, interaction_type: interaction, visit_duration: duration })
+      body: JSON.stringify({ student_id: student._id, url, interaction_type: interaction, visit_duration: duration, category: category })
     }).catch(() => {})
   }, [student])
 
@@ -438,7 +470,7 @@ export default function Dashboard() {
     interactionType.current = "view"
     stopTimer()
 
-    await logActivity(url, interaction, duration)
+    await logActivity(url, interaction, duration, category)
     await saveLearningHistory(url, category, status)
 
     return { url, category }
@@ -690,6 +722,36 @@ export default function Dashboard() {
     }
   };
 
+  const handleRecommendationClick = useCallback(async (url: string) => {
+    const fullUrl = url.startsWith("http") ? url : `https://${url}`
+    const token = localStorage.getItem("token")
+    setLoading(true)
+    setSearchResults([])
+
+    try {
+      const checkRes = await fetch(`${API}/api/activity/check`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ url: fullUrl })
+      })
+      const checkData = await checkRes.json()
+
+      if (checkData.decision === "Blocked") {
+        showNotification({ type: "blocked", message: checkData.message || "Access restricted.", url: fullUrl })
+        setLoading(false)
+        return
+      }
+
+      if (rootUrl.current) await endSession("in_progress")
+      setNavHistory([])
+      rootCategory.current = checkData.category || "General"
+      await loadPage(fullUrl, true)
+    } catch {
+      showNotification({ type: "error", message: "Could not load this recommendation." })
+      setLoading(false)
+    }
+  }, [endSession, loadPage, showNotification])
+
   // ── Close viewer ──────────────────────────────────────────────
   const handleClose = useCallback(async () => {
     if (rootUrl.current) await endSession("in_progress")
@@ -769,7 +831,7 @@ export default function Dashboard() {
         <div style={{ display: "flex", gap: 8 }}>
           <button onClick={loadHistory}
             style={{ padding: "8px 16px", cursor: "pointer", borderRadius: 8, border: "1px solid #2563eb", color: "#2563eb", background: "#fff", fontSize: 13 }}>
-            📚 Learning History
+            ⏱️ Learning History
           </button>
           <button onClick={handleLogout}
             style={{ padding: "8px 18px", cursor: "pointer", borderRadius: 8, border: "1px solid #ccc", background: "#fff" }}>
@@ -799,6 +861,60 @@ export default function Dashboard() {
           onDismiss={dismissNotification}
           onOpenAnyway={handleOpenAnyway}
         />
+      )}
+
+      {/* Recommendations — shown only when no page is open */}
+      {!activeUrl && !loading && recommendations.length > 0 && (
+        <div style={{ marginBottom: "1.5rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+            <p style={{ margin: 0, fontWeight: 600, fontSize: 14, color: "#374151" }}>
+              ✨ Suggested For You
+            </p>
+            <button
+              onClick={loadRecommendations}
+              style={{ fontSize: 12, color: "#2563eb", background: "none", border: "none", cursor: "pointer" }}
+            >
+              Refresh
+            </button>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 10 }}>
+            {recommendations.map((rec, i) => (
+              <div
+                key={i}
+                onClick={() => handleRecommendationClick(rec.url)}
+                style={{
+                  padding: "12px 14px", borderRadius: 10, border: "1px solid #e5e7eb",
+                  background: "#fff", cursor: "pointer", transition: "all 0.2s",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.06)"
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = "#2563eb"
+                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(37,99,235,0.15)"
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = "#e5e7eb"
+                  e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.06)"
+                }}
+              >
+                <p style={{
+                  margin: "0 0 6px", fontSize: 13, fontWeight: 600, color: "#1e40af",
+                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"
+                }}>
+                  {rec.title || rec.url}
+                </p>
+                <span style={{
+                  fontSize: 11, padding: "2px 8px", borderRadius: 20,
+                  background: "#eff6ff", color: "#2563eb", fontWeight: 500
+                }}>
+                  {rec.category}
+                </span>
+              </div>
+            ))}
+          </div>
+          {loadingRecs && (
+            <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 8 }}>Updating recommendations...</p>
+          )}
+        </div>
       )}
 
       {/* Search results */}
@@ -870,9 +986,41 @@ export default function Dashboard() {
               )}
 
               {iframeError && !loading && (
-                <div style={{ height: 300, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 8 }}>
-                  <p style={{ color: "#ef4444", fontWeight: 500 }}>This page could not be loaded in the viewer.</p>
-                  <a href={urlInput} target="_blank" rel="noreferrer" style={{ color: "#2563eb" }}>Open in new tab →</a>
+                <div style={{ 
+                  height: 400, display: "flex", alignItems: "center", justifyContent: "center", 
+                  flexDirection: "column", gap: 16, background: "#fafafa", borderRadius: 8,
+                  border: "2px dashed #e5e7eb", margin: 16
+                }}>
+                  <span style={{ fontSize: 48 }}>🔒</span>
+                  <p style={{ fontWeight: 600, fontSize: 16, margin: 0, color: "#374151" }}>
+                    This site can't be displayed in the safe viewer
+                  </p>
+                  <p style={{ fontSize: 13, color: "#9ca3af", margin: 0, textAlign: "center", maxWidth: 340 }}>
+                    Some websites block embedded viewing for security reasons. 
+                    You can still open it in a new tab.
+                  </p>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <a 
+                      href={activeUrl || urlInput} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      style={{ 
+                        padding: "10px 20px", background: "#2563eb", color: "#fff", 
+                        borderRadius: 8, textDecoration: "none", fontWeight: 600, fontSize: 14
+                      }}
+                    >
+                      Open in New Tab →
+                    </a>
+                    <button 
+                      onClick={handleClose}
+                      style={{ 
+                        padding: "10px 20px", background: "#fff", color: "#6b7280", 
+                        border: "1px solid #e5e7eb", borderRadius: 8, cursor: "pointer", fontSize: 14
+                      }}
+                    >
+                      Go Back
+                    </button>
+                  </div>
                 </div>
               )}
 

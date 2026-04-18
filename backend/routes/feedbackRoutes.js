@@ -4,6 +4,7 @@ const FeedbackResponse = require("../models/feedbackResponseModel")
 const Student = require("../models/studentModel")
 const CategoryCache = require("../models/categoryCacheModel")
 const { protect, authorizeRoles } = require("../middleware/authMiddleware")
+const { buildContextVector, updateArm, initArmState, rewardFromFeedback } = require("../utils/linucb");
 
 const normalizeUrl = (url) => {
   try {
@@ -37,6 +38,29 @@ router.post("/", protect, authorizeRoles("student"), async (req, res) => {
       perceived_difficulty
     })
     res.status(201).json(feedback)
+
+    const student = await Student.findById(req.user.id).populate("class_id");
+
+    if (cached) {
+      const contextVector = buildContextVector(student);
+      const currentState = cached.linucb || initArmState();
+      
+      const reward = rewardFromFeedback({
+        completion_status: req.body.completion_status,
+        interest_rating: req.body.interest_rating,
+        usefulness_rating: req.body.usefulness_rating,
+        visit_duration: req.body.visit_duration,
+        interaction_type: req.body.interaction_type
+      });
+
+      const updatedState = updateArm(currentState, contextVector, reward);
+      
+      await CategoryCache.findOneAndUpdate(
+        { url: domain },
+        { linucb: updatedState },
+        { upsert: false }
+      );
+    }
   } catch (err) {
     res.status(500).json({ error: err.message })
   }

@@ -80,7 +80,7 @@ export default function Step2Profile({ data, update, next, back, errors }: Props
             <option value="public">Public</option>
             <option value="private">Private</option>
             <option value="international">International</option>
-            <option value="homeschooled">Homeschool</option>
+            {/* <option value="homeschooled">Homeschool</option> */}
           </select>
           {errors.school_type && <p style={errorStyle}>{errors.school_type}</p>}
         </div>
@@ -89,11 +89,10 @@ export default function Step2Profile({ data, update, next, back, errors }: Props
           <select value={data.region} onChange={e => update({ region: e.target.value })}
             style={{ ...selectStyle, borderColor: errors.region ? "#fca5a5" : "#e5e7eb" }}>
             <option value="" disabled>Select region</option>
-            <option value="Africa">Africa</option>
-            <option value="Middle East">Middle East</option>
-            <option value="Europe">Europe</option>
-            <option value="Asia">Asia</option>
-            <option value="North America">North America</option>
+            <option value="Egypt">Egypt</option>
+            <option value="USA">USA</option>
+            <option value="UK">UK</option>
+            <option value="Germany">Germany</option>
           </select>
           {errors.region && <p style={errorStyle}>{errors.region}</p>}
         </div>
@@ -110,7 +109,7 @@ export default function Step2Profile({ data, update, next, back, errors }: Props
             <option value="" disabled>Select language</option>
             <option value="Arabic">Arabic</option>
             <option value="English">English</option>
-            <option value="French">French</option>
+            {/* <option value="French">French</option> */}
             <option value="German">German</option>
           </select>
           {errors.preferred_language && <p style={errorStyle}>{errors.preferred_language}</p>}
@@ -120,10 +119,10 @@ export default function Step2Profile({ data, update, next, back, errors }: Props
           <select value={data.learning_preferences} onChange={e => update({ learning_preferences: e.target.value })}
             style={{ ...selectStyle, borderColor: errors.learning_preferences ? "#fca5a5" : "#e5e7eb" }}>
             <option value="" disabled>Select style</option>
-            <option value="Visual">Visual 👁</option>
-            <option value="Auditory">Auditory 👂</option>
-            <option value="Reading/Writing">Reading / Writing 📖</option>
-            <option value="Kinesthetic">Kinesthetic 🤲</option>
+            <option value="Visual">Visual</option>
+            <option value="Auditory">Auditory</option>
+            <option value="Reading/Writing">Reading / Writing</option>
+            <option value="Kinesthetic">Kinesthetic</option>
           </select>
           {errors.learning_preferences && <p style={errorStyle}>{errors.learning_preferences}</p>}
         </div>

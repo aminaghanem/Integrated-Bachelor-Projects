@@ -1,53 +1,5 @@
-// // routes/proxy.js
-// const express = require("express")
-// const router = express.Router()
-// const fetch = require("node-fetch") // npm install node-fetch@2
-
-// router.get("/", async (req, res) => {
-
-//   const { url } = req.query
-//   if (!url) return res.status(400).send("Missing url param")
-
-//   try {
-
-//     const response = await fetch(url, {
-//       headers: {
-//         "User-Agent": "Mozilla/5.0 (compatible; SmartGuard/1.0)"
-//       }
-//     })
-
-//     if (!response.ok) {
-//       return res.status(500).send("Failed to load page")
-//     }
-
-//     const contentType = response.headers.get("content-type") || "text/html"
-
-//     const html = await response.text()   // ✅ THIS WAS MISSING
-
-//     // ✅ Allow iframe embedding
-//     res.setHeader("Content-Type", contentType)
-//     res.setHeader("X-Frame-Options", "ALLOWALL")
-
-//     // ⚠️ Remove CSP if exists
-//     res.removeHeader("Content-Security-Policy")
-
-//     // ✅ Send ONLY ONCE
-//     res.send(html)
-
-//   } catch (err) {
-
-//     console.error("Proxy failed:", err)
-//     res.status(500).send("Failed to fetch page: " + err.message)
-
-//   }
-
-// })
-
-// module.exports = router
-
 const express = require("express")
 const router = express.Router()
-
 const axios = require('axios');
 const cheerio = require('cheerio');
 
@@ -57,33 +9,72 @@ router.get("/", async (req, res) => {
 
   try {
     const response = await axios.get(targetUrl, {
-      headers: { 'User-Agent': 'Mozilla/5.0' }
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      maxRedirects: 5
     });
 
     const $ = cheerio.load(response.data);
 
-    // FIX: Convert relative links (like /style.css) to absolute links
-    // so images and styles actually load.
     const urlObj = new URL(targetUrl);
-    const baseUrl = `${urlObj.protocol}//${urlObj.host}`;
+    const origin = `${urlObj.protocol}//${urlObj.host}`;
+    // Base path for resolving relative URLs like "css/main.css"
+    const basePath = targetUrl.substring(0, targetUrl.lastIndexOf('/') + 1);
 
-    $('link, script, img, a').each((i, el) => {
-      const attr = $(el).attr('href') ? 'href' : 'src';
-      const val = $(el).attr(attr);
-      if (val && val.startsWith('/')) {
-        $(el).attr(attr, baseUrl + val);
-      }
+    // Resolves any URL (relative, root-relative, or absolute) to absolute
+    const toAbsolute = (val) => {
+      if (!val) return val;
+      if (/^(https?:\/\/|\/\/|data:|mailto:|javascript:|#)/.test(val)) return val;
+      if (val.startsWith('/')) return origin + val;
+      return basePath + val;  // ← THIS is what fixes hero_slides/left.png and css/main.css
+    };
+
+    // Fix href and src on all elements
+    $('[href]').each((_, el) => {
+      const val = $(el).attr('href');
+      $(el).attr('href', toAbsolute(val));
     });
 
-    $('a').each((i, el) => {
+    $('[src]').each((_, el) => {
+      const val = $(el).attr('src');
+      $(el).attr('src', toAbsolute(val));
+    });
+
+    // Fix srcset (e.g. <img srcset="img-2x.png 2x, img-1x.png 1x">)
+    $('[srcset]').each((_, el) => {
+      const srcset = $(el).attr('srcset');
+      const fixed = srcset.split(',').map(part => {
+        const [url, descriptor] = part.trim().split(/\s+/);
+        return descriptor ? `${toAbsolute(url)} ${descriptor}` : toAbsolute(url);
+      }).join(', ');
+      $(el).attr('srcset', fixed);
+    });
+
+    // Fix url(...) inside <style> tags
+    $('style').each((_, el) => {
+      const css = $(el).html();
+      const fixed = css.replace(/url\(['"]?([^'")]+)['"]?\)/g, (match, path) => {
+        return `url("${toAbsolute(path)}")`;
+      });
+      $(el).html(fixed);
+    });
+
+    // Fix url(...) inside inline style attributes
+    $('[style]').each((_, el) => {
+      const style = $(el).attr('style');
+      const fixed = style.replace(/url\(['"]?([^'")]+)['"]?\)/g, (match, path) => {
+        return `url("${toAbsolute(path)}")`;
+      });
+      $(el).attr('style', fixed);
+    });
+
+    // Keep _self so ShadowViewer link interception works
+    $('a').each((_, el) => {
       $(el).attr('target', '_self');
     });
 
-    // 3. Optional: Inject a base tag to help with relative assets
-    $('head').prepend(`<base href="${baseUrl}/">`);
-
-    // Remove scripts if you want a "Safe Mode" for students
-    // $('script').remove(); 
+    // Remove the base tag — toAbsolute handles everything now,
+    // and a <base> tag can interfere with the Shadow DOM context
+    $('base').remove();
 
     res.send($.html());
   } catch (error) {
@@ -92,4 +83,4 @@ router.get("/", async (req, res) => {
   }
 });
 
-module.exports = router
+module.exports = router;
