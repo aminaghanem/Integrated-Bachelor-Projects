@@ -11,22 +11,24 @@ const {
   addStudentToClass
 } = require("../controllers/classController");
 
+const { protect, authorizeRoles } = require("../middleware/authMiddleware");
+
 
 // create class
-router.post("/create", createClass);
+router.post("/create", protect, authorizeRoles("admin"), createClass);
 
 
 // get class by id
-router.get("/:id", getClassById);
+router.get("/:id", protect, authorizeRoles("admin"), getClassById);
 
 
 // add student to class
-router.put("/:id/add-student", addStudentToClass);
+router.put("/:id/add-student", protect, authorizeRoles("admin"), addStudentToClass);
 
-router.get("/", getAllClasses);
+router.get("/", protect, authorizeRoles("admin"), getAllClasses);
 
-router.put("/:id", updateClass);
+router.put("/:id", protect, authorizeRoles("admin"), updateClass);
 
-router.delete("/:id", deleteClass);
+router.delete("/:id", protect, authorizeRoles("admin"), deleteClass);
 
 module.exports = router;

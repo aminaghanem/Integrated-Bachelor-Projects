@@ -5,7 +5,7 @@ let pipeline = null;
 async function getEmbedder() {
   if (pipeline) return pipeline;
 
-  console.log("⏳ Loading embedding model (first time only)...");
+  console.log("⏳ Loading embedding model...");
   // Dynamic import because @xenova/transformers is ESM
   const { pipeline: createPipeline } = await import("@xenova/transformers");
   pipeline = await createPipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2");

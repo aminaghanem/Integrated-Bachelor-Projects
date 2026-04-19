@@ -9,17 +9,19 @@ const {
   deleteSubject
 } = require("../controllers/subjectController")
 
+const { protect, authorizeRoles } = require("../middleware/authMiddleware")
+
 // POST /api/subjects
-router.post("/", createSubject)
+router.post("/", protect, authorizeRoles("admin"), createSubject)
 
 // GET /api/subjects
-router.get("/", getAllSubjects)
+router.get("/", protect, authorizeRoles("admin"), getAllSubjects)
 
 // GET /api/subjects/grade/10
-router.get("/grade/:grade", getSubjectsByGrade)
+router.get("/grade/:grade", protect, authorizeRoles("admin"), getSubjectsByGrade)
 
-router.put("/:id", updateSubject);
+router.put("/:id", protect, authorizeRoles("admin"), updateSubject);
 
-router.delete("/:id", deleteSubject);
+router.delete("/:id", protect, authorizeRoles("admin"), deleteSubject);
 
 module.exports = router

@@ -208,8 +208,63 @@ router.post("/log", protect, async (req, res) => {
               Return ONLY the category name.` }] }]
           });
 
+          const CATEGORY_ALIASES = {
+              
+            // Language variants
+            "languages": "Language",
+            "language learning": "Language",
+            "english": "Language",
+            "english language": "Language",
+            "arabic": "Language",
+            "foreign language": "Language",
+            "linguistics": "Language",
+
+            // Math variants
+            "mathematics": "Math",
+            "maths": "Math",
+            "algebra": "Math",
+            "geometry": "Math",
+            "calculus": "Math",
+            "arithmetic": "Math",
+            "statistics": "Math",
+
+            // Science variants
+            "sciences": "Science",
+            "natural science": "Science",
+            "general science": "Science",
+
+            // CS variants
+            "computer science": "Computer Science",
+            "coding": "Computer Science",
+            "programming": "Computer Science",
+            "software": "Computer Science",
+            "technology": "Computer Science",
+
+            // History variants
+            "social studies": "History",
+            "world history": "History",
+            "ancient history": "History",
+
+            // Reading variants
+            "reading": "Reading",
+            "literature": "Reading",
+            "books": "Reading",
+
+            // Learning platforms
+            "education": "Learning",
+            "e-learning": "Learning",
+            "online learning": "Learning",
+            "learning platform": "Learning",
+         };
+
+          function normalizeCategory(raw) {
+            if (!raw) return "General";
+            const lower = raw.trim().toLowerCase();
+            return CATEGORY_ALIASES[lower] || raw.trim();
+          }
+
           const aiText = response.text.trim();
-          if (aiText) category = aiText;
+          if (aiText) category = normalizeCategory(aiText);
 
         } catch (error) {
           console.error("AI Error (Falling back to local logic):", error.message);
@@ -280,17 +335,5 @@ router.post("/log", protect, async (req, res) => {
 
     res.status(201).json({ success: true, category, decision: "Allowed" });
 });
-
-
-// Get all activity (teacher only)
-// router.get(
-//   "/",
-//   protect,
-//   authorizeRoles("teacher"),
-//   async (req, res) => {
-//     const activity = await BrowserActivity.find().populate("student_id");
-//     res.json(activity);
-//   }
-// );
 
 module.exports = router;

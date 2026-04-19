@@ -7,10 +7,12 @@ const {
   deleteAdmin
 } = require("../controllers/adminController");
 
-router.post("/", createAdmin);
+const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 
-router.get("/", getAllAdmins);
+router.post("/", protect, authorizeRoles("admin"), createAdmin);
 
-router.delete("/:id", deleteAdmin);
+router.get("/", protect, authorizeRoles("admin"), getAllAdmins);
+
+router.delete("/:id", protect, authorizeRoles("admin"), deleteAdmin);
 
 module.exports = router;

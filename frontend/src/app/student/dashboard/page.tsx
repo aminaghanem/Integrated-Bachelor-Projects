@@ -32,6 +32,12 @@ interface Recommendation {
   cosineScore: string
   finalScore: string
 }
+
+interface RecommendationGroup {
+  category: string
+  label: string
+  items: Recommendation[]
+}
  
 // ── Notification banner ──────────────────────────────────────────
 function NotificationBanner({
@@ -90,6 +96,40 @@ function NotificationBanner({
         background: "none", border: "none", cursor: "pointer",
         color: "#9ca3af", fontSize: 18, lineHeight: 1, padding: "0 0 0 8px", flexShrink: 0
       }}>×</button>
+    </div>
+  )
+}
+
+function RecCard({ rec, onClick }: { rec: Recommendation; onClick: (url: string) => void }) {
+  return (
+    <div
+      onClick={() => onClick(rec.url)}
+      style={{
+        padding: "12px 14px", borderRadius: 10, border: "1px solid #e5e7eb",
+        background: "#fff", cursor: "pointer", transition: "all 0.2s",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.06)"
+      }}
+      onMouseEnter={e => {
+        e.currentTarget.style.borderColor = "#2563eb"
+        e.currentTarget.style.boxShadow = "0 4px 12px rgba(37,99,235,0.15)"
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.borderColor = "#e5e7eb"
+        e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.06)"
+      }}
+    >
+      <p style={{
+        margin: "0 0 6px", fontSize: 13, fontWeight: 600, color: "#1e40af",
+        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"
+      }}>
+        {rec.title || rec.url}
+      </p>
+      <span style={{
+        fontSize: 11, padding: "2px 8px", borderRadius: 20,
+        background: "#eff6ff", color: "#2563eb", fontWeight: 500
+      }}>
+        {rec.category}
+      </span>
     </div>
   )
 }
@@ -269,6 +309,7 @@ export default function Dashboard() {
   const [iframeError, setIframeError] = useState(false)
   const [loading, setLoading] = useState(false)
   const [htmlContent, setHtmlContent] = useState("")
+  const [sessionActive, setSessionActive] = useState(false)
 
   const [searchResults, setSearchResults] = useState<{ title: string; snippet: string; link: string }[]>([])
   const [isSearching, setIsSearching] = useState(false)
@@ -277,10 +318,14 @@ export default function Dashboard() {
   const [pendingUrl, setPendingUrl] = useState("")
   const [navHistory, setNavHistory] = useState<string[]>([])
 
+  const [showCompletionPrompt, setShowCompletionPrompt] = useState(false)
+
   const [notification, setNotification] = useState<Notification | null>(null)
 
   const [recommendations, setRecommendations] = useState<Recommendation[]>([])
   const [loadingRecs, setLoadingRecs] = useState(false)
+  const [recGroups, setRecGroups] = useState<RecommendationGroup[]>([])
+  const [exploreRecs, setExploreRecs] = useState<Recommendation[]>([])
 
   // Auto-dismiss non-blocked notifications after 5s
   useEffect(() => {
@@ -297,9 +342,35 @@ export default function Dashboard() {
   const dismissNotification = useCallback(() => setNotification(null), [])
  
   const handleOpenAnyway = useCallback((url: string) => {
-    window.open(url, "_blank")
+    window.location.href = url
     setNotification(null)
   }, [])
+
+  const clearRedirectStorage = useCallback(() => {
+    sessionStorage.removeItem("dashboardRedirectedAway")
+    sessionStorage.removeItem("dashboardRedirectedAwayUrl")
+    sessionStorage.removeItem("dashboardRedirectedAwayCategory")
+  }, [])
+
+  const getRedirectedAwayData = useCallback(() => {
+    const url = sessionStorage.getItem("dashboardRedirectedAwayUrl")
+    if (!url) return null
+    return {
+      url,
+      category: sessionStorage.getItem("dashboardRedirectedAwayCategory") || "General"
+    }
+  }, [])
+
+  const handleRedirectAnyway = useCallback(() => {
+    const url = pendingUrl || activeUrl
+    if (url) {
+      redirectedAway.current = true
+      sessionStorage.setItem("dashboardRedirectedAway", "1")
+      sessionStorage.setItem("dashboardRedirectedAwayUrl", url)
+      sessionStorage.setItem("dashboardRedirectedAwayCategory", rootCategory.current)
+      window.location.href = url
+    }
+  }, [pendingUrl, activeUrl])
 
   // Session tracking — all refs, zero React state, zero re-renders
   const rootUrl = useRef<string | null>(null)              // the ORIGINAL url opened
@@ -309,6 +380,7 @@ export default function Dashboard() {
   const timerRef = useRef<HTMLSpanElement>(null)
   const timerInterval = useRef<NodeJS.Timeout | null>(null)
   const interactionBadgeRef = useRef<HTMLSpanElement>(null)
+  const redirectedAway = useRef(false)
 
   // Feedback & history
   const [showFeedback, setShowFeedback] = useState(false)
@@ -328,7 +400,8 @@ export default function Dashboard() {
       })
       if (res.ok) {
         const data = await res.json()
-        setRecommendations(data.recommendations || [])
+        setRecGroups(data.grouped || [])
+        setExploreRecs(data.explore || [])
       }
     } catch (e) {
       console.error("Failed to load recommendations:", e)
@@ -346,6 +419,11 @@ export default function Dashboard() {
         loadRecommendations()
       })
       .catch(() => setPageError("Failed to load profile"))
+
+    const redirectedUrl = sessionStorage.getItem("dashboardRedirectedAwayUrl")
+    if (redirectedUrl) {
+      setShowCompletionPrompt(true)
+    }
   }, [])
 
   // ── Timer — updates DOM directly, never React state ──────────
@@ -468,6 +546,7 @@ export default function Dashboard() {
     rootUrl.current = null
     sessionStart.current = null
     interactionType.current = "view"
+    setSessionActive(false)
     stopTimer()
 
     await logActivity(url, interaction, duration, category)
@@ -475,6 +554,34 @@ export default function Dashboard() {
 
     return { url, category }
   }, [logActivity, saveLearningHistory])
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        // Student left your tab — pause the timer display but keep sessionStart running
+        if (timerInterval.current) {
+          clearInterval(timerInterval.current)
+          timerInterval.current = null
+        }
+      } else {
+        // Student came back — resume the timer if a session is active
+        if (rootUrl.current && sessionStart.current) {
+          timerInterval.current = setInterval(() => {
+            if (!sessionStart.current || !timerRef.current) return
+            const secs = Math.round((Date.now() - sessionStart.current) / 1000)
+            timerRef.current.textContent = secs < 60 ? `⏱ ${secs}s` : `⏱ ${Math.floor(secs / 60)}m ${secs % 60}s`
+          }, 1000)
+        }
+
+        // Check if user came back from external navigation
+        if (rootUrl.current && sessionActive && (iframeError || (!htmlContent && !loading) || redirectedAway.current)) {
+          setShowCompletionPrompt(true)
+        }
+      }
+    }
+    document.addEventListener("visibilitychange", handleVisibility)
+    return () => document.removeEventListener("visibilitychange", handleVisibility)
+  }, [])
 
   // Save on tab close — mark as in_progress
   useEffect(() => {
@@ -543,6 +650,11 @@ export default function Dashboard() {
     setLoading(true)
     setIframeError(false)
     setHtmlContent("")
+    setShowCompletionPrompt(false)
+    redirectedAway.current = false
+    if (isRoot) {
+      clearRedirectStorage()
+    }
 
     try {
       const res = await fetch(`${API}/api/proxy?url=${encodeURIComponent(url)}`)
@@ -556,6 +668,7 @@ export default function Dashboard() {
       if (isRoot) {
         // Get category from the last activity response if available
         // (category is set server-side; we'll read it from the activity log response)
+        setSessionActive(true)
         rootUrl.current = url
         rootCategory.current = "General"  // will be updated after activity is logged
         interactionType.current = "view"
@@ -571,6 +684,20 @@ export default function Dashboard() {
       setIframeError(true)
       setPendingUrl(url)
       setShowRedirectConfirm(true)
+
+      if (isRoot) {
+        setSessionActive(true)
+        rootUrl.current = url
+        rootCategory.current = "General"
+        interactionType.current = "view"
+        startTimer()
+        if (interactionBadgeRef.current) {
+          interactionBadgeRef.current.textContent = "Viewing"
+          interactionBadgeRef.current.style.background = "#6b728022"
+          interactionBadgeRef.current.style.color = "#6b7280"
+        }
+      }
+
     } finally {
       setLoading(false)
     }
@@ -654,6 +781,7 @@ export default function Dashboard() {
    }
     else {
       setIsSearching(true)
+      setShowCompletionPrompt(false)
       if (rootUrl.current) await endSession("in_progress")
       setActiveUrl(null)
       try {
@@ -759,7 +887,10 @@ export default function Dashboard() {
     setHtmlContent("")
     setNavHistory([])
     setIframeError(false)
-  }, [endSession])
+    setShowCompletionPrompt(false)
+    redirectedAway.current = false
+    clearRedirectStorage()
+  }, [endSession, clearRedirectStorage])
 
   // ── Mark as completed ─────────────────────────────────────────
   const handleMarkDone = useCallback(async () => {
@@ -774,6 +905,45 @@ export default function Dashboard() {
       setShowFeedback(true)
     }
   }, [endSession])
+
+  // ── Handle completion prompt ─────────────────────────────────
+  const handleCompleteAndFeedback = useCallback(async () => {
+    let result = await endSession("completed")
+    const stored = getRedirectedAwayData()
+    if (!result && stored) {
+      await saveLearningHistory(stored.url, stored.category, "completed")
+      result = { url: stored.url, category: stored.category }
+    }
+
+    setShowCompletionPrompt(false)
+    setActiveUrl(null)
+    setHtmlContent("")
+    setNavHistory([])
+    setIframeError(false)
+    redirectedAway.current = false
+    clearRedirectStorage()
+
+    if (result) {
+      setPendingFeedback({ url: result.url, category: result.category })
+      setShowFeedback(true)
+    }
+  }, [endSession, getRedirectedAwayData, saveLearningHistory, clearRedirectStorage])
+
+  const handleSkipCompletion = useCallback(async () => {
+    if (rootUrl.current) {
+      await endSession("in_progress")
+    } else {
+      const stored = getRedirectedAwayData()
+      if (stored) await saveLearningHistory(stored.url, stored.category, "in_progress")
+    }
+    setShowCompletionPrompt(false)
+    setActiveUrl(null)
+    setHtmlContent("")
+    setNavHistory([])
+    setIframeError(false)
+    redirectedAway.current = false
+    clearRedirectStorage()
+  }, [endSession, getRedirectedAwayData, saveLearningHistory, clearRedirectStorage])
 
   // ── Back navigation ───────────────────────────────────────────
   const handleBack = useCallback(() => {
@@ -863,56 +1033,45 @@ export default function Dashboard() {
         />
       )}
 
-      {/* Recommendations — shown only when no page is open */}
-      {!activeUrl && !loading && recommendations.length > 0 && (
+      {/* Recommendations — shown only when no page is open and not searching/viewing history */}
+      {!activeUrl && !loading && !isSearching && !showHistory && searchResults.length === 0 && (recGroups.length > 0 || exploreRecs.length > 0) && (
         <div style={{ marginBottom: "1.5rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-            <p style={{ margin: 0, fontWeight: 600, fontSize: 14, color: "#374151" }}>
-              ✨ Suggested For You
-            </p>
-            <button
-              onClick={loadRecommendations}
-              style={{ fontSize: 12, color: "#2563eb", background: "none", border: "none", cursor: "pointer" }}
-            >
-              Refresh
+
+          {/* Header */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+            <p style={{ margin: 0, fontWeight: 700, fontSize: 15, color: "#111827" }}>✨ Suggested For You</p>
+            <button onClick={loadRecommendations} disabled={loadingRecs}
+              style={{ fontSize: 12, color: "#2563eb", background: "none", border: "none", cursor: "pointer" }}>
+              {loadingRecs ? "Refreshing..." : "Refresh"}
             </button>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 10 }}>
-            {recommendations.map((rec, i) => (
-              <div
-                key={i}
-                onClick={() => handleRecommendationClick(rec.url)}
-                style={{
-                  padding: "12px 14px", borderRadius: 10, border: "1px solid #e5e7eb",
-                  background: "#fff", cursor: "pointer", transition: "all 0.2s",
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.06)"
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = "#2563eb"
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(37,99,235,0.15)"
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = "#e5e7eb"
-                  e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.06)"
-                }}
-              >
-                <p style={{
-                  margin: "0 0 6px", fontSize: 13, fontWeight: 600, color: "#1e40af",
-                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"
-                }}>
-                  {rec.title || rec.url}
-                </p>
-                <span style={{
-                  fontSize: 11, padding: "2px 8px", borderRadius: 20,
-                  background: "#eff6ff", color: "#2563eb", fontWeight: 500
-                }}>
-                  {rec.category}
-                </span>
+
+          {/* Personalized groups — one section per category */}
+          {recGroups.map((group) => (
+            <div key={group.category} style={{ marginBottom: 20 }}>
+              <p style={{ margin: "0 0 8px", fontSize: 12, fontWeight: 600, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                {group.label}
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", gap: 10 }}>
+                {group.items.map((rec, i) => (
+                  <RecCard key={i} rec={rec} onClick={handleRecommendationClick} />
+                ))}
               </div>
-            ))}
-          </div>
-          {loadingRecs && (
-            <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 8 }}>Updating recommendations...</p>
+            </div>
+          ))}
+
+          {/* Explore section */}
+          {exploreRecs.length > 0 && (
+            <div style={{ marginTop: 8 }}>
+              <p style={{ margin: "0 0 8px", fontSize: 12, fontWeight: 600, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                🔭 Explore Other Content
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", gap: 10 }}>
+                {exploreRecs.map((rec, i) => (
+                  <RecCard key={i} rec={rec} onClick={handleRecommendationClick} />
+                ))}
+              </div>
+            </div>
           )}
         </div>
       )}
@@ -956,14 +1115,18 @@ export default function Dashboard() {
                 <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#ef4444", display: "inline-block" }} />
                 <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#f59e0b", display: "inline-block" }} />
                 <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#22c55e", display: "inline-block" }} />
-                <span style={{ flex: 1, fontSize: 13, color: "#555", background: "#fff", border: "1px solid #ddd", borderRadius: 6, padding: "3px 10px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {activeUrl}
-                </span>
+                <input 
+                  type="text"
+                  value={activeUrl || ""}
+                  onChange={e => setUrlInput(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && handleVisit()}
+                  style={{ flex: 1, fontSize: 13, color: "#555", background: "#fff", border: "1px solid #ddd", borderRadius: 6, padding: "3px 10px", outline: "none" }}
+                />
                 <button onClick={handleClose} style={{ fontSize: 18, background: "none", border: "none", cursor: "pointer", color: "#888", lineHeight: 1 }}>×</button>
               </div>
 
-              {/* Session status bar — rendered once, updated via DOM refs */}
-              {activeUrl && !loading && (
+              {/* Session status bar — shown for normal view AND external redirect */}
+              {(activeUrl || iframeError) && !loading && sessionActive && (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 14px", background: "#fff", borderBottom: "1px solid #f0f0f0" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <span ref={interactionBadgeRef}
@@ -971,6 +1134,14 @@ export default function Dashboard() {
                       Viewing
                     </span>
                     <LiveTimer timerRef={timerRef} />
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button 
+                      onClick={handleRedirectAnyway}
+                      style={{ padding: "6px 16px", fontSize: 12, fontWeight: 600, cursor: "pointer", background: "#2563eb", color: "#fff", border: "none", borderRadius: 20 }}
+                    >
+                      Redirect To Site
+                    </button>
                   </div>
                   <button onClick={handleMarkDone}
                     style={{ padding: "6px 16px", fontSize: 12, fontWeight: 600, cursor: "pointer", background: "#10b981", color: "#fff", border: "none", borderRadius: 20 }}>
@@ -1000,17 +1171,15 @@ export default function Dashboard() {
                     You can still open it in a new tab.
                   </p>
                   <div style={{ display: "flex", gap: 8 }}>
-                    <a 
-                      href={activeUrl || urlInput} 
-                      target="_blank" 
-                      rel="noreferrer"
+                    <button 
+                      onClick={handleRedirectAnyway}
                       style={{ 
                         padding: "10px 20px", background: "#2563eb", color: "#fff", 
-                        borderRadius: 8, textDecoration: "none", fontWeight: 600, fontSize: 14
+                        border: "none", borderRadius: 8, fontWeight: 600, fontSize: 14, cursor: "pointer"
                       }}
                     >
-                      Open in New Tab →
-                    </a>
+                      Redirect Anyway
+                    </button>
                     <button 
                       onClick={handleClose}
                       style={{ 
@@ -1051,18 +1220,52 @@ export default function Dashboard() {
 
       {/* Redirect confirm */}
       {showRedirectConfirm && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
-          <div style={{ background: "#fff", padding: "2rem", borderRadius: 12, maxWidth: 400, textAlign: "center" }}>
-            <h3 style={{ margin: "0 0 8px" }}>External Site Required</h3>
-            <p style={{ color: "#555", margin: "0 0 20px" }}>This page cannot be displayed in the safe viewer. Open it in a full window?</p>
-            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
-              <button onClick={() => { window.open(pendingUrl, "_self"); setShowRedirectConfirm(false) }}
-                style={{ padding: "10px 20px", background: "#22c55e", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer" }}>
-                Yes, Proceed
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000 }}>
+          <div style={{ background: "#fff", borderRadius: 16, padding: "2rem", width: "100%", maxWidth: 440, boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
+            <h2 style={{ margin: "0 0 8px", fontSize: 18, fontWeight: 700 }}>External navigation required</h2>
+            <p style={{ margin: "0 0 20px", fontSize: 14, color: "#6b7280" }}>
+              This page cannot be displayed in the safe viewer. Redirect to the URL anyway?
+            </p>
+            <div style={{ display: "flex", gap: 12 }}>
+              <button onClick={handleRedirectAnyway}
+                style={{
+                  flex: 1, padding: "12px", borderRadius: 8, border: "none", cursor: "pointer",
+                  background: "#2563eb", color: "#fff", fontWeight: 600, fontSize: 14
+                }}>
+                Redirect Anyway
               </button>
               <button onClick={() => setShowRedirectConfirm(false)}
-                style={{ padding: "10px 20px", background: "#ef4444", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer" }}>
+                style={{
+                  flex: 1, padding: "12px", borderRadius: 8, border: "1px solid #e5e7eb", background: "#fff", color: "#6b7280", cursor: "pointer", fontSize: 14
+                }}>
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Completion prompt */}
+      {showCompletionPrompt && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000 }}>
+          <div style={{ background: "#fff", borderRadius: 16, padding: "2rem", width: "100%", maxWidth: 440, boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
+            <h2 style={{ margin: "0 0 8px", fontSize: 18, fontWeight: 700 }}>Did you finish learning?</h2>
+            <p style={{ margin: "0 0 20px", fontSize: 14, color: "#6b7280" }}>
+              It looks like you navigated away from the learning page. Would you like to mark this URL as completed?
+            </p>
+            <div style={{ display: "flex", gap: 12 }}>
+              <button onClick={handleCompleteAndFeedback}
+                style={{
+                  flex: 1, padding: "12px", borderRadius: 8, border: "none", cursor: "pointer",
+                  background: "#10b981", color: "#fff", fontWeight: 600, fontSize: 14
+                }}>
+                ✓ Mark as Completed
+              </button>
+              <button onClick={handleSkipCompletion}
+                style={{
+                  flex: 1, padding: "12px", borderRadius: 8, border: "1px solid #e5e7eb", background: "#fff", color: "#6b7280", cursor: "pointer", fontSize: 14
+                }}>
+                Not Yet
               </button>
             </div>
           </div>

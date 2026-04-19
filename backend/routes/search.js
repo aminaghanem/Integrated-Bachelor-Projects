@@ -3,6 +3,8 @@ const router = express.Router()
 const axios = require("axios")
 const cheerio = require("cheerio")
 
+const { protect, authorizeRoles } = require("../middleware/authMiddleware")
+
 router.get("/", async (req, res) => {
   const { q } = req.query
 

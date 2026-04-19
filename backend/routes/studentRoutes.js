@@ -15,7 +15,7 @@ const Teacher = require("../models/teacherModel.js");
 
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 
-router.post("/signup", createStudent);
+router.post("/signup", protect, authorizeRoles("admin"), createStudent);
 
 router.get("/", protect, authorizeRoles("admin"), getStudents);
 
@@ -23,11 +23,9 @@ router.put("/:id", protect, authorizeRoles("admin"), updateStudent);
 
 router.delete("/:id", protect, authorizeRoles("admin"), deleteStudent);
 
-//router.post("/login", loginStudent);
+router.get("/profile", protect, authorizeRoles("student"), getStudentProfile);
 
-router.get("/profile", protect, getStudentProfile);
-
-router.get("/:id", getStudent);
+router.get("/:id", protect, authorizeRoles("admin"), getStudent);
 
 router.get("/check-username/:username", async (req, res) => {
   try {

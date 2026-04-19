@@ -14,7 +14,7 @@ const BrowserActivity = require("../models/browserActivityModel")
 const Parent = require("../models/parentModel")
 
 // Create parent (public registration)
-router.post("/", createParent);
+router.post("/", protect, authorizeRoles("admin"), createParent);
 
 router.get("/", protect, authorizeRoles("admin"), getParents);
 
