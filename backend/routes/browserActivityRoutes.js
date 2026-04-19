@@ -79,7 +79,7 @@ router.post("/check", protect, async (req, res) => {
       return res.status(400).json({ error: "Your grade level could not be determined. Please contact your school administrator!" })
     }
 
-    // Payload structure in the /check route
+    // Payload structure
     const orchestratorPayload = {
       url: url,
       user_id: student._id.toString(),
@@ -90,7 +90,8 @@ router.post("/check", protect, async (req, res) => {
         .map(item => ({
           interest: String(item.category),
           rating: Math.max(1, Math.min(5, Math.round(Number(item.score))))
-        }))
+        })),
+      accessibility: student.accessibility
     };
         
     console.log("Sending to orchestrator:", JSON.stringify(orchestratorPayload, null, 2))

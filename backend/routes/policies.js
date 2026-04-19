@@ -27,10 +27,11 @@ router.post("/launch-gui", (req, res) => {
     let hasError = false;
 
     proc.stderr.on("data", d => {
-      errorOutput += d.toString();
-      console.error("Python error:", d.toString());
-      // Detect early errors (within first few lines)
-      if (errorOutput.includes("AttributeError") || errorOutput.includes("Traceback")) {
+      const text = d.toString();
+      errorOutput += text;
+      console.error("Python stderr:", text);
+      // Detect real startup failures only, not normal INFO/WARNING logs
+      if (/Traceback|Exception|AttributeError|ImportError|RuntimeError|SyntaxError/.test(text)) {
         hasError = true;
       }
     });
@@ -54,8 +55,7 @@ router.post("/launch-gui", (req, res) => {
     // Give it 2.5 seconds — if it's still running, it launched successfully
     setTimeout(() => {
       if (!res.headersSent) {
-        if (hasError || errorOutput) {
-          // Crashed within 2.5s — return the actual Python error
+        if (hasError) {
           res.status(500).json({ 
             error: "GUI failed to start", 
             detail: errorOutput.slice(-500) // Last 500 chars to avoid huge responses
