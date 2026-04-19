@@ -1684,7 +1684,9 @@ class AdminLogViewer(tk.Toplevel):
         level = self.policy_level_var.get()
         self.policy_grade_cb["values"]    = GRADE_OPTIONS.get(level, [])
         self.policy_age_cb["values"]      = AGE_OPTIONS.get(level, [])
-        self.policy_interest_cb["values"] = INTEREST_OPTIONS.get(level, [])
+        subjects = db.get_subjects_by_school_level(level) if db.connected else []
+        self.policy_interest_cb["values"] = subjects
+        # self.policy_interest_cb["values"] = INTEREST_OPTIONS.get(level, [])
 
     def _save_policy(self):
         url      = self.policy_url_var.get().strip()
