@@ -104,7 +104,7 @@ class InvalidUrlError(ValueError):
 
 
 class CacheApiClient:
-	def __init__(self, get_endpoint: str, post_endpoint: str, timeout_seconds: int = 4) -> None:
+	def __init__(self, get_endpoint: str, post_endpoint: str, timeout_seconds: int = 600) -> None:
 		self.get_endpoint = get_endpoint.strip()
 		self.post_endpoint = post_endpoint.strip()
 		self.timeout_seconds = timeout_seconds
@@ -125,7 +125,7 @@ class CacheApiClient:
 				return "miss", None
 			print(f"Cache analyze HTTP error {error.code}: {error}")
 			return "error", None
-		except (URLError, TimeoutError, ValueError) as error:
+		except (URLError, TimeoutError, ValueError, OSError) as error:
 			print(f"Cache analyze request failed: {error}")
 			return "error", None
 
@@ -142,7 +142,7 @@ class CacheApiClient:
 		try:
 			self._request_json("POST", endpoint, ai_response)
 			return "updated"
-		except (HTTPError, URLError, TimeoutError, ValueError) as error:
+		except (HTTPError, URLError, TimeoutError, ValueError, OSError) as error:
 			print(f"Cache update request failed: {error}")
 			return "failed"
 
@@ -172,7 +172,12 @@ class CacheApiClient:
 
 	@staticmethod
 	def _policy_from_payload(url: str, payload: Dict[str, Any]) -> AccessPolicy:
-		data = payload.get("data") if isinstance(payload.get("data"), dict) else payload
+		data = payload
+		for key in ("data", "policy", "classification"):
+			candidate = payload.get(key) if isinstance(payload, dict) else None
+			if isinstance(candidate, dict):
+				data = candidate
+				break
 
 		age_restriction = str(data.get("age_restriction") or "All Ages")
 		min_age = _parse_age_restriction(age_restriction)
@@ -240,91 +245,30 @@ class CacheApiClient:
 
 
 class AIServiceClient:
-	def __init__(self, endpoint: str, timeout_seconds: int = 8) -> None:
+	def __init__(self, endpoint: str, timeout_seconds: int = 600) -> None:
 		self.endpoint = endpoint.strip()
 		self.timeout_seconds = timeout_seconds
 
 	def classify_url(self, url: str) -> AIAnalysisResult:
-		if self.endpoint:
-			try:
-				payload = self._request_json("POST", self.endpoint, {"url": url})
-				policy_payload = payload.get("policy") if isinstance(payload, dict) else None
-				if policy_payload is None and isinstance(payload, dict):
-					policy_payload = payload
-				if isinstance(policy_payload, dict):
-					policy = CacheApiClient._policy_from_payload(url, policy_payload)
-					return AIAnalysisResult(policy=policy, raw_response=payload, used_fallback=False, model_response=payload)
-			except (HTTPError, URLError, TimeoutError, ValueError):
-				pass
+		if not self.endpoint:
+			raise RuntimeError("AI endpoint is not configured")
 
-		# Fallback behavior for local testing when AI endpoint is unavailable.
-		lowered = url.lower()
-		if any(keyword in lowered for keyword in ["adult", "gambling", "violence"]):
-			policy = AccessPolicy(
-				url=url,
-				category="Unsafe",
-				age_restriction="18+",
-				educational_genre="Other",
-				suitability_for_school="Unsuitable",
-				recommended_grade_level=None,
-				unsuitability_reasons="Inappropriate Content",
-				ai_generated="AI Generated",
-				accessibility_score="Not Accessible",
-				safe_alternatives=[],
-				timing_breakdown=None,
-				reason="AI fallback: restricted keyword detected.",
-				allowed_for_user_ids=[],
-				min_age=18,
-				max_age=None,
-				min_grade_level=None,
-				max_grade_level=None,
-			)
-			return AIAnalysisResult(
-				policy=policy,
-				raw_response={
-					"url": url,
-					"safety_status": "unsafe",
-					"risk_level": "high",
-					"explanation": policy.reason,
-					"genre": "sensitive-content",
-					"last_analysed_date": datetime.now(timezone.utc).isoformat(),
-				},
-				used_fallback=True,
-				model_response=None,
-			)
+		try:
+			payload = self._request_json("POST", self.endpoint, {"url": url})
+		except (HTTPError, URLError, TimeoutError, ValueError, OSError) as error:
+			raise RuntimeError(f"AI analysis request failed: {error}") from error
 
-		policy = AccessPolicy(
-			url=url,
-			category="Other",
-			age_restriction="All Ages",
-			educational_genre="Other",
-			suitability_for_school="Suitable",
-			recommended_grade_level=None,
-			unsuitability_reasons=None,
-			ai_generated="AI Generated",
-			accessibility_score="Accessible",
-			safe_alternatives=[],
-			timing_breakdown=None,
-			reason="AI fallback: allowed for all profiles.",
-			allowed_for_user_ids=[],
-			min_age=None,
-			max_age=None,
-			min_grade_level=None,
-			max_grade_level=None,
-		)
-		return AIAnalysisResult(
-			policy=policy,
-			raw_response={
-				"url": url,
-				"safety_status": "safe",
-				"risk_level": "low",
-				"explanation": policy.reason,
-				"genre": "general",
-				"last_analysed_date": datetime.now(timezone.utc).isoformat(),
-			},
-			used_fallback=True,
-			model_response=None,
-		)
+		print(f"AI response received for url={url}: {json.dumps(payload, ensure_ascii=True)}")
+
+		policy_payload = payload.get("policy") if isinstance(payload, dict) else None
+		if policy_payload is None and isinstance(payload, dict):
+			classification_payload = payload.get("classification")
+			policy_payload = classification_payload if isinstance(classification_payload, dict) else payload
+		if not isinstance(policy_payload, dict):
+			raise RuntimeError("AI analysis response does not contain a valid policy object")
+
+		policy = CacheApiClient._policy_from_payload(url, policy_payload)
+		return AIAnalysisResult(policy=policy, raw_response=payload, used_fallback=False, model_response=payload)
 
 	def _request_json(self, method: str, endpoint: str, payload: Dict[str, Any]) -> Dict[str, Any]:
 		data = json.dumps(payload).encode("utf-8")
@@ -623,13 +567,15 @@ app = FastAPI(title="SmartGuard Orchestrator", version="0.2.0")
 default_cache_base_url = os.getenv("YASSIN_CACHE_BASE_URL", "https://logan-unroosted-jenine.ngrok-free.dev").rstrip("/")
 default_analyze_url = f"{default_cache_base_url}/analyze"
 default_update_url = f"{default_cache_base_url}/cache/update"
+default_ai_policy_url = "https://outer-crisply-radiated.ngrok-free.dev/analyze"
+configured_ai_policy_url = (os.getenv("AI_POLICY_API_URL") or "").strip() or default_ai_policy_url
 
 orchestrator = Orchestrator(
 	cache_client=CacheApiClient(
 		get_endpoint=os.getenv("YASSIN_CACHE_ANALYZE_URL", default_analyze_url),
 		post_endpoint=os.getenv("YASSIN_CACHE_UPDATE_URL", default_update_url),
 	),
-	ai_client=AIServiceClient(endpoint=os.getenv("AI_POLICY_API_URL", "")),
+	ai_client=AIServiceClient(endpoint=configured_ai_policy_url),
 	keyword_filter=UrlKeywordFilter(list_path=os.path.join(os.path.dirname(__file__), "blocked_keywords.json")),
 	state_manager=RedisStateManager(),
 )
