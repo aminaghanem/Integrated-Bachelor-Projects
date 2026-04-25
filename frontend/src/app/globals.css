@@ -3,12 +3,12 @@
   --foreground: #171717;
 }
 
-@theme inline {
+/* @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
+} */
 
 @media (prefers-color-scheme: dark) {
   :root {
@@ -18,7 +18,7 @@
 }
 
 body {
-  background: var(--background);
+  background: #fff8ee; 
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
@@ -142,4 +142,19 @@ transition:0.2s;
 
 .rating span:hover{
 transform:scale(1.2);
+}
+
+/* globals.css or inside a <style> tag if using CSS-in-JS */
+:root {
+  --retro-bg: #fef3e2;
+  --retro-surface: #fff8ee;
+  --retro-border: #3d2c1e;
+  --retro-shadow: 2px 2px 0 #3d2c1e;
+  --retro-shadow-lg: 3px 3px 0 #3d2c1e;
+  --retro-blue: #5ab4e8;
+  --retro-green: #7bc67e;
+  --retro-amber: #f5c842;
+  --retro-text: #3d2c1e;
+  --retro-muted: #b89b82;
+  --retro-radius: 10px;
 }

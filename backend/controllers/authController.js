@@ -69,7 +69,7 @@ const login = async (req, res) => {
       })
     }
 
-    return res.status(400).json({ error: "User not found" })
+    return res.status(400).json({ error: "Invalid Username or Password" })
 
   } catch (err) {
 

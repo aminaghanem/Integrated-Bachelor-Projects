@@ -91,7 +91,9 @@ router.post("/check", protect, async (req, res) => {
           interest: String(item.category),
           rating: Math.max(1, Math.min(5, Math.round(Number(item.score))))
         })),
-      accessibility: student.accessibility
+      sensory_limitations: student.accessibility?.sensory_limitations ?? [],
+      neurodiversity_flags: student.accessibility?.neurodiversity_flags ?? [],
+      has_accessibility_needs: student.accessibility?.has_accessibility_needs ?? false
     };
         
     console.log("Sending to orchestrator:", JSON.stringify(orchestratorPayload, null, 2))

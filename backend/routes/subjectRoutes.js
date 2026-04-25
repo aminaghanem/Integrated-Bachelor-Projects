@@ -15,10 +15,10 @@ const { protect, authorizeRoles } = require("../middleware/authMiddleware")
 router.post("/", protect, authorizeRoles("admin"), createSubject)
 
 // GET /api/subjects
-router.get("/", protect, authorizeRoles("admin"), getAllSubjects)
+router.get("/", getAllSubjects)
 
 // GET /api/subjects/grade/10
-router.get("/grade/:grade", protect, authorizeRoles("admin"), getSubjectsByGrade)
+router.get("/grade/:grade", getSubjectsByGrade)
 
 router.put("/:id", protect, authorizeRoles("admin"), updateSubject);
 

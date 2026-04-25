@@ -10,7 +10,7 @@ router.post("/launch-gui", (req, res) => {
   const path = require("path");
   const { spawn } = require("child_process");
   
-  const scriptPath = "..\\PolicyEngine\\run_agentvilm.py";
+  const scriptPath = "..\\PolicyEngine\\appp(2).py";
   const cwd = path.dirname(scriptPath);
 
   try {
