@@ -12,7 +12,7 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link
-          href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Silkscreen&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600&family=Press+Start+2P&family=VT323&family=Silkscreen&display=swap"
           rel="stylesheet"
         />
       </head>
