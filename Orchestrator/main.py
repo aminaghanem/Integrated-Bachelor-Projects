@@ -15,7 +15,7 @@ import validators
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from state_manager import RedisStateManager
 from states import ControlState
@@ -76,11 +76,17 @@ class StudentProfile:
 		age:         Student's age in years.
 		grade_level: School grade (e.g. 1–12).
 		interests:   List of interest dicts, each with 'interest' and 'rating' keys.
+		sensory_limitations: List of declared sensory accessibility limitations.
+		neurodiversity_flags: List of declared neurodiversity-related flags.
+		has_accessibility_needs: Whether any accessibility accommodations are needed.
 	"""
 	user_id: str
 	age: int
 	grade_level: int
 	interests: List[Dict[str, Any]]
+	sensory_limitations: List[str]
+	neurodiversity_flags: List[str]
+	has_accessibility_needs: bool
 
 
 @dataclass
@@ -912,6 +918,23 @@ class EvaluateRequest(BaseModel):
 	age: int = Field(..., ge=1, le=20)
 	grade_level: int = Field(..., ge=1)
 	interests: List[InterestInput] = Field(default_factory=list)
+	sensory_limitations: List[str] = Field(default_factory=list)
+	neurodiversity_flags: List[str] = Field(default_factory=list)
+	has_accessibility_needs: bool = False
+
+	@model_validator(mode="after")
+	def validate_accessibility_consistency(self) -> "EvaluateRequest":
+		"""Keep accessibility booleans and arrays consistent with browser contract."""
+		has_any_flag = bool(self.sensory_limitations or self.neurodiversity_flags)
+		if self.has_accessibility_needs and not has_any_flag:
+			raise ValueError(
+				"When has_accessibility_needs is true, provide at least one sensory_limitation or neurodiversity_flag."
+			)
+		if not self.has_accessibility_needs and has_any_flag:
+			raise ValueError(
+				"When has_accessibility_needs is false, sensory_limitations and neurodiversity_flags must be empty."
+			)
+		return self
 
 
 class AccessPolicyResponse(BaseModel):
@@ -1019,6 +1042,9 @@ def evaluate_url(request: EvaluateRequest) -> EvaluateResponse:
 		age=request.age,
 		grade_level=request.grade_level,
 		interests=[interest.model_dump() for interest in request.interests],
+		sensory_limitations=request.sensory_limitations,
+		neurodiversity_flags=request.neurodiversity_flags,
+		has_accessibility_needs=request.has_accessibility_needs,
 	)
 
 	try:
