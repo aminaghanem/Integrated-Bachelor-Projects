@@ -883,7 +883,7 @@ class ContentSignalAnalyzer:
         "extremist": 9, "white supremac": 10, "neo-nazi": 10,
         "drug": 8, "narcotic": 8, "psychoactive": 8, "substance abuse": 8,
         "weapon": 7, "explosive": 9, "nuclear weapon": 9,
-        "explicit": 7, "adult content": 7, "pornograph": 10,
+        "explicit": 7, "adult content": 7 : 10,
         "dangerous": 6, "malware": 9, "ransomware": 9, "phishing": 8,
     }
     _SAFE = {
