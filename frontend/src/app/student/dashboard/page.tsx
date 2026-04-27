@@ -21,8 +21,9 @@ interface LearningHistoryItem {
 interface Notification {
   type: "blocked" | "error" | "success"
   message: string
-  url?: string           // the URL that was blocked, for display
-  retrigger?: boolean    // whether to offer "open anyway"
+  url?: string
+  retrigger?: boolean
+  safeAlternatives?: string[]
 }
 
 interface Recommendation {
@@ -938,6 +939,183 @@ function MazeGame({
   )
 }
 
+// ── Blocked popup modal with mini maze ───────────────────────────
+function buildMiniMaze(alternatives: string[]): MazeCell[][] {
+  // Simple linear maze: center hub → one arm per alternative
+  const SIZE = 11
+  const cx = 5, cy = 5
+  const grid: MazeCell[][] = Array.from({ length: SIZE }, () =>
+    Array.from({ length: SIZE }, () => ({ type: "wall" as CellType }))
+  )
+  const open = (r: number, c: number, type: CellType = "path", extra?: Partial<MazeCell>) => {
+    if (r >= 0 && r < SIZE && c >= 0 && c < SIZE) grid[r][c] = { type, ...extra }
+  }
+
+  // Hub
+  open(cy, cx); open(cy-1, cx); open(cy+1, cx); open(cy, cx-1); open(cy, cx+1)
+
+  const dirs = [
+    { dy: -1, dx: 0, color: "#5ab4e8" },
+    { dy: 0,  dx: 1, color: "#7bc67e" },
+    { dy: 1,  dx: 0, color: "#f47b7b" },
+    { dy: 0,  dx: -1, color: "#c47be8" },
+  ]
+
+  alternatives.slice(0, 4).forEach((alt, i) => {
+    const { dy, dx, color } = dirs[i]
+    for (let s = 2; s <= 3; s++) open(cy + dy * s, cx + dx * s)
+    open(cy + dy * 4, cx + dx * 4, "rec", {
+      rec: { url: alt, title: alt.replace("https://", "").replace("www.", ""), category: "Safe Alternative", cosineScore: "0", finalScore: "0" },
+      zoneColor: color
+    })
+  })
+
+  return grid
+}
+
+function BlockedModal({ notification, onDismiss, onVisit }: {
+  notification: Notification
+  onDismiss: () => void
+  onVisit: (url: string) => void
+}) {
+  const alts = notification.safeAlternatives || []
+  const grid = useMemo(() => buildMiniMaze(alts), [alts.join(",")])
+
+  const CELL = 44
+  const SIZE = grid.length
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0,
+      background: "rgba(60,20,80,0.75)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      zIndex: 3000, backdropFilter: "blur(3px)"
+    }}>
+      <div style={{
+        background: "#fff8ee", border: "2.5px solid #3d2c1e",
+        borderRadius: 16, boxShadow: "5px 5px 0 #3d2c1e",
+        width: "100%", maxWidth: 540, overflow: "hidden"
+      }}>
+        {/* Title bar */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: 7,
+          padding: "8px 14px", background: "#f47b7b",
+          borderBottom: "2.5px solid #3d2c1e"
+        }}>
+          {[["#f47b7b"], ["#f5c842"], ["#7bc67e"]].map(([bg], i) => (
+            <span key={i} style={{ width: 11, height: 11, borderRadius: "50%", background: bg, border: "1.5px solid #3d2c1e", flexShrink: 0 }} />
+          ))}
+          <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", marginLeft: 4 }}>access blocked</span>
+          <button onClick={onDismiss} style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: "#fff", fontSize: 20, fontWeight: 700, lineHeight: 1 }}>×</button>
+        </div>
+
+        <div style={{ padding: "24px 28px", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+          {/* Lock icon */}
+          <img src="/sg-lock.png" alt="Blocked" style={{ width: 72, height: 72, objectFit: "contain", imageRendering: "pixelated" }} />
+
+          {/* Message */}
+          <div style={{
+            background: "#fde8e8", border: "2px solid #3d2c1e",
+            borderRadius: 10, padding: "10px 18px",
+            boxShadow: "2px 2px 0 #3d2c1e", textAlign: "center"
+          }}>
+            <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#c0392b" }}>
+              {notification.message}
+            </p>
+            {notification.url && (
+              <p style={{ margin: "4px 0 0", fontSize: 11, color: "#b89b82", wordBreak: "break-all" }}>
+                {notification.url}
+              </p>
+            )}
+          </div>
+
+          {/* Mini maze or fallback list */}
+          {alts.length > 0 ? (
+            <div style={{ width: "100%" }}>
+              <p style={{ margin: "0 0 10px", fontSize: 11, fontWeight: 700, color: "#b89b82", textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "center" }}>
+                🗺 safe alternatives — click to visit
+              </p>
+              <div style={{ display: "flex", justifyContent: "center" }}>
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: `repeat(${SIZE}, ${CELL}px)`,
+                  gridTemplateRows: `repeat(${SIZE}, ${CELL}px)`,
+                  border: "2px solid #3d2c1e",
+                  boxShadow: "2px 2px 0 #3d2c1e",
+                  imageRendering: "pixelated" as const
+                }}>
+                  {grid.map((row, r) =>
+                    row.map((cell, c) => {
+                      const isHub = r === 5 && c === 5
+                      let bg = "#6b21a8"
+                      if (cell.type === "path") bg = "#fef3e2"
+                      if (cell.type === "rec") bg = cell.zoneColor ? cell.zoneColor + "55" : "#fff8ee"
+                      if (isHub) bg = "#f5c842"
+
+                      return (
+                        <div
+                          key={`${r}-${c}`}
+                          title={cell.rec?.title}
+                          onClick={() => cell.type === "rec" && cell.rec && onVisit(cell.rec.url)}
+                          style={{
+                            width: CELL, height: CELL,
+                            background: bg,
+                            border: cell.type !== "wall" ? "0.5px solid #3d2c1e22" : "0.5px solid #7c3aed44",
+                            display: "flex", flexDirection: "column",
+                            alignItems: "center", justifyContent: "center",
+                            cursor: cell.type === "rec" ? "pointer" : "default",
+                            overflow: "hidden", padding: 3,
+                            boxSizing: "border-box" as const,
+                            borderRadius: cell.type === "rec" ? 4 : 0,
+                            boxShadow: cell.type === "rec" ? "inset 0 0 0 1.5px #3d2c1e55" : "none",
+                            transition: "filter 0.1s",
+                          }}
+                          onMouseEnter={e => { if (cell.type === "rec") e.currentTarget.style.filter = "brightness(0.9)" }}
+                          onMouseLeave={e => { e.currentTarget.style.filter = "" }}
+                        >
+                          {isHub ? (
+                            <span style={{ fontSize: 20 }}>🔒</span>
+                          ) : cell.type === "rec" && cell.rec ? (
+                            <>
+                              <span style={{ fontSize: 13 }}>🌐</span>
+                              <span style={{
+                                fontSize: 8, fontWeight: 700, color: "#3d2c1e",
+                                textAlign: "center", lineHeight: 1.2,
+                                wordBreak: "break-word" as const,
+                                display: "-webkit-box" as const,
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: "vertical" as const,
+                                overflow: "hidden", width: "100%"
+                              }}>{cell.rec.title}</span>
+                            </>
+                          ) : null}
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p style={{ fontSize: 12, color: "#b89b82", textAlign: "center" }}>
+              No safe alternatives available for this page.
+            </p>
+          )}
+
+          <button onClick={onDismiss} style={{
+            padding: "9px 28px", borderRadius: 8,
+            border: "2px solid #3d2c1e", background: "#fff8ee",
+            fontWeight: 700, fontSize: 13, cursor: "pointer",
+            boxShadow: "2px 2px 0 #3d2c1e", color: "#3d2c1e"
+          }}>
+            Go Back
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Main dashboard ───────────────────────────────────────────────
 export default function Dashboard() {
   const [student, setStudent] = useState<Student | null>(null)
@@ -1389,6 +1567,7 @@ export default function Dashboard() {
             message: checkData.message || "Access to this site is restricted.",
             url,
             retrigger: checkData.retrigger_browser === true,
+            safeAlternatives: checkData.safe_alternatives ?? [],
           });
           setLoading(false);
           return; // STOP HERE
@@ -1460,6 +1639,7 @@ export default function Dashboard() {
           message: checkData.message || "This search result is restricted.",
           url,
           retrigger: checkData.retrigger_browser === true,
+          safeAlternatives: checkData.safe_alternatives ?? [],
         });
         setLoading(false);
         return;
@@ -1503,7 +1683,7 @@ export default function Dashboard() {
       const checkData = await checkRes.json()
 
       if (checkData.decision === "Blocked") {
-        showNotification({ type: "blocked", message: checkData.message || "Access restricted.", url: fullUrl })
+        showNotification({ type: "blocked", message: checkData.message || "Access restricted.", url: fullUrl, safeAlternatives: checkData.safe_alternatives ?? [] })
         setLoading(false)
         return
       }
@@ -1808,13 +1988,24 @@ export default function Dashboard() {
       </div>
 
       {/* Notification banner — shown below search bar */}
-      {notification && (
+      {notification && notification.type === "blocked" ? (
+        <BlockedModal
+          notification={notification}
+          onDismiss={dismissNotification}
+          onVisit={async (url) => {
+            dismissNotification()
+            if (rootUrl.current) await endSession("in_progress")
+            setNavHistory([])
+            await loadPage(url, true)
+          }}
+        />
+      ) : notification ? (
         <NotificationBanner
           notification={notification}
           onDismiss={dismissNotification}
           onOpenAnyway={handleOpenAnyway}
         />
-      )}
+      ) : null}
 
       {/* Maze game — shown when not browsing */}
       {!activeUrl && !loading && !isSearching && !showHistory && searchResults.length === 0 && (

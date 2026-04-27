@@ -112,7 +112,8 @@ router.post("/check", protect, async (req, res) => {
         success: false,
         decision: "Blocked",
         message: ui_message,
-        retrigger_browser: orchResponse.data.retrigger_browser ?? false
+        retrigger_browser: orchResponse.data.retrigger_browser ?? false,
+        safe_alternatives: orchResponse.data.policy?.safe_alternatives ?? []
       })
     }
 
