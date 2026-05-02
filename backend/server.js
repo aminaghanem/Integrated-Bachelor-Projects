@@ -37,6 +37,8 @@ app.use("/api/learning-history", require("./routes/learningHistoryRoutes"));
 app.use("/api/admins", require("./routes/adminRoutes"));
 app.use("/api/policies", require("./routes/policies"));
 app.use("/api/recommendations", require("./routes/recommendationRoutes"));
+app.use("/api/student-profile", require("./routes/StudentProfileRoutes"));
+
 console.log('Set up routes...')
 
 //connect to db

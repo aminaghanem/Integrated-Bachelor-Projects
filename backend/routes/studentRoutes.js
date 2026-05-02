@@ -15,7 +15,7 @@ const Teacher = require("../models/teacherModel.js");
 
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 
-router.post("/signup", protect, authorizeRoles("admin"), createStudent);
+router.post("/signup", createStudent);
 
 router.get("/", protect, authorizeRoles("admin"), getStudents);
 

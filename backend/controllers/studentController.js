@@ -185,7 +185,7 @@ const loginStudent = async (req, res) => {
 
 const getStudentProfile = async (req, res) => {
   try {
-    const student = await Student.findById(req.user.id)  // ← req.user not req.student
+    const student = await Student.findById(req.user.id).populate("class_id")  // ← populate class_id
 
     if (!student) {
       return res.status(404).json({ error: "Student not found" })

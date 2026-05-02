@@ -19,7 +19,7 @@ router.post("/create", protect, authorizeRoles("admin"), createClass);
 
 
 // get class by id
-router.get("/:id", protect, authorizeRoles("admin"), getClassById);
+router.get("/:id", protect, getClassById);
 
 
 // add student to class

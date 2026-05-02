@@ -2,10 +2,19 @@
 
 import { useEffect, useState, useRef, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
+import RunnerGame from "@/components/RunnerGame"
+import NicknameModal from "@/components/NicknameModal"
 
 const API = "http://localhost:4000"
 
 interface Student { _id: string; username: string }
+
+interface StudentProfile {
+  student_id: string
+  nickname: string | null
+  avatar: string | null
+  best_score: number
+}
 
 interface LearningHistoryItem {
   _id: string
@@ -26,6 +35,11 @@ interface Notification {
   safeAlternatives?: string[]
 }
 
+interface MCNotification {
+  type: "blocked" | "error" | "success"
+  message: string; url?: string; retrigger?: boolean; safeAlternatives?: string[]
+}
+
 interface Recommendation {
   url: string
   title: string
@@ -38,6 +52,148 @@ interface RecommendationGroup {
   category: string
   label: string
   items: Recommendation[]
+}
+
+// ── Keyframe injection ───────────────────────────────────────────
+const MC_STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600&display=swap');
+
+  @keyframes mc-scanline {
+    0%   { background-position: 0 0; }
+    100% { background-position: 0 100px; }
+  }
+  @keyframes mc-blink {
+    0%,100% { opacity: 1; } 50% { opacity: 0.3; }
+  }
+  @keyframes mc-fadein {
+    from { opacity:0; transform:translateY(12px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  @keyframes mc-launch {
+    0%   { transform: scale(1) translateY(0); opacity:1; }
+    40%  { transform: scale(1.15) translateY(-6px); opacity:1; }
+    100% { transform: scale(0) translateY(-80px); opacity:0; }
+  }
+  @keyframes mc-streak {
+    from { transform: translateY(0); opacity:0.8; }
+    to   { transform: translateY(120px); opacity:0; }
+  }
+  @keyframes mc-slide-panel {
+    from { transform: translateX(100%); opacity:0; }
+    to   { transform: translateX(0);    opacity:1; }
+  }
+  @keyframes mc-hud-glow {
+    0%,100% { text-shadow: 0 0 8px #ffe600, 0 0 20px #ffe60066; }
+    50%      { text-shadow: 0 0 16px #ffe600, 0 0 40px #ffe600aa; }
+  }
+  @keyframes mc-star-twinkle {
+    0%,100% { opacity: 0.2; } 50% { opacity: 1; }
+  }
+  @keyframes mc-spinner {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+  @keyframes mc-radar {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+ 
+  .mc-planet-btn:hover .mc-planet-inner {
+    filter: brightness(1.25) saturate(1.3);
+    transform: scale(1.08);
+  }
+  .mc-planet-btn:hover .mc-planet-label {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+  }
+  .mc-rec-card:hover {
+    border-color: #ffe600 !important;
+    background: rgba(255,230,0,0.08) !important;
+    transform: translateX(4px);
+  }
+  .mc-nav-btn:hover {
+    background: rgba(255,230,0,0.15) !important;
+    border-color: #ffe600 !important;
+    color: #ffe600 !important;
+  }
+  .mc-launch-btn:hover {
+    background: #ffe600 !important;
+    color: #0a0a1a !important;
+    box-shadow: 0 0 24px #ffe600aa !important;
+  }
+  .mc-input-wrap:focus-within {
+    border-color: #ffe600 !important;
+    box-shadow: 0 0 0 2px rgba(255,230,0,0.25), 0 0 20px rgba(255,230,0,0.15) !important;
+  }
+`
+// ── Starfield background ─────────────────────────────────────────
+function Starfield() {
+  const stars = useMemo(() => Array.from({ length: 180 }, (_, i) => ({
+    x: Math.random() * 100, y: Math.random() * 100,
+    size: Math.random() * 2.2 + 0.4,
+    delay: Math.random() * 4,
+    dur: Math.random() * 3 + 2,
+  })), [])
+ 
+  return (
+    <div style={{ position:"fixed", inset:0, pointerEvents:"none", zIndex:0, overflow:"hidden" }}>
+      {stars.map((s, i) => (
+        <div key={i} style={{
+          position:"absolute", borderRadius:"50%",
+          left:`${s.x}%`, top:`${s.y}%`,
+          width: s.size, height: s.size,
+          background:"#fff",
+          animation: `mc-star-twinkle ${s.dur}s ${s.delay}s ease-in-out infinite`,
+        }} />
+      ))}
+    </div>
+  )
+}
+
+// ── HUD corner decoration ────────────────────────────────────────
+function HudCorner({ pos }: { pos: "tl"|"tr"|"bl"|"br" }) {
+  const isRight = pos.includes("r")
+  const isBottom = pos.includes("b")
+  return (
+    <div style={{
+      position:"absolute",
+      top: isBottom ? undefined : 0, bottom: isBottom ? 0 : undefined,
+      left: isRight ? undefined : 0, right: isRight ? 0 : undefined,
+      width:32, height:32,
+      borderTop: !isBottom ? "2px solid #ffe600" : undefined,
+      borderBottom: isBottom ? "2px solid #ffe600" : undefined,
+      borderLeft: !isRight ? "2px solid #ffe600" : undefined,
+      borderRight: isRight ? "2px solid #ffe600" : undefined,
+    }} />
+  )
+}
+ 
+// ── Notification banner (MC-themed) ─────────────────────────────
+function MCNotificationBanner({ n, onDismiss }: { n: MCNotification; onDismiss: () => void }) {
+  const isBlocked = n.type === "blocked"
+  const isError   = n.type === "error"
+  return (
+    <div style={{
+      display:"flex", alignItems:"flex-start", justifyContent:"space-between",
+      padding:"12px 16px", marginBottom:12, borderRadius:8,
+      background: isBlocked ? "rgba(255,50,50,0.1)" : isError ? "rgba(255,200,0,0.08)" : "rgba(0,255,136,0.08)",
+      border: `1px solid ${isBlocked ? "#ff4444" : isError ? "#ffe600" : "#00ff88"}`,
+      boxShadow: `0 0 20px ${isBlocked ? "rgba(255,68,68,0.2)" : isError ? "rgba(255,230,0,0.15)" : "rgba(0,255,136,0.15)"}`,
+      animation:"mc-fadein 0.2s ease",
+      fontFamily:"'Share Tech Mono', monospace",
+    }}>
+      <div style={{ display:"flex", gap:10, flex:1 }}>
+        <span style={{ fontSize:16 }}>{isBlocked ? "🚫" : isError ? "⚠" : "✓"}</span>
+        <div>
+          <p style={{ margin:"0 0 2px", fontSize:11, fontWeight:700, color: isBlocked ? "#ff4444" : isError ? "#ffe600" : "#00ff88", letterSpacing:"0.1em" }}>
+            {isBlocked ? "ACCESS DENIED" : isError ? "SYSTEM ERROR" : "SUCCESS"}
+          </p>
+          <p style={{ margin:0, fontSize:11, color:"rgba(255,255,255,0.7)" }}>{n.message}</p>
+        </div>
+      </div>
+      <button onClick={onDismiss} style={{ background:"none", border:"none", cursor:"pointer", color:"rgba(255,255,255,0.4)", fontSize:16 }}>✕</button>
+    </div>
+  )
 }
  
 // ── Notification banner ──────────────────────────────────────────
@@ -122,11 +278,6 @@ function RecCard({ rec, onClick }: { rec: Recommendation; onClick: (url: string)
       </span>
     </div>
   )
-}
-
-// ── Timer component — uses DOM directly, never causes re-renders ──
-function LiveTimer({ timerRef }: { timerRef: React.RefObject<HTMLSpanElement | null> }) {
-  return <span ref={timerRef} style={{ fontSize: 12, color: "#6b7280", fontFamily: "monospace" }}>⏱ 0s</span>
 }
 
 // ── Shadow DOM viewer ────────────────────────────────────────────
@@ -299,12 +450,12 @@ function HistoryPanel({ items, onClose, onItemClick }: { items: LearningHistoryI
 
 // ── Avatar data ───────────────────────────────────────────────────
 const AVATARS = [
-  { id: "ghost",    emoji: "👻", color: "#5ab4e8" },
-  { id: "mushroom", emoji: "🍄", color: "#f47b7b" },
-  { id: "star",     emoji: "⭐", color: "#f5c842" },
-  { id: "frog",     emoji: "🐸", color: "#7bc67e" },
-  { id: "robot",    emoji: "🤖", color: "#c47be8" },
-  { id: "duck",     emoji: "🐤", color: "#f5c842" },
+  { id: "avatar1",    image: "/sg-avatar1.png", color: "#c47be8" },
+  { id: "avatar2",    image: "/sg-avatar2.png", color: "#f5c842" },
+  { id: "avatar3",    image: "/sg-avatar3.png", color: "#c47be8" },
+  { id: "avatar4",    image: "/sg-avatar4.png", color: "#f5c842" },
+  { id: "avatar5",    image: "/sg-avatar5.png", color: "#c47be8" },
+  { id: "avatar6",    image: "/sg-avatar6.png", color: "#f5c842" },
 ]
 
 // ── Maze cell types ───────────────────────────────────────────────
@@ -683,9 +834,9 @@ function MazeGame({
                 cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
                 boxShadow: selectedAvatar === av.id ? "2px 2px 0 #3d2c1e" : "none",
                 transform: selectedAvatar === av.id ? "translate(-1px,-1px)" : "none",
-                transition: "all 0.1s", flexShrink: 0
+                transition: "all 0.1s", flexShrink: 0, padding: 4
               }}
-            >{av.emoji}</button>
+            ><img src={av.image} alt={av.id} style={{ width: "100%", height: "100%", objectFit: "contain" }} /></button>
           ))}
           
         </div>
@@ -773,17 +924,17 @@ function MazeGame({
                         }}
                       >
                         {isPlayer ? (
-                          <span
+                          <img
                             key={`${playerPos[0]}-${playerPos[1]}`}
+                            src={avatar?.image || "/sg-avatar1.png"}
+                            alt="player"
                             style={{
-                              fontSize: avatarFontSize,
-                              lineHeight: 1,
-                              display: "inline-block",
+                              width: avatarFontSize,
+                              height: avatarFontSize,
+                              objectFit: "contain",
                               animation: "playerBounce 0.2s ease",
                             }}
-                          >
-                            {avatar?.emoji || "😊"}
-                          </span>
+                          />
                         ) : cell.type === "zone" ? (
                           <span style={{
                             fontSize: 11, textAlign: "center", lineHeight: 1.3,
@@ -1116,8 +1267,7 @@ function BlockedModal({ notification, onDismiss, onVisit }: {
   )
 }
 
-// ── Main dashboard ───────────────────────────────────────────────
-export default function Dashboard() {
+function KidsDashboard() {
   const [student, setStudent] = useState<Student | null>(null)
   const [pageError, setPageError] = useState<string | null>(null)
   const [urlInput, setUrlInput] = useState("")
@@ -1142,6 +1292,9 @@ export default function Dashboard() {
   const [loadingRecs, setLoadingRecs] = useState(false)
   const [recGroups, setRecGroups] = useState<RecommendationGroup[]>([])
   const [exploreRecs, setExploreRecs] = useState<Recommendation[]>([])
+
+  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null)
+  const [showNicknameModal, setShowNicknameModal] = useState(false)
 
   // Auto-dismiss non-blocked notifications after 5s
   useEffect(() => {
@@ -1228,18 +1381,44 @@ export default function Dashboard() {
   useEffect(() => {
     const token = localStorage.getItem("token")
     if (!token) { router.push("/"); return }
-    fetch(`${API}/api/students/profile`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => { if (!r.ok) throw new Error(); return r.json() })
-      .then(data => {
-        setStudent(data)
-        loadRecommendations()
-      })
-      .catch(() => setPageError("Failed to load profile"))
 
-    const redirectedUrl = sessionStorage.getItem("dashboardRedirectedAwayUrl")
-    if (redirectedUrl) {
-      setShowCompletionPrompt(true)
+    const init = async () => {
+      try {
+        // Step 1 — load student
+        const r = await fetch(`${API}/api/students/profile`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        if (!r.ok) throw new Error("Failed to load profile")
+        const d = await r.json()
+        setStudent(d)
+        loadRecommendations()
+
+        // Step 2 — load extended profile (separate try so it never breaks step 1)
+        try {
+          const profRes = await fetch(`${API}/api/student-profile`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+          console.log("profRes status:", profRes.status)
+          if (profRes.ok) {
+            const prof = await profRes.json()
+            console.log("prof data:", prof)
+            setStudentProfile(prof)
+            if (!prof.nickname) setShowNicknameModal(true)
+          }
+        } catch (profErr) {
+          console.error("Extended profile error (non-fatal):", profErr)
+          // Don't block the dashboard — just skip the modal
+        }
+
+      } catch (err) {
+        setPageError("Failed to load profile")
+      }
     }
+
+    init()
+
+    // Keep your existing sessionStorage check below
+    if (sessionStorage.getItem("dashboardRedirectedAwayUrl")) setShowCompletionPrompt(true)
   }, [])
 
   // ── Timer — updates DOM directly, never React state ──────────
@@ -1801,6 +1980,23 @@ export default function Dashboard() {
     await loadPage(url, true)   // isRoot = true → new session
   }, [endSession, loadPage])
 
+  const handleNicknameSave = async (nickname: string, selectedAvatar: string | null) => {
+    const token = localStorage.getItem("token")
+    const res = await fetch(`${API}/api/student-profile`, {
+      method: "POST",
+      headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+      body: JSON.stringify({
+        nickname,
+        avatar: selectedAvatar ?? null   // if you track selectedAvatar state here, otherwise handle inside modal
+      })
+    })
+    if (res.ok) {
+      const updated = await res.json()
+      setStudentProfile(updated)
+    }
+    setShowNicknameModal(false)
+  }
+
   const handleLogout = async () => {
     if (rootUrl.current) await endSession("in_progress")
     localStorage.removeItem("token")
@@ -1827,101 +2023,106 @@ export default function Dashboard() {
   if (!student) return <p style={{ padding: "2rem" }}>Loading...</p>
 
   return (
-    <div style={{ maxWidth: "100vw", margin: 0, padding: "1.5rem 2rem", fontFamily: "sans-serif", background: "#fde8c8", minHeight: "100vh", boxSizing: "border-box" }}>
+    <div style={{ maxWidth: "100vw", margin: 0, padding: "1.5rem 2rem", fontFamily: "sans-serif", background:"#7a59af", minHeight: "100vh", boxSizing: "border-box" }}>
 
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {/* Pixel home icon */}
-          <img
-              src="/sg-lock.png"
-              alt=""
-              style={{
-                position: "relative", inset: 0,
-                width: "5%", height: "5%",
-                objectFit: "contain", zIndex: 0, top: -2,
-              }}
-            />
+       {/* Dark pixel grid background — same family as kids dashboard */}
+      <div style={{
+        position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
+        backgroundImage: `
+          linear-gradient(rgba(203,108,230,0.06) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(203,108,230,0.06) 1px, transparent 1px)
+        `,
+        backgroundSize: "32px 32px",
+      }} />
+
+      {/* ── Header ── */}
+      <header style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24, paddingBottom:16, borderBottom:"1px solid rgba(255,255,255,0.07)", top: 30, position: "relative" }}>
+        {/* Logo + student name */}
+        <div style={{ display:"flex", alignItems:"center", gap:16 }}>
+          <div style={{ position:"relative" }}>
+            <div style={{ width:44, height:44, borderRadius:10, background:"rgba(255,230,0,0.1)", border:"1px solid rgba(255,230,0,0.3)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22 }}>🚀</div>
+          </div>
           
-          <h1 style={{ margin: 0, fontSize: 22, color: "#3d2c1e", fontWeight: 700, fontFamily: 'monospace' }}>
-            <span style={{ color: "#7c4eb2", fontFamily: "'Silkscreen', monospace" }}>Hello, {student.username}!</span>
-            
-          </h1>
-        </div>
-        <div style={{ display: "flex", gap: 16 }}>
-          {/* Home button - sg-home.png */}
-          <button
-            onClick={() => { handleClose(); setShowHistory(false); }}
-            title="Home"
-            style={{
-              ...retroBtn,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              padding: "8px 14px", gap: 10
-            }}
-          >
-            <img 
-              src="/sg-home.png"
-              alt="Home"
-              style={{
-                width: 44,
-                height: 44,
-                objectFit: "contain",
-                border: "none",
-              }}
-            />
-            <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.03em" }}>HOME</span>
-          </button>
+          <div style={{ fontFamily:"'Press Start 2P', monospace", fontWeight:900, fontSize:30, color:"#ffe600", letterSpacing:"0.12em", animation:"mc-hud-glow 3s ease-in-out infinite" }}>
+            Hello, {studentProfile?.nickname || student.username}!
+          </div>
+          
 
-          {/* Learning History button - sg-clock.png */}
-          <button
-            onClick={loadHistory}
-            title="Learning History"
-            style={{
-              ...retroBtn,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              padding: "8px 14px", gap: 10
-            }}
-          >
-            <img
-              src="/sg-clock.png"
-              alt="History"
-              style={{
-                width: 44,
-                height: 44,
-                objectFit: "contain",
-                border: "none",
-              }}
-            />
-            <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.03em" }}>HISTORY</span>
-          </button>
+          <div style={{ display: "flex", gap: 16, right: 20, position: "absolute" }}>
+              {/* Home button - sg-home.png */}
+              <button
+                onClick={() => { handleClose(); setShowHistory(false); }}
+                title="Home"
+                style={{
+                  ...retroBtn,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  padding: "8px 14px", gap: 10
+                }}
+              >
+                <img 
+                  src="/sg-home.png"
+                  alt="Home"
+                  style={{
+                    width: 44,
+                    height: 44,
+                    objectFit: "contain",
+                    border: "none",
+                  }}
+                />
+                <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.03em" }}>HOME</span>
+              </button>
 
-          {/* Logout button - sg-door.png */}
-          <button
-            onClick={handleLogout}
-            title="Logout"
-            style={{
-              ...retroBtn,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              padding: "8px 14px", gap: 10
-            }}
-          >
-            <img
-              src="/sg-door.png"
-              alt="Logout"
-              style={{
-                width: 44,
-                height: 44,
-                objectFit: "contain",
-                border: "none",
-              }}
-            />
-            <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.03em" }}>LOGOUT</span>
-          </button>
+              {/* Learning History button - sg-clock.png */}
+              <button
+                onClick={loadHistory}
+                title="Learning History"
+                style={{
+                  ...retroBtn,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  padding: "8px 14px", gap: 10
+                }}
+              >
+                <img
+                  src="/sg-clock.png"
+                  alt="History"
+                  style={{
+                    width: 44,
+                    height: 44,
+                    objectFit: "contain",
+                    border: "none",
+                  }}
+                />
+                <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.03em" }}>HISTORY</span>
+              </button>
+
+              {/* Logout button - sg-door.png */}
+              <button
+                onClick={handleLogout}
+                title="Logout"
+                style={{
+                  ...retroBtn,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  padding: "8px 14px", gap: 10
+                }}
+              >
+                <img
+                  src="/sg-door.png"
+                  alt="Logout"
+                  style={{
+                    width: 44,
+                    height: 44,
+                    objectFit: "contain",
+                    border: "none",
+                  }}
+                />
+                <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.03em" }}>LOGOUT</span>
+              </button>
+          </div>
         </div>
-      </div>
+      </header>
 
       {/* Search bar */}
-      <div style={{ marginBottom: "1.2rem" }}>
+      <div style={{ marginBottom: "1.2rem", top: 10, position: "relative", zIndex: 1 }}>
         <div style={{
           background: "#cb6ce6",
           border: "2.5px solid #3d2c1e",
@@ -1936,12 +2137,7 @@ export default function Dashboard() {
             padding: "6px 12px", background: "#cb6ce6",
             borderBottom: "2px solid #3d2c1e"
           }}>
-            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-              {/* <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#f47b7b", border: "1.5px solid #3d2c1e", display: "inline-block" }} />
-              <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#f5c842", border: "1.5px solid #3d2c1e", display: "inline-block" }} />
-              <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#7bc67e", border: "1.5px solid #3d2c1e", display: "inline-block" }} /> */}
-            </div>
-            <span style={{ fontSize: 14, fontWeight: 700, color: "#fff", letterSpacing: "0.05em", fontFamily: "'Silkscreen', monospace" }}>SmartGuard Search Engine</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#fff", letterSpacing: "0.05em", fontFamily: "'Silkscreen', monospace" }}>Play & Learn - Search Engine</span>
             <span style={{ width: 54 }} /> {/* spacer */}
           </div>
           {/* Globe icon + input area */}
@@ -2234,6 +2430,782 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {showNicknameModal && student && (
+        <NicknameModal
+          username={student.username}
+          onSave={handleNicknameSave}
+        />
+      )}
     </div>
   )
+}
+
+// ── Radar sweep ──────────────────────────────────────────────────
+function RadarWidget() {
+  return (
+    <div style={{ position:"relative", width:90, height:90, flexShrink:0, top: 100, left: 500, alignItems:"center", justifyContent:"center" }}>
+      {/* Rings */}
+      {[90,60,30].map(s => (
+        <div key={s} style={{
+          position:"absolute", borderRadius:"50%",
+          border:"1px solid rgba(0,255,136,0.3)",
+          width:s, height:s,
+          top:(90-s)/2, left:(90-s)/2,
+        }} />
+      ))}
+      {/* Cross-hairs */}
+      <div style={{ position:"absolute", top:"50%", left:0, right:0, height:"1px", background:"rgba(0,255,136,0.25)", transform:"translateY(-50%)" }} />
+      <div style={{ position:"absolute", left:"50%", top:0, bottom:0, width:"1px", background:"rgba(0,255,136,0.25)", transform:"translateX(-50%)" }} />
+      {/* Sweep */}
+      <div style={{
+        position:"absolute", top:"50%", left:"50%",
+        width:"50%", height:2,
+        background:"linear-gradient(to right, rgba(0,255,136,0.9), transparent)",
+        transformOrigin:"left center",
+        animation:"mc-radar 3s linear infinite",
+      }} />
+      <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
+        <div style={{ width:6, height:6, borderRadius:"50%", background:"#00ff88", boxShadow:"0 0 8px #00ff88" }} />
+      </div>
+    </div>
+  )
+}
+
+function MissionControlDashboard() {
+  const router = useRouter()
+ 
+  // ── State ──────────────────────────────────────────────────────
+  const [student, setStudent]           = useState<Student|null>(null)
+  const [pageError, setPageError]       = useState<string|null>(null)
+  const [urlInput, setUrlInput]         = useState("")
+  const [activeUrl, setActiveUrl]       = useState<string|null>(null)
+  const [iframeError, setIframeError]   = useState(false)
+  const [loading, setLoading]           = useState(false)
+  const [htmlContent, setHtmlContent]   = useState("")
+  const [sessionActive, setSessionActive] = useState(false)
+  const [navHistory, setNavHistory]     = useState<string[]>([])
+  const [notification, setNotification] = useState<MCNotification|null>(null)
+  const [recGroups, setRecGroups]       = useState<RecommendationGroup[]>([])
+  const [exploreRecs, setExploreRecs]   = useState<Recommendation[]>([])
+  const [loadingRecs, setLoadingRecs]   = useState(false)
+  const [selectedGroup, setSelectedGroup]   = useState<RecommendationGroup|null>(null)
+  const [selectedGroupIdx, setSelectedGroupIdx] = useState<number|null>(null)
+  const [showHistory, setShowHistory]   = useState(false)
+  const [learningHistory, setLearningHistory] = useState<LearningHistoryItem[]>([])
+  const [showFeedback, setShowFeedback] = useState(false)
+  const [pendingFeedback, setPendingFeedback] = useState<{url:string;category:string}|null>(null)
+  const [showCompletionPrompt, setShowCompletionPrompt] = useState(false)
+  const [pendingUrl, setPendingUrl]     = useState("")
+  const [searchResults, setSearchResults] = useState<{title:string;snippet:string;link:string}[]>([])
+  const [isSearching, setIsSearching]   = useState(false)
+  const [launchingUrl, setLaunchingUrl] = useState<string|null>(null)
+  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null)
+  const [showNicknameModal, setShowNicknameModal] = useState(false)
+ 
+  // ── Session refs ───────────────────────────────────────────────
+  const rootUrl       = useRef<string|null>(null)
+  const rootCategory  = useRef<string>("General")
+  const sessionStart  = useRef<number|null>(null)
+  const interactionType = useRef<"view"|"scroll"|"click">("view")
+  const timerInterval = useRef<NodeJS.Timeout|null>(null)
+  const interactionBadgeRef = useRef<HTMLSpanElement>(null)
+  const redirectedAway = useRef(false)
+ 
+  // ── Inject styles ──────────────────────────────────────────────
+  useEffect(() => {
+    const el = document.createElement("style")
+    el.textContent = MC_STYLES
+    document.head.appendChild(el)
+    return () => { document.head.removeChild(el) }
+  }, [])
+ 
+  // ── Auto-dismiss notifications ─────────────────────────────────
+  useEffect(() => {
+    if (notification && notification.type !== "blocked") {
+      const t = setTimeout(() => setNotification(null), 5000)
+      return () => clearTimeout(t)
+    }
+  }, [notification])
+ 
+  const showNotif = useCallback((n: MCNotification) => setNotification(n), [])
+  const dismissNotif = useCallback(() => setNotification(null), [])
+ 
+  // ── Session helpers ────────────────────────────────────────────
+  const startTimer = () => {
+    if (timerInterval.current) clearInterval(timerInterval.current)
+    sessionStart.current = Date.now()
+    timerInterval.current = setInterval(() => {}, 1000)
+  }
+  const stopTimer = () => {
+    if (timerInterval.current) { clearInterval(timerInterval.current); timerInterval.current = null }
+  }
+  const upgradeInteraction = useCallback((type:"scroll"|"click") => {
+    if (type === "click" && interactionType.current !== "click") interactionType.current = "click"
+    else if (type === "scroll" && interactionType.current === "view") interactionType.current = "scroll"
+  }, [])
+ 
+  const logActivity = useCallback(async (url:string, interaction:string, duration:number, category:string) => {
+    const token = localStorage.getItem("token")
+    if (!token || !student) return
+    await fetch(`${API}/api/activity/log`, {
+      method:"POST",
+      headers:{"Content-Type":"application/json", Authorization:`Bearer ${token}`},
+      body:JSON.stringify({ student_id:student._id, url, interaction_type:interaction, visit_duration:duration, category })
+    }).catch(()=>{})
+  }, [student])
+ 
+  const saveLearningHistory = useCallback(async (url:string, category:string, status:"completed"|"in_progress") => {
+    const token = localStorage.getItem("token")
+    if (!token) return
+    try {
+      const res = await fetch(`${API}/api/learning-history`, {
+        method:"POST",
+        headers:{"Content-Type":"application/json", Authorization:`Bearer ${token}`},
+        body:JSON.stringify({ url, resource_title:url, category, completion_status:status })
+      })
+      if (res.ok) { const d = await res.json(); setLearningHistory(d.learning_history ?? []) }
+    } catch {}
+  }, [])
+ 
+  const endSession = useCallback(async (status:"completed"|"in_progress") => {
+    if (!rootUrl.current || !sessionStart.current) return
+    const duration = Math.round((Date.now() - sessionStart.current) / 1000)
+    const url = rootUrl.current; const interaction = interactionType.current; const category = rootCategory.current
+    rootUrl.current = null; sessionStart.current = null; interactionType.current = "view"
+    setSessionActive(false); stopTimer()
+    await logActivity(url, interaction, duration, category)
+    await saveLearningHistory(url, category, status)
+    return { url, category }
+  }, [logActivity, saveLearningHistory])
+ 
+  // ── Load data ──────────────────────────────────────────────────
+  const loadRecommendations = useCallback(async () => {
+    const token = localStorage.getItem("token"); if (!token) return
+    setLoadingRecs(true)
+    try {
+      const res = await fetch(`${API}/api/recommendations`, { headers:{Authorization:`Bearer ${token}`} })
+      if (res.ok) { const d = await res.json(); setRecGroups(d.grouped||[]); setExploreRecs(d.explore||[]) }
+    } catch {}
+    setLoadingRecs(false)
+  }, [])
+ 
+  useEffect(() => {
+    const token = localStorage.getItem("token")
+    if (!token) { router.push("/"); return }
+
+    const init = async () => {
+      try {
+        // Step 1 — load student
+        const r = await fetch(`${API}/api/students/profile`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        if (!r.ok) throw new Error("Failed to load profile")
+        const d = await r.json()
+        setStudent(d)
+        loadRecommendations()
+
+        // Step 2 — load extended profile (separate try so it never breaks step 1)
+        try {
+          const profRes = await fetch(`${API}/api/student-profile`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+          console.log("profRes status:", profRes.status)
+          if (profRes.ok) {
+            const prof = await profRes.json()
+            console.log("prof data:", prof)
+            setStudentProfile(prof)
+            if (!prof.nickname) setShowNicknameModal(true)
+          }
+        } catch (profErr) {
+          console.error("Extended profile error (non-fatal):", profErr)
+          // Don't block the dashboard — just skip the modal
+        }
+
+      } catch (err) {
+        setPageError("Failed to load profile")
+      }
+    }
+
+    init()
+
+    // Keep your existing sessionStorage check below
+    if (sessionStorage.getItem("dashboardRedirectedAwayUrl")) setShowCompletionPrompt(true)
+  }, [])
+ 
+  useEffect(() => {
+    const h = () => { endSession("in_progress") }
+    window.addEventListener("beforeunload", h)
+    return () => window.removeEventListener("beforeunload", h)
+  }, [endSession])
+ 
+  // ── Page loading ───────────────────────────────────────────────
+  const loadPage = useCallback(async (url:string, isRoot=false) => {
+    setLoading(true); setIframeError(false); setHtmlContent("")
+    setShowCompletionPrompt(false); redirectedAway.current = false
+    if (isRoot) {
+      sessionStorage.removeItem("dashboardRedirectedAway")
+      sessionStorage.removeItem("dashboardRedirectedAwayUrl")
+      sessionStorage.removeItem("dashboardRedirectedAwayCategory")
+    }
+    try {
+      const res = await fetch(`${API}/api/proxy?url=${encodeURIComponent(url)}`)
+      if (!res.ok) throw new Error()
+      const html = await res.text()
+      setHtmlContent(html); setActiveUrl(url); setUrlInput(url)
+      if (isRoot) {
+        setSessionActive(true); rootUrl.current = url; rootCategory.current = "General"
+        interactionType.current = "view"; startTimer()
+      }
+    } catch {
+      setIframeError(true); setPendingUrl(url)
+      if (isRoot) {
+        setSessionActive(true); rootUrl.current = url; rootCategory.current = "General"
+        interactionType.current = "view"; startTimer()
+      }
+    } finally { setLoading(false) }
+  }, [])
+ 
+  // ── Visit / check URL ──────────────────────────────────────────
+  const isProbablyUrl = (s:string) => /^(https?:\/\/)/i.test(s) || /^[^\s]+\.[^\s]+$/.test(s)
+ 
+  const doVisit = async (rawUrl: string) => {
+    const url = /^https?:\/\//i.test(rawUrl) ? rawUrl : "https://" + rawUrl
+    const token = localStorage.getItem("token")
+    try {
+      setLoading(true)
+      const checkRes = await fetch(`${API}/api/activity/check`, {
+        method:"POST", headers:{"Content-Type":"application/json", Authorization:`Bearer ${token}`},
+        body: JSON.stringify({ url })
+      })
+      const cd = await checkRes.json()
+      if (checkRes.status === 400) { showNotif({ type:"error", message: cd.error||"Profile error." }); setLoading(false); return }
+      if (cd.decision === "Blocked") {
+        showNotif({ type:"blocked", message: cd.message||"Access restricted.", url, safeAlternatives: cd.safe_alternatives??[] })
+        setLoading(false); return
+      }
+      if (checkRes.status === 502) { showNotif({ type:"error", message: cd.message||"Safety service unavailable." }); setLoading(false); return }
+      if (rootUrl.current) await endSession("in_progress")
+      setNavHistory([]); rootCategory.current = cd.category||"General"
+      await loadPage(cd.normalized_url||url, true)
+    } catch { showNotif({ type:"error", message:"Connection error." }); setLoading(false) }
+  }
+ 
+  const handleVisit = async () => {
+    if (!urlInput.trim()) return
+    const input = urlInput.trim(); setSearchResults([])
+    if (isProbablyUrl(input)) {
+      await doVisit(input)
+    } else {
+      setIsSearching(true)
+      if (rootUrl.current) await endSession("in_progress")
+      setActiveUrl(null)
+      try {
+        const res = await fetch(`${API}/api/search?q=${encodeURIComponent(input)}`)
+        const d = await res.json(); setSearchResults(d.results||[])
+      } catch {}
+      setIsSearching(false)
+    }
+  }
+ 
+  const handleLaunch = useCallback(async (url:string) => {
+    setLaunchingUrl(url)
+    setTimeout(() => setLaunchingUrl(null), 600)
+    await doVisit(url)
+    setSelectedGroup(null); setSelectedGroupIdx(null)
+  }, [doVisit])
+ 
+  const handleClose = useCallback(async () => {
+    if (rootUrl.current) await endSession("in_progress")
+    setActiveUrl(null); setHtmlContent(""); setNavHistory([]); setIframeError(false)
+    setShowCompletionPrompt(false); redirectedAway.current = false
+    sessionStorage.removeItem("dashboardRedirectedAway")
+    sessionStorage.removeItem("dashboardRedirectedAwayUrl")
+    sessionStorage.removeItem("dashboardRedirectedAwayCategory")
+  }, [endSession])
+ 
+  const handleMarkDone = useCallback(async () => {
+    const result = await endSession("completed")
+    setActiveUrl(null); setHtmlContent(""); setNavHistory([])
+    if (result) { setPendingFeedback({ url:result.url, category:result.category }); setShowFeedback(true) }
+  }, [endSession])
+ 
+  const handleBack = useCallback(() => {
+    const prev = navHistory[navHistory.length-1]; if (!prev) return
+    setNavHistory(h => h.slice(0,-1)); loadPage(prev, false)
+  }, [navHistory, loadPage])
+ 
+  const handleRedirectAnyway = useCallback(() => {
+    const url = pendingUrl || activeUrl
+    if (url) {
+      redirectedAway.current = true
+      sessionStorage.setItem("dashboardRedirectedAway","1")
+      sessionStorage.setItem("dashboardRedirectedAwayUrl", url)
+      sessionStorage.setItem("dashboardRedirectedAwayCategory", rootCategory.current)
+      window.location.href = url
+    }
+  }, [pendingUrl, activeUrl])
+ 
+  const loadHistory = async () => {
+    const token = localStorage.getItem("token"); if (!token) return
+    try {
+      const res = await fetch(`${API}/api/learning-history`, { headers:{Authorization:`Bearer ${token}`} })
+      if (res.ok) { const d = await res.json(); setLearningHistory(d) }
+    } catch {}
+    setShowHistory(true)
+  }
+
+  const handleNicknameSave = async (nickname: string, selectedAvatar: string | null) => {
+    const token = localStorage.getItem("token")
+    const res = await fetch(`${API}/api/student-profile`, {
+      method: "POST",
+      headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+      body: JSON.stringify({
+        nickname,
+        avatar: selectedAvatar ?? null   // if you track selectedAvatar state here, otherwise handle inside modal
+      })
+    })
+    if (res.ok) {
+      const updated = await res.json()
+      setStudentProfile(updated)
+    }
+    setShowNicknameModal(false)
+  }
+ 
+  const handleLogout = async () => {
+    if (rootUrl.current) await endSession("in_progress")
+    localStorage.removeItem("token"); router.push("/")
+  }
+ 
+  // ── Rendering guards ───────────────────────────────────────────
+  if (pageError) return (
+    <div style={{ background:"#1a0e2e", minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", color:"#ff4444", fontFamily:"'Orbitron', monospace" }}>
+      SYSTEM ERROR: {pageError}
+    </div>
+  )
+  if (!student) return (
+    <div style={{ background:"#1a0e2e", minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center" }}>
+      <div style={{ textAlign:"center" }}>
+        <div style={{ width:48, height:48, border:"3px solid #ffe600", borderTopColor:"transparent", borderRadius:"50%", animation:"mc-spinner 0.8s linear infinite", margin:"0 auto 16px" }} />
+        <div style={{ fontFamily:"'Orbitron', monospace", color:"#ffe600", fontSize:13, letterSpacing:"0.15em" }}>INITIALIZING…</div>
+      </div>
+    </div>
+  )
+ 
+  const showOrbitView = !activeUrl && !loading && !isSearching && !showHistory && searchResults.length === 0
+ 
+  return (
+    <div style={{
+      minHeight:"100vh", background:"#7a59af",
+      color:"#e8e8f0", fontFamily:"'Exo 2', sans-serif",
+      position:"relative", overflow:"hidden",
+    }}>
+      <Starfield />
+ 
+      {/* Dark pixel grid background — same family as kids dashboard */}
+      <div style={{
+        position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
+        backgroundImage: `
+          linear-gradient(rgba(203,108,230,0.06) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(203,108,230,0.06) 1px, transparent 1px)
+        `,
+        backgroundSize: "32px 32px",
+      }} />
+      <div style={{
+        position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
+        background: "radial-gradient(ellipse at 50% 0%, rgba(203,108,230,0.12) 0%, transparent 60%)",
+      }} />
+ 
+      {/* Main content */}
+      <div style={{ position:"relative", zIndex:1, maxWidth:1200, margin:"0 auto", padding:"20px 28px", boxSizing:"border-box" }}>
+ 
+        {/* ── Header ── */}
+        <header style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24, paddingBottom:16, borderBottom:"1px solid rgba(255,255,255,0.07)", top: 30, position: "relative" }}>
+          {/* Logo + student name */}
+          <div style={{ display:"flex", alignItems:"center", gap:16 }}>
+            <div style={{ position:"relative" }}>
+              <div style={{ width:44, height:44, borderRadius:10, background:"rgba(255,230,0,0.1)", border:"1px solid rgba(255,230,0,0.3)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22 }}>🚀</div>
+            </div>
+            <div>
+              <div style={{ fontFamily:"'Press Start 2P', monospace", fontWeight:900, fontSize:30, color:"#ffe600", letterSpacing:"0.12em", animation:"mc-hud-glow 3s ease-in-out infinite" }}>
+                MISSION CONTROL
+              </div>
+              <div style={{ fontFamily:"'Press Start 2P', monospace", fontSize:11, color:"rgba(255,255,255,0.4)", letterSpacing:"0.08em", marginTop:2 }}>
+                Player: <span style={{ color:"#00ff88" }}>{(studentProfile?.nickname || student.username).toUpperCase()}</span>
+              </div>
+            </div>
+          </div>
+ 
+          {/* Status strip */}
+          {/* <div style={{ display:"flex", alignItems:"center", gap:8, fontFamily:"'Share Tech Mono', monospace", fontSize:10, color:"rgba(255,255,255,0.3)", letterSpacing:"0.06em" }}>
+            <div style={{ width:7, height:7, borderRadius:"50%", background:"#00ff88", boxShadow:"0 0 6px #00ff88", animation:"mc-blink 2s ease-in-out infinite" }} />
+            SYSTEMS ONLINE
+          </div> */}
+ 
+          {/* Nav buttons */}
+          <div style={{ display:"flex", gap:8 }}>
+            {[
+              { label:"HOME",    icon:"⌂",  action: () => { handleClose(); setShowHistory(false) } },
+              { label:"LOG",     icon:"📋", action: loadHistory },
+              { label:"LOGOUT",  icon:"⏻",  action: handleLogout },
+            ].map(btn => (
+              <button key={btn.label} className="mc-nav-btn" onClick={btn.action} style={{
+                display:"flex", flexDirection:"column", alignItems:"center", gap:3,
+                padding:"8px 14px", borderRadius:8,
+                border: "2px solid #3d2c1e",
+                background: "#2a1a42",
+                color: "#e8e8f0", cursor:"pointer",
+                fontFamily:"'Share Tech Mono', monospace",
+                fontSize:9, letterSpacing:"0.1em",
+                boxShadow: "2px 2px 0 #3d2c1e",
+                transition:"all 0.15s",
+                            }}>
+                <span style={{ fontSize:16 }}>{btn.icon}</span>
+                {btn.label}
+              </button>
+            ))}
+          </div>
+        </header>
+ 
+        {/* ── Notification ── */}
+        {notification && <MCNotificationBanner n={notification} onDismiss={dismissNotif} />}
+ 
+        {/* ── Search bar ── */}
+        <div style={{
+          display:"flex", alignItems:"center", gap:12, marginBottom:24,
+          background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)",
+          borderRadius:12, padding:"10px 14px",
+          position:"relative",
+        }}>
+          <div style={{
+            width: 44, height: 44, flexShrink: 0,
+            border: "2px solid #cb6ce6",
+            borderRadius: 8,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 22,
+            background: "rgba(203,108,230,0.1)",
+            boxShadow: "2px 2px 0 #3d2c1e",
+          }}>🚀</div>
+ 
+          <div style={{ flex:1 }}>
+            <div style={{ fontFamily:"'Orbitron', monospace", fontSize:9, color:"rgba(255,230,0,0.7)", letterSpacing:"0.15em", marginBottom:6 }}>
+              NAVIGATION CONSOLE
+            </div>
+            <div className="mc-input-wrap" style={{
+              display:"flex", border:"1px solid rgba(255,255,255,0.15)",
+              borderRadius:8, overflow:"hidden", transition:"all 0.2s",
+            }}>
+              <div style={{ padding:"0 12px", display:"flex", alignItems:"center", color:"rgba(255,255,255,0.3)", fontSize:13, fontFamily:"'Share Tech Mono', monospace" }}>
+                ❯_
+              </div>
+              <input
+                type="text" value={urlInput}
+                onChange={e => setUrlInput(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handleVisit()}
+                placeholder="Enter coordinates or search query…"
+                style={{
+                  flex:1, padding:"10px 8px", fontSize:13,
+                  background:"transparent", border:"none", outline:"none",
+                  color:"#e8e8f0", fontFamily:"'Share Tech Mono', monospace",
+                  letterSpacing:"0.04em",
+                }}
+              />
+              <button onClick={handleVisit} className="mc-launch-btn" style={{
+                padding:"0 24px", fontSize:10, fontWeight:700,
+                border:"none", borderLeft:"1px solid rgba(255,255,255,0.1)",
+                background:"rgba(255,230,0,0.12)", color:"#ffe600",
+                cursor:"pointer", fontFamily:"'Orbitron', monospace",
+                letterSpacing:"0.12em", transition:"all 0.2s",
+                whiteSpace:"nowrap",
+              }}>
+                LAUNCH ›
+              </button>
+            </div>
+          </div>
+ 
+          {/* Live clock */}
+          {/* <LiveClock /> */}
+        </div>
+ 
+        {/* ── Main view: Orbit system ── */}
+        {showOrbitView && (
+          <div style={{ display:"flex", gap:20, alignItems:"flex-start" }}>
+            <div style={{ flex:1, minWidth:0 }}>
+              {loadingRecs ? (
+                <RadarWidget />
+              ) : (
+                <>
+                  <div style={{ fontFamily:"'Share Tech Mono',monospace",fontSize:10,color:"rgba(255,255,255,0.25)",letterSpacing:"0.1em",marginBottom:12 }}>
+                    COLLECT KNOWLEDGE ORBS TO UNLOCK RESOURCES — SPACE / TAP TO JUMP
+                  </div>
+                  <RunnerGame
+                    recGroups={recGroups}
+                    exploreRecs={exploreRecs}
+                    onLaunch={handleLaunch}   // ← your existing handler
+                    currentBestScore={studentProfile?.best_score ?? 0}
+                    onNewBestScore={async (score) => {
+                      const token = localStorage.getItem("token")
+                      const res = await fetch(`${API}/api/student-profile`, {
+                        method:"POST",
+                        headers:{"Content-Type":"application/json", Authorization:`Bearer ${token}`},
+                        body: JSON.stringify({ best_score: score })
+                      })
+                      if (res.ok) setStudentProfile(await res.json())
+                    }}
+                  />
+                </>
+              )}
+            </div>
+          </div>
+        )}
+ 
+        {/* ── Search results ── */}
+        {isSearching && (
+          <div style={{ display:"flex", alignItems:"center", gap:10, padding:"20px 0", fontFamily:"'Share Tech Mono', monospace", color:"rgba(255,255,255,0.4)", fontSize:12 }}>
+            <div style={{ width:16, height:16, border:"2px solid #ffe600", borderTopColor:"transparent", borderRadius:"50%", animation:"mc-spinner 0.7s linear infinite" }} />
+            SCANNING THE WEB…
+          </div>
+        )}
+        {searchResults.length > 0 && !activeUrl && (
+          <div style={{ animation:"mc-fadein 0.2s ease" }}>
+            <div style={{ fontFamily:"'Orbitron', monospace", fontSize:10, color:"rgba(255,230,0,0.6)", letterSpacing:"0.12em", marginBottom:12 }}>
+              SEARCH RESULTS — {searchResults.length} TARGETS FOUND
+            </div>
+            {searchResults.map((r, i) => (
+              <div key={i} className="mc-rec-card" onClick={() => { setSearchResults([]); doVisit(r.link) }} style={{
+                padding:"12px 16px", borderRadius:8, marginBottom:8, cursor:"pointer",
+                border:"1px solid rgba(255,255,255,0.07)", background:"rgba(255,255,255,0.02)",
+                transition:"all 0.2s",
+              }}>
+                <div style={{ fontFamily:"'Exo 2', sans-serif", fontWeight:600, fontSize:13, color:"#5b8dee", marginBottom:4 }}>{r.title}</div>
+                <div style={{ fontFamily:"'Share Tech Mono', monospace", fontSize:11, color:"rgba(255,255,255,0.5)", marginBottom:4 }}>{r.snippet}</div>
+                <div style={{ fontFamily:"'Share Tech Mono', monospace", fontSize:9, color:"rgba(255,255,255,0.25)" }}>{r.link}</div>
+              </div>
+            ))}
+          </div>
+        )}
+ 
+        {/* ── History panel ── */}
+        {showHistory && (
+          <MCHistoryPanel items={learningHistory} onClose={() => setShowHistory(false)} onItemClick={async (url) => { setShowHistory(false); setNavHistory([]); if (rootUrl.current) await endSession("in_progress"); await loadPage(url, true) }} />
+        )}
+ 
+        {/* ── Browser frame ── */}
+        {(activeUrl || loading) && !showHistory && (
+          <div style={{
+            border:"1px solid rgba(255,255,255,0.1)", borderRadius:12, overflow:"hidden",
+            background:"rgba(10,10,26,0.95)", boxShadow:"0 0 40px rgba(0,0,0,0.5)",
+            animation:"mc-fadein 0.2s ease",
+          }}>
+            {/* Browser chrome */}
+            <div style={{ display:"flex", alignItems:"center", gap:8, background:"rgba(255,255,255,0.04)", padding:"10px 14px", borderBottom:"1px solid rgba(255,255,255,0.08)" }}>
+              <button onClick={handleBack} disabled={navHistory.length===0} style={{ padding:"4px 10px", borderRadius:6, border:"1px solid rgba(255,255,255,0.12)", background:"transparent", cursor:navHistory.length>0?"pointer":"default", fontSize:13, color:navHistory.length>0?"#e8e8f0":"rgba(255,255,255,0.2)", fontFamily:"'Orbitron', monospace" }}>‹</button>
+              {[["#ff4444"],["#ffe600"],["#00ff88"]].map(([c],i) => (
+                <span key={i} style={{ width:10, height:10, borderRadius:"50%", background:c, display:"inline-block", boxShadow:`0 0 6px ${c}66` }} />
+              ))}
+              <input type="text" value={activeUrl||""} onChange={e=>setUrlInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleVisit()} style={{ flex:1, fontSize:11, color:"rgba(255,255,255,0.6)", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:6, padding:"4px 12px", outline:"none", fontFamily:"'Share Tech Mono', monospace" }} />
+              <button onClick={handleClose} style={{ fontSize:16, background:"none", border:"none", cursor:"pointer", color:"rgba(255,255,255,0.4)" }}>✕</button>
+            </div>
+ 
+            {/* Session bar */}
+            {(activeUrl||iframeError) && !loading && sessionActive && (
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"6px 14px", background:"rgba(255,230,0,0.04)", borderBottom:"1px solid rgba(255,230,0,0.1)" }}>
+                <span ref={interactionBadgeRef} style={{ fontFamily:"'Share Tech Mono', monospace", fontSize:10, color:"rgba(255,230,0,0.6)", letterSpacing:"0.08em" }}>● LIVE SESSION</span>
+                <div style={{ display:"flex", gap:8 }}>
+                  <button onClick={handleRedirectAnyway} style={{ padding:"4px 14px", borderRadius:6, border:"1px solid rgba(255,255,255,0.15)", background:"transparent", color:"rgba(255,255,255,0.6)", cursor:"pointer", fontSize:11, fontFamily:"'Share Tech Mono', monospace" }}>OPEN EXTERNALLY</button>
+                  <button onClick={handleMarkDone} style={{ padding:"4px 14px", borderRadius:6, border:"1px solid #00ff88", background:"rgba(0,255,136,0.1)", color:"#00ff88", cursor:"pointer", fontSize:11, fontFamily:"'Share Tech Mono', monospace", letterSpacing:"0.05em" }}>✓ MISSION COMPLETE</button>
+                </div>
+              </div>
+            )}
+ 
+            {loading && (
+              <div style={{ height:500, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:16 }}>
+                <div style={{ width:48, height:48, border:"3px solid rgba(255,230,0,0.3)", borderTopColor:"#ffe600", borderRadius:"50%", animation:"mc-spinner 0.8s linear infinite" }} />
+                <div style={{ fontFamily:"'Orbitron', monospace", fontSize:11, color:"rgba(255,230,0,0.6)", letterSpacing:"0.12em" }}>LOADING TARGET…</div>
+              </div>
+            )}
+ 
+            {iframeError && !loading && (
+              <div style={{ height:380, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:16 }}>
+                <div style={{ fontSize:48 }}>🔒</div>
+                <div style={{ fontFamily:"'Orbitron', monospace", fontSize:14, color:"rgba(255,255,255,0.7)", letterSpacing:"0.08em" }}>SITE BLOCKS EMBEDDED VIEW</div>
+                <div style={{ fontFamily:"'Share Tech Mono', monospace", fontSize:11, color:"rgba(255,255,255,0.35)", textAlign:"center", maxWidth:360 }}>This site's security settings prevent embedding. You can open it directly.</div>
+                <div style={{ display:"flex", gap:10 }}>
+                  <button onClick={handleRedirectAnyway} style={{ padding:"10px 24px", borderRadius:8, border:"1px solid #5b8dee", background:"rgba(91,141,238,0.15)", color:"#5b8dee", cursor:"pointer", fontSize:12, fontFamily:"'Orbitron', monospace", letterSpacing:"0.08em" }}>OPEN DIRECTLY</button>
+                  <button onClick={handleClose} style={{ padding:"10px 24px", borderRadius:8, border:"1px solid rgba(255,255,255,0.15)", background:"transparent", color:"rgba(255,255,255,0.5)", cursor:"pointer", fontSize:12, fontFamily:"'Orbitron', monospace" }}>ABORT</button>
+                </div>
+              </div>
+            )}
+ 
+            {activeUrl && !iframeError && !loading && (
+              <ShadowViewer html={htmlContent} onIntercept={(url) => { setNavHistory(p => activeUrl ? [...p, activeUrl] : p); loadPage(url, false) }} onScroll={() => upgradeInteraction("scroll")} onClick={() => upgradeInteraction("click")} />
+            )}
+          </div>
+        )}
+      </div>
+ 
+      {/* ── Modals ── */}
+ 
+      {/* Feedback */}
+      {showFeedback && pendingFeedback && (
+        <MCFeedbackModal url={pendingFeedback.url} category={pendingFeedback.category}
+          onSubmit={async (data) => {
+            const token = localStorage.getItem("token"); if (!token) return
+            await fetch(`${API}/api/feedback`, { method:"POST", headers:{"Content-Type":"application/json", Authorization:`Bearer ${token}`}, body:JSON.stringify({ url:pendingFeedback.url, resource_category:pendingFeedback.category, ...data }) }).catch(()=>{})
+            setShowFeedback(false); setPendingFeedback(null)
+          }}
+          onSkip={() => { setShowFeedback(false); setPendingFeedback(null) }}
+        />
+      )}
+ 
+      {/* Completion prompt */}
+      {showCompletionPrompt && (
+        <MCModal title="MISSION STATUS" onClose={async () => {
+          if (rootUrl.current) await endSession("in_progress")
+          setShowCompletionPrompt(false); setActiveUrl(null); setHtmlContent(""); setNavHistory([])
+          sessionStorage.removeItem("dashboardRedirectedAway"); sessionStorage.removeItem("dashboardRedirectedAwayUrl"); sessionStorage.removeItem("dashboardRedirectedAwayCategory")
+        }}>
+          <p style={{ fontFamily:"'Share Tech Mono', monospace", fontSize:12, color:"rgba(255,255,255,0.6)", marginBottom:20 }}>
+            You navigated away from the mission zone. Did you complete your objective?
+          </p>
+          <div style={{ display:"flex", gap:10 }}>
+            <button onClick={async () => {
+              if (rootUrl.current) await endSession("completed")
+              setShowCompletionPrompt(false); setActiveUrl(null); setHtmlContent(""); setNavHistory([])
+              sessionStorage.removeItem("dashboardRedirectedAway"); sessionStorage.removeItem("dashboardRedirectedAwayUrl"); sessionStorage.removeItem("dashboardRedirectedAwayCategory")
+            }} style={{ flex:1, padding:"10px", borderRadius:8, border:"1px solid #00ff88", background:"rgba(0,255,136,0.1)", color:"#00ff88", cursor:"pointer", fontFamily:"'Orbitron', monospace", fontSize:11, letterSpacing:"0.08em" }}>
+              ✓ MISSION COMPLETE
+            </button>
+            <button onClick={async () => {
+              if (rootUrl.current) await endSession("in_progress")
+              setShowCompletionPrompt(false); setActiveUrl(null); setHtmlContent(""); setNavHistory([])
+              sessionStorage.removeItem("dashboardRedirectedAway"); sessionStorage.removeItem("dashboardRedirectedAwayUrl"); sessionStorage.removeItem("dashboardRedirectedAwayCategory")
+            }} style={{ flex:1, padding:"10px", borderRadius:8, border:"1px solid rgba(255,255,255,0.15)", background:"transparent", color:"rgba(255,255,255,0.5)", cursor:"pointer", fontFamily:"'Orbitron', monospace", fontSize:11 }}>
+              STILL IN PROGRESS
+            </button>
+          </div>
+        </MCModal>
+      )}
+
+      {showNicknameModal && student && (
+        <NicknameModal
+          username={student.username}
+          onSave={handleNicknameSave}
+        />
+      )}
+    </div>
+  )
+}
+ 
+// ── Generic MC modal shell ────────────────────────────────────────
+function MCModal({ title, children, onClose }: { title:string; children:React.ReactNode; onClose:()=>void }) {
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,20,0.85)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:3000, backdropFilter:"blur(4px)" }}>
+      <div style={{ background:"rgba(10,10,30,0.98)", border:"1px solid rgba(255,230,0,0.3)", borderRadius:14, padding:"24px 28px", maxWidth:460, width:"100%", boxShadow:"0 0 60px rgba(255,230,0,0.1)", position:"relative" }}>
+        {(["tl","tr","bl","br"] as const).map(p => <HudCorner key={p} pos={p} />)}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
+          <div style={{ fontFamily:"'Orbitron', monospace", fontWeight:900, fontSize:13, color:"#ffe600", letterSpacing:"0.15em" }}>{title}</div>
+          <button onClick={onClose} style={{ background:"none", border:"none", cursor:"pointer", color:"rgba(255,255,255,0.4)", fontSize:18 }}>✕</button>
+        </div>
+        {children}
+      </div>
+    </div>
+  )
+}
+ 
+// ── MC Feedback modal ────────────────────────────────────────────
+function MCFeedbackModal({ url, category, onSubmit, onSkip }: { url:string; category:string; onSubmit:(d:any)=>void; onSkip:()=>void }) {
+  const [form, setForm] = useState({ interest_rating:0, usefulness_rating:0, perceived_difficulty:"" as ""| "easy"|"moderate"|"hard" })
+  const canSubmit = form.interest_rating > 0 && form.usefulness_rating > 0 && form.perceived_difficulty !== ""
+ 
+  const StarRow = ({ label, field }: { label:string; field:"interest_rating"|"usefulness_rating" }) => (
+    <div style={{ marginBottom:16 }}>
+      <div style={{ fontFamily:"'Share Tech Mono', monospace", fontSize:10, color:"rgba(255,255,255,0.5)", letterSpacing:"0.1em", marginBottom:8 }}>{label}</div>
+      <div style={{ display:"flex", gap:8 }}>
+        {[1,2,3,4,5].map(n => (
+          <button key={n} onClick={() => setForm(f=>({...f,[field]:n}))} style={{ width:36, height:36, borderRadius:6, border:`1px solid ${form[field]>=n?"#ffe600":"rgba(255,255,255,0.15)"}`, background:form[field]>=n?"rgba(255,230,0,0.15)":"transparent", cursor:"pointer", fontSize:16, color:form[field]>=n?"#ffe600":"rgba(255,255,255,0.2)", transition:"all 0.15s" }}>★</button>
+        ))}
+      </div>
+    </div>
+  )
+ 
+  return (
+    <MCModal title="MISSION DEBRIEF" onClose={onSkip}>
+      <div style={{ fontFamily:"'Share Tech Mono', monospace", fontSize:10, color:"rgba(255,255,255,0.3)", marginBottom:20, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{url}</div>
+      <StarRow label="INTEREST LEVEL" field="interest_rating" />
+      <StarRow label="MISSION USEFULNESS" field="usefulness_rating" />
+      <div style={{ marginBottom:20 }}>
+        <div style={{ fontFamily:"'Share Tech Mono', monospace", fontSize:10, color:"rgba(255,255,255,0.5)", letterSpacing:"0.1em", marginBottom:8 }}>DIFFICULTY ASSESSMENT</div>
+        <div style={{ display:"flex", gap:8 }}>
+          {(["easy","moderate","hard"] as const).map(d => (
+            <button key={d} onClick={() => setForm(f=>({...f,perceived_difficulty:d}))} style={{ flex:1, padding:"8px", borderRadius:6, border:`1px solid ${form.perceived_difficulty===d?"#ffe600":"rgba(255,255,255,0.12)"}`, background:form.perceived_difficulty===d?"rgba(255,230,0,0.12)":"transparent", color:form.perceived_difficulty===d?"#ffe600":"rgba(255,255,255,0.4)", cursor:"pointer", fontFamily:"'Orbitron', monospace", fontSize:9, letterSpacing:"0.1em", textTransform:"uppercase", transition:"all 0.15s" }}>{d}</button>
+          ))}
+        </div>
+      </div>
+      <div style={{ display:"flex", gap:8 }}>
+        <button onClick={() => onSubmit(form)} disabled={!canSubmit} style={{ flex:1, padding:"10px", borderRadius:8, border:`1px solid ${canSubmit?"#00ff88":"rgba(255,255,255,0.1)"}`, background:canSubmit?"rgba(0,255,136,0.12)":"transparent", color:canSubmit?"#00ff88":"rgba(255,255,255,0.25)", cursor:canSubmit?"pointer":"not-allowed", fontFamily:"'Orbitron', monospace", fontSize:10, letterSpacing:"0.1em", transition:"all 0.2s" }}>SUBMIT REPORT</button>
+        <button onClick={onSkip} style={{ padding:"10px 16px", borderRadius:8, border:"1px solid rgba(255,255,255,0.1)", background:"transparent", color:"rgba(255,255,255,0.3)", cursor:"pointer", fontFamily:"'Orbitron', monospace", fontSize:10 }}>SKIP</button>
+      </div>
+    </MCModal>
+  )
+}
+ 
+// ── MC History panel ─────────────────────────────────────────────
+function MCHistoryPanel({ items, onClose, onItemClick }: { items:LearningHistoryItem[]; onClose:()=>void; onItemClick:(url:string)=>void }) {
+  const fmt = (d?:string) => d ? new Date(d).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : "—"
+  return (
+    <div style={{ border:"1px solid rgba(255,255,255,0.08)", borderRadius:12, overflow:"hidden", background:"rgba(10,10,26,0.97)", animation:"mc-fadein 0.2s ease" }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"14px 18px", borderBottom:"1px solid rgba(255,255,255,0.07)", background:"rgba(255,255,255,0.03)" }}>
+        <div style={{ fontFamily:"'Orbitron', monospace", fontWeight:900, fontSize:12, color:"#ffe600", letterSpacing:"0.12em" }}>MISSION LOG — {items.length} ENTRIES</div>
+        <button onClick={onClose} style={{ background:"none", border:"none", cursor:"pointer", color:"rgba(255,255,255,0.4)", fontSize:18 }}>✕</button>
+      </div>
+      {items.length === 0 ? (
+        <div style={{ padding:"3rem", textAlign:"center", fontFamily:"'Share Tech Mono', monospace", color:"rgba(255,255,255,0.25)", fontSize:12 }}>NO MISSIONS LOGGED YET</div>
+      ) : (
+        <div style={{ maxHeight:500, overflowY:"auto" }}>
+          {[...items].reverse().map(item => (
+            <div key={item._id} onClick={() => onItemClick(item.resource_id)} className="mc-rec-card" style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 18px", borderBottom:"1px solid rgba(255,255,255,0.05)", cursor:"pointer", transition:"all 0.2s" }}>
+              <span style={{ fontSize:16 }}>{item.completion_status==="completed"?"✅":"📖"}</span>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontFamily:"'Exo 2', sans-serif", fontWeight:600, fontSize:12, color:"#5b8dee", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{item.resource_title||item.resource_id}</div>
+                {item.completion_date && <div style={{ fontFamily:"'Share Tech Mono', monospace", fontSize:9, color:"rgba(255,255,255,0.3)", marginTop:2 }}>{fmt(item.completion_date)}</div>}
+              </div>
+              <span style={{ padding:"3px 10px", borderRadius:20, fontSize:9, fontWeight:700, fontFamily:"'Orbitron', monospace", letterSpacing:"0.06em", border:`1px solid ${item.completion_status==="completed"?"#00ff8866":"rgba(255,230,0,0.4)"}`, background:item.completion_status==="completed"?"rgba(0,255,136,0.08)":"rgba(255,230,0,0.06)", color:item.completion_status==="completed"?"#00ff88":"#ffe600" }}>
+                {item.completion_status==="completed"?"COMPLETE":"IN PROGRESS"}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default function DashboardRouter() {
+  const [gradeLevel, setGradeLevel] = useState<number | null>(null)
+  const router = useRouter()
+
+  useEffect(() => {
+    const token = localStorage.getItem("token")
+    if (!token) { router.push("/"); return }
+    fetch(`${API}/api/students/profile`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(r => r.json())
+      .then(data => {
+        const studentclass = data.class_id
+        const grade = studentclass.grade_level
+        setGradeLevel(grade)
+      })
+      .catch(() => router.push("/"))
+  }, [])
+
+  if (gradeLevel === null) return (
+    <div style={{ minHeight: "100vh", background: "#fde8c8", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "sans-serif" }}>
+      <p style={{ color: "#b89b82", fontSize: 14 }}>Loading...</p>
+    </div>
+  )
+
+  if (gradeLevel >= 7) return <MissionControlDashboard />
+  return <KidsDashboard />
 }

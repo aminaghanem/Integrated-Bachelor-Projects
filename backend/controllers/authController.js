@@ -4,6 +4,7 @@ const Student = require("../models/studentModel.js");
 const Parent = require("../models/parentModel.js");
 const Teacher = require("../models/teacherModel.js");
 const Admin = require("../models/adminModel") ;
+const SchoolClass = require("../models/classModel.js");
 
 const login = async (req, res) => {
 
@@ -21,6 +22,10 @@ const login = async (req, res) => {
 
     if (user) {
       role = "student"
+      const gradeLevel = await SchoolClass.findById(user.class_id).then(c => c ? c.grade_level : null)
+      if (gradeLevel !== null) {
+        console.log(`Student ${username} is in grade level ${gradeLevel}`)
+      }
     }
 
     // check teachers

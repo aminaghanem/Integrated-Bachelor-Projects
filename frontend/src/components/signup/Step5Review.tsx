@@ -1,4 +1,4 @@
-import { SignupData, errorStyle } from "./SignupWizard"
+import { SignupData, ACCENT, mcInputStyle, mcErrorStyle, mcSectionDivider } from "./SignupWizard"
 
 interface Props {
   data: SignupData
@@ -11,7 +11,7 @@ function ReviewRow({ label, value }: { label: string; value?: string | null }) {
   return (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "8px 0", borderBottom: "1px solid #f3f4f6" }}>
       <span style={{ fontSize: 12, color: "#9ca3af", minWidth: 150 }}>{label}</span>
-      <span style={{ fontSize: 13, color: "#111827", fontWeight: 500, textAlign: "right" }}>{value || "—"}</span>
+      <span style={{ fontSize: 13, color: "#f5c842", fontWeight: 500, textAlign: "right" }}>{value || "—"}</span>
     </div>
   )
 }
@@ -75,18 +75,18 @@ export default function Step5Review({ data, back, submit, errors }: Props) {
 
       {errors.submit && (
         <div style={{ margin: "16px 0", padding: "10px 14px", borderRadius: 8, background: "#fef2f2", border: "1px solid #fecaca" }}>
-          <p style={{ ...errorStyle, margin: 0 }}>{errors.submit}</p>
+          <p style={{ ...mcErrorStyle, margin: 0 }}>{errors.submit}</p>
         </div>
       )}
 
       <div style={{ display: "flex", gap: 10, marginTop: 24 }}>
         <button onClick={back}
           style={{ flex: 1, padding: "10px", borderRadius: 8, border: "1px solid #e5e7eb", background: "#fff", color: "#374151", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>
-          ← Back
+          Back
         </button>
         <button onClick={submit}
           style={{ flex: 2, padding: "10px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #3b82f6, #6366f1)", color: "#fff", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
-          Submit ✓
+          Submit 
         </button>
       </div>
     </div>

@@ -119,7 +119,7 @@ router.get("/", protect, authorizeRoles("student"), async (req, res) => {
     res.json({
       grouped: Object.entries(groupedByCategory).map(([category, items]) => ({
         category,
-        label: `Since you're interested in ${category}`,
+        label: `${category}`,
         items: items.map(formatRec)
       })),
       explore: explorationPool.map(formatRec)

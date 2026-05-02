@@ -1,4 +1,4 @@
-import { SignupData, inputStyle, labelStyle, fieldStyle, errorStyle } from "./SignupWizard"
+import { SignupData, ACCENT, mcInputStyle, mcLabelStyle, mcFieldStyle, mcErrorStyle } from "./SignupWizard"
 
 interface Props {
   data: SignupData
@@ -12,57 +12,51 @@ export default function Step1Account({ data, update, next, errors }: Props) {
 
   return (
     <div>
-      <p style={{ margin: "0 0 20px", fontSize: 13, color: "#6b7280" }}>
-        Choose a username and password to secure your account.
+      <p style={{ margin: "0 0 20px", fontSize: 12, color: "rgba(255,255,255,0.35)", fontFamily: "'Share Tech Mono', monospace", letterSpacing: "0.05em", lineHeight: 1.6 }}>
+        CHOOSE A USERNAME AND PASSWORD TO SECURE YOUR ACCOUNT.
       </p>
 
-      <div style={fieldStyle}>
-        <label style={labelStyle}>Username</label>
+      <div style={mcFieldStyle}>
+        <label style={mcLabelStyle}>USERNAME</label>
         <input
-          value={data.username}
-          onChange={e => update({ username: e.target.value })}
-          placeholder="e.g. student_ali"
-          style={{ ...inputStyle, borderColor: errors.username ? "#fca5a5" : "#e5e7eb" }}
+          value={data.username} onChange={e => update({ username: e.target.value })}
+          placeholder="e.g. student_ali" className="mc-input"
+          style={{ ...mcInputStyle, borderColor: errors.username ? "rgba(255,80,60,0.6)" : "rgba(255,255,255,0.1)" }}
         />
-        {errors.username && <p style={errorStyle}>{errors.username}</p>}
+        {errors.username && <p style={mcErrorStyle}>⚠ {errors.username}</p>}
       </div>
 
-      <div style={fieldStyle}>
-        <label style={labelStyle}>Password</label>
+      <div style={mcFieldStyle}>
+        <label style={mcLabelStyle}>PASSWORD</label>
         <input
-          type="password"
-          value={data.password}
-          onChange={e => update({ password: e.target.value })}
-          placeholder="Min. 6 characters"
-          style={{ ...inputStyle, borderColor: errors.password ? "#fca5a5" : "#e5e7eb" }}
+          type="password" value={data.password} onChange={e => update({ password: e.target.value })}
+          placeholder="Min. 6 characters" className="mc-input"
+          style={{ ...mcInputStyle, borderColor: errors.password ? "rgba(255,80,60,0.6)" : "rgba(255,255,255,0.1)" }}
         />
-        {errors.password && <p style={errorStyle}>{errors.password}</p>}
+        {errors.password && <p style={mcErrorStyle}>⚠ {errors.password}</p>}
       </div>
 
       <div style={{ marginBottom: 24 }}>
-        <label style={labelStyle}>Confirm Password</label>
+        <label style={mcLabelStyle}>CONFIRM PASSWORD</label>
         <input
-          type="password"
-          value={data.confirm_password}
-          onChange={e => update({ confirm_password: e.target.value })}
-          placeholder="Repeat your password"
-          style={{ ...inputStyle, borderColor: errors.confirm_password ? "#fca5a5" : "#e5e7eb" }}
+          type="password" value={data.confirm_password} onChange={e => update({ confirm_password: e.target.value })}
+          placeholder="Repeat your password" className="mc-input"
+          style={{ ...mcInputStyle, borderColor: errors.confirm_password ? "rgba(255,80,60,0.6)" : "rgba(255,255,255,0.1)" }}
         />
-        {errors.confirm_password && <p style={errorStyle}>{errors.confirm_password}</p>}
+        {errors.confirm_password && <p style={mcErrorStyle}>⚠ {errors.confirm_password}</p>}
       </div>
 
-      <button
-        onClick={next}
-        disabled={!canNext}
+      <button onClick={next} disabled={!canNext} className="mc-next-btn"
         style={{
-          width: "100%", padding: "11px", borderRadius: 8, border: "none",
-          background: canNext ? "linear-gradient(135deg, #3b82f6, #6366f1)" : "#e5e7eb",
-          color: canNext ? "#fff" : "#9ca3af",
-          fontWeight: 700, fontSize: 14, cursor: canNext ? "pointer" : "not-allowed",
-          letterSpacing: "0.02em"
-        }}
-      >
-        Next →
+          width: "100%", padding: "12px", borderRadius: 8,
+          border: `1px solid ${canNext ? ACCENT + "55" : "rgba(255,255,255,0.08)"}`,
+          background: canNext ? `rgba(91,141,238,0.2)` : "rgba(255,255,255,0.04)",
+          color: canNext ? ACCENT : "rgba(255,255,255,0.2)",
+          fontFamily: "'Orbitron', monospace", fontSize: 10, fontWeight: 700,
+          letterSpacing: "0.12em", cursor: canNext ? "pointer" : "not-allowed",
+          transition: "all 0.2s",
+        }}>
+        NEXT →
       </button>
     </div>
   )

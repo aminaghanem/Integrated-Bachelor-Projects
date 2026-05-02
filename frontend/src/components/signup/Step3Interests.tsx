@@ -1,4 +1,4 @@
-import { SignupData, inputStyle, errorStyle } from "./SignupWizard"
+import { SignupData, ACCENT, mcInputStyle, mcErrorStyle } from "./SignupWizard"
 import { useState } from "react"
 
 interface Props {
@@ -10,17 +10,16 @@ interface Props {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Math: "#3b82f6", English: "#8b5cf6", Science: "#10b981",
-  Programming: "#f59e0b", History: "#ef4444",
+  Math: "#5b8dee", English: "#cb6ce6", Science: "#00ff88",
+  Programming: "#ffa500", History: "#ff503c",
 }
-const DEFAULT_COLOR = "#6b7280"
+const DEFAULT_COLOR = "rgba(255,255,255,0.35)"
 
 export default function Step3Interests({ data, update, next, back, errors }: Props) {
   const [newInterest, setNewInterest] = useState("")
 
   const calculateAge = (dob: string) => {
-    const birth = new Date(dob)
-    const today = new Date()
+    const birth = new Date(dob); const today = new Date()
     let age = today.getFullYear() - birth.getFullYear()
     const m = today.getMonth() - birth.getMonth()
     if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--
@@ -52,11 +51,11 @@ export default function Step3Interests({ data, update, next, back, errors }: Pro
 
   return (
     <div>
-      <p style={{ margin: "0 0 20px", fontSize: 13, color: "#6b7280" }}>
-        Rate your interest in each subject. This helps us personalise your content.
+      <p style={{ margin: "0 0 20px", fontSize: 12, color: "rgba(255,255,255,0.35)", fontFamily: "'Share Tech Mono', monospace", letterSpacing: "0.05em", lineHeight: 1.6 }}>
+        RATE YOUR INTEREST IN EACH SUBJECT. THIS HELPS US PERSONALISE YOUR CONTENT.
       </p>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
         {categories.map(category => {
           const rating = getRating(category)
           const color = CATEGORY_COLORS[category] ?? DEFAULT_COLOR
@@ -66,27 +65,22 @@ export default function Step3Interests({ data, update, next, back, errors }: Pro
             <div key={category} style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
               padding: "10px 14px", borderRadius: 10,
-              background: rating > 0 ? color + "0d" : "#f9fafb",
-              border: `1px solid ${rating > 0 ? color + "33" : "#e5e7eb"}`,
-              transition: "all 0.2s"
+              background: rating > 0 ? `${color}12` : "rgba(255,255,255,0.02)",
+              border: `1px solid ${rating > 0 ? color + "44" : "rgba(255,255,255,0.07)"}`,
+              transition: "all 0.2s",
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 13, fontWeight: 500, color: rating > 0 ? color : "#374151" }}>
+                <span style={{ fontSize: 12, fontWeight: 500, color: rating > 0 ? color : "rgba(255,255,255,0.45)", fontFamily: "'Exo 2', sans-serif" }}>
                   {category}
                 </span>
                 {isCustom && (
-                  <span style={{ fontSize: 10, padding: "1px 6px", borderRadius: 10, background: "#f3f4f6", color: "#9ca3af" }}>custom</span>
+                  <span style={{ fontSize: 8, padding: "2px 7px", borderRadius: 10, background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.25)", fontFamily: "'Share Tech Mono', monospace", letterSpacing: "0.06em" }}>CUSTOM</span>
                 )}
               </div>
-              <div style={{ display: "flex", gap: 4 }}>
+              <div style={{ display: "flex", gap: 3 }}>
                 {[1, 2, 3, 4, 5].map(star => (
-                  <button key={star} type="button" onClick={() => setRating(category, star)}
-                    style={{
-                      background: "none", border: "none", cursor: "pointer",
-                      fontSize: 20, padding: "0 1px", lineHeight: 1,
-                      color: rating >= star ? color : "#d1d5db",
-                      transition: "color 0.15s"
-                    }}>
+                  <button key={star} type="button" onClick={() => setRating(category, star)} className="mc-star-btn"
+                    style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, padding: "0 1px", lineHeight: 1, color: rating >= star ? color : "rgba(255,255,255,0.1)", transition: "all 0.15s" }}>
                     ★
                   </button>
                 ))}
@@ -96,37 +90,37 @@ export default function Step3Interests({ data, update, next, back, errors }: Pro
         })}
       </div>
 
-      {errors.interests && <p style={{ ...errorStyle, marginBottom: 12 }}>{errors.interests}</p>}
+      {errors.interests && (
+        <div style={{ marginBottom: 12, padding: "8px 12px", borderRadius: 8, background: "rgba(255,80,60,0.1)", border: "1px solid rgba(255,80,60,0.3)" }}>
+          <p style={{ ...mcErrorStyle, margin: 0 }}>⚠ {errors.interests}</p>
+        </div>
+      )}
 
       {/* Add custom interest */}
       <div style={{ marginBottom: 24 }}>
-        <p style={{ margin: "0 0 8px", fontSize: 12, fontWeight: 600, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-          Add another interest
-        </p>
+        <label style={{ display: "block", fontFamily: "'Orbitron', monospace", fontSize: 8, color: `${ACCENT}88`, letterSpacing: "0.15em", marginBottom: 8 }}>ADD ANOTHER INTEREST</label>
         <div style={{ display: "flex", gap: 8 }}>
           <input
-            type="text"
-            value={newInterest}
-            onChange={e => setNewInterest(e.target.value)}
+            type="text" value={newInterest} onChange={e => setNewInterest(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addInterest() } }}
-            placeholder="e.g. Geography, Art, Music..."
-            style={{ ...inputStyle, flex: 1 }}
+            placeholder="e.g. Geography, Art, Music..." className="mc-input"
+            style={{ ...mcInputStyle, flex: 1 }}
           />
-          <button type="button" onClick={addInterest}
-            style={{ padding: "10px 16px", borderRadius: 8, border: "1px solid #e5e7eb", background: "#f9fafb", color: "#374151", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
-            Add
+          <button type="button" onClick={addInterest} className="mc-add-btn"
+            style={{ padding: "10px 16px", borderRadius: 8, border: `1px solid rgba(91,141,238,0.35)`, background: "rgba(91,141,238,0.1)", color: ACCENT, fontFamily: "'Share Tech Mono', monospace", fontSize: 11, cursor: "pointer", transition: "all 0.15s", letterSpacing: "0.06em" }}>
+            ADD
           </button>
         </div>
       </div>
 
       <div style={{ display: "flex", gap: 10 }}>
-        <button onClick={back}
-          style={{ flex: 1, padding: "10px", borderRadius: 8, border: "1px solid #e5e7eb", background: "#fff", color: "#374151", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>
-          ← Back
+        <button onClick={back} className="mc-back-btn"
+          style={{ flex: 1, padding: "10px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "transparent", color: "rgba(255,255,255,0.35)", fontFamily: "'Orbitron', monospace", fontSize: 10, fontWeight: 600, cursor: "pointer", letterSpacing: "0.1em", transition: "all 0.15s" }}>
+          ← BACK
         </button>
-        <button onClick={next}
-          style={{ flex: 2, padding: "10px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #3b82f6, #6366f1)", color: "#fff", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
-          Next →
+        <button onClick={next} className="mc-next-btn"
+          style={{ flex: 2, padding: "10px", borderRadius: 8, border: `1px solid ${ACCENT}55`, background: "rgba(91,141,238,0.2)", color: ACCENT, fontFamily: "'Orbitron', monospace", fontSize: 10, fontWeight: 700, cursor: "pointer", letterSpacing: "0.12em", transition: "all 0.2s" }}>
+          NEXT →
         </button>
       </div>
     </div>
