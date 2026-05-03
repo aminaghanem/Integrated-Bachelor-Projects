@@ -2,7 +2,9 @@
 import { useState } from "react"
 
 interface Props {
-  username: string                          // fallback if skipped
+  username: string
+  currentNickname?: string | null        // ← add this
+  currentAvatar?: string | null          // ← and this
   onSave: (nickname: string, selectedAvatar: string | null) => void
 }
 
@@ -24,9 +26,9 @@ const AVATARS = [
   { id: "avatar6",    image: "/sg-avatar6.png", color: "#f5c842" },
 ]
 
-export default function NicknameModal({ username, onSave }: Props) {
-  const [nickname, setNickname] = useState("")
-  const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null)
+export default function NicknameModal({ username, currentNickname, currentAvatar, onSave }: Props) {
+  const [nickname, setNickname] = useState(currentNickname || "")           // ← pre-fill
+  const [selectedAvatar, setSelectedAvatar] = useState<string | null>(currentAvatar || null) 
   const [error, setError] = useState("")
 
   const handleSave = () => {
@@ -46,10 +48,12 @@ export default function NicknameModal({ username, onSave }: Props) {
       }}>
         {/* Title */}
         <div style={{ fontFamily:"'Orbitron',monospace", fontSize:13, color:"#ffe600", letterSpacing:"0.15em", marginBottom:6 }}>
-          First things first...
+          {currentNickname? "EDIT NICKNAME" : "CHOOSE NICKNAME"}
         </div>
         <div style={{ fontSize:11, color:"rgba(255,255,255,0.4)", marginBottom:24 }}>
-          Choose your nickname — or skip to use your username
+            {currentNickname
+                ? "Update your nickname"
+                : "Choose your nickname — or skip to use your username"}
         </div>
 
         {/* Avatar picker */}

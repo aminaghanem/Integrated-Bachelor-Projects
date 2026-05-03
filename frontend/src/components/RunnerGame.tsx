@@ -351,6 +351,8 @@ export default function RunnerGame({ recGroups, exploreRecs, onLaunch, currentBe
         e.preventDefault()
         if (stateRef.current === "paused") {
           g.closePanel()
+        } else if (stateRef.current === "dead") {
+          g.reset()
         } else {
           jump()
         }

@@ -191,7 +191,7 @@ export default function LoginPage() {
             width: '750px',
             height: '500px',
             border: '3px solid #4F4A45', // Blocky, bold brown lines
-            backgroundColor: '#F9EB9B', // Muted yellow frame
+            backgroundColor: '#F5EAD4', // Muted yellow frame
             borderRadius: '15px', // Pixelated curves
             display: 'flex',
             alignItems: 'center',
@@ -201,12 +201,14 @@ export default function LoginPage() {
           }}>
             {/* Miniature window icons styled as 'eyes' or details */}
             <img
-              src="/image-removebg-preview.png"
+              src="/sg-logo.png"
               alt=""
               style={{
                 position: "relative", inset: 0,
                 width: "100%", height: "100%",
-                objectFit: "cover", zIndex: 0
+                objectFit: "cover", zIndex: 0,
+                alignItems: "center", justifyContent: "center",
+                left: -23, top: 12
               }}
             />
           </div>

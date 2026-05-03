@@ -2043,9 +2043,22 @@ function KidsDashboard() {
             <div style={{ width:44, height:44, borderRadius:10, background:"rgba(255,230,0,0.1)", border:"1px solid rgba(255,230,0,0.3)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22 }}>🚀</div>
           </div>
           
-          <div style={{ fontFamily:"'Press Start 2P', monospace", fontWeight:900, fontSize:30, color:"#ffe600", letterSpacing:"0.12em", animation:"mc-hud-glow 3s ease-in-out infinite" }}>
+          <span style={{ fontFamily:"'Press Start 2P', monospace", fontWeight:900, fontSize:30, color:"#ffe600", letterSpacing:"0.12em", animation:"mc-hud-glow 3s ease-in-out infinite" }}>
             Hello, {studentProfile?.nickname || student.username}!
-          </div>
+          </span>
+
+          <button
+            onClick={() => setShowNicknameModal(true)}
+            title="Edit nickname"
+            style={{
+              background:"none", border:"2px solid #3d2c1e", borderRadius:6,
+              color:"#3d2c1e", cursor:"pointer", fontSize:10, padding:"3px 8px",
+              fontFamily:"monospace", fontWeight:700, boxShadow:"1px 1px 0 #3d2c1e",
+              marginLeft:6,
+            }}
+          >
+            ✏️ EDIT
+          </button>
           
 
           <div style={{ display: "flex", gap: 16, right: 20, position: "absolute" }}>
@@ -2434,6 +2447,8 @@ function KidsDashboard() {
       {showNicknameModal && student && (
         <NicknameModal
           username={student.username}
+          currentNickname={studentProfile?.nickname}    // ← add
+          currentAvatar={studentProfile?.avatar}   // ← add
           onSave={handleNicknameSave}
         />
       )}
@@ -2830,8 +2845,22 @@ function MissionControlDashboard() {
               <div style={{ fontFamily:"'Press Start 2P', monospace", fontWeight:900, fontSize:30, color:"#ffe600", letterSpacing:"0.12em", animation:"mc-hud-glow 3s ease-in-out infinite" }}>
                 MISSION CONTROL
               </div>
-              <div style={{ fontFamily:"'Press Start 2P', monospace", fontSize:11, color:"rgba(255,255,255,0.4)", letterSpacing:"0.08em", marginTop:2 }}>
+              <div style={{ fontFamily:"'Press Start 2P', monospace", fontSize:11, color:"rgba(255,255,255,0.4)", letterSpacing:"0.08em", marginTop:2, display:"flex", alignItems:"center", gap:8 }}>
                 Player: <span style={{ color:"#00ff88" }}>{(studentProfile?.nickname || student.username).toUpperCase()}</span>
+                <button
+                  onClick={() => setShowNicknameModal(true)}
+                  title="Edit callsign"
+                  style={{
+                    background:"none", border:"1px solid rgba(255,255,255,0.15)", borderRadius:4,
+                    color:"rgba(255,255,255,0.3)", cursor:"pointer", fontSize:8, padding:"2px 6px",
+                    fontFamily:"'Share Tech Mono',monospace", letterSpacing:"0.08em",
+                    transition:"all 0.15s",
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor="#ffe600"; e.currentTarget.style.color="#ffe600" }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor="rgba(255,255,255,0.15)"; e.currentTarget.style.color="rgba(255,255,255,0.3)" }}
+                >
+                  EDIT
+                </button>
               </div>
             </div>
           </div>
@@ -3090,6 +3119,8 @@ function MissionControlDashboard() {
       {showNicknameModal && student && (
         <NicknameModal
           username={student.username}
+          currentNickname={studentProfile?.nickname}    // ← add
+          currentAvatar={studentProfile?.avatar} 
           onSave={handleNicknameSave}
         />
       )}
