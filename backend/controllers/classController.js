@@ -187,17 +187,35 @@ const addStudentToClass = async (req, res) => {
 
     const { studentId } = req.body;
 
+    if (!studentId) {
+      return res.status(400).json({ error: "studentId is required" });
+    }
+
     const schoolClass = await SchoolClass.findById(req.params.id);
 
     if (!schoolClass) {
       return res.status(404).json({ error: "Class not found" });
     }
 
-    schoolClass.students.push(studentId);
+    const student = await Student.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ error: "Student not found" });
+    }
+
+    if (student.class_id && student.class_id.toString() !== schoolClass._id.toString()) {
+      return res.status(400).json({ error: "Student is already assigned to another class" });
+    }
+
+    if (!schoolClass.students.some(id => id.toString() === studentId.toString())) {
+      schoolClass.students.push(studentId);
+    }
 
     schoolClass.number_of_students = schoolClass.students.length;
 
-    await schoolClass.save();
+    await Promise.all([
+      schoolClass.save(),
+      Student.findByIdAndUpdate(studentId, { class_id: schoolClass._id })
+    ]);
 
     res.json(schoolClass);
 
@@ -219,12 +237,45 @@ const getAllClasses = async (req, res) => {
 
 // UPDATE
 const updateClass = async (req, res) => {
-  const updated = await SchoolClass.findByIdAndUpdate(
-    req.params.id,
-    req.body,
-    { new: true }
-  );
-  res.json(updated);
+  try {
+    const classId = req.params.id;
+    const schoolClass = await SchoolClass.findById(classId);
+
+    if (!schoolClass) {
+      return res.status(404).json({ error: "Class not found" });
+    }
+
+    const updatedData = req.body;
+    const newStudentIds = Array.isArray(updatedData.students)
+      ? updatedData.students.map(id => String(id))
+      : null;
+    const currentStudentIds = schoolClass.students.map(id => String(id));
+
+    if (newStudentIds) {
+      const studentsToAdd = newStudentIds.filter(id => !currentStudentIds.includes(id));
+      const studentsToRemove = currentStudentIds.filter(id => !newStudentIds.includes(id));
+
+      await Promise.all([
+        studentsToAdd.length > 0
+          ? Student.updateMany({ _id: { $in: studentsToAdd } }, { class_id: schoolClass._id })
+          : Promise.resolve(),
+        studentsToRemove.length > 0
+          ? Student.updateMany({ _id: { $in: studentsToRemove } }, { class_id: null })
+          : Promise.resolve()
+      ]);
+    }
+
+    const updated = await SchoolClass.findByIdAndUpdate(
+      classId,
+      updatedData,
+      { returnDocument: 'after' }
+    );
+
+    res.json(updated);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
 // DELETE

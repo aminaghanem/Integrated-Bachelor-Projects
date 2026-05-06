@@ -185,7 +185,7 @@ router.post("/log", protect, async (req, res) => {
     else {
       console.log("⚠️ Not cached → calling AI")
         try {
-          // Use the new model identifier: gemini-2.5-flash
+          // Using the new model identifier: gemini-2.5-flash
           const response = await ai.models.generateContent({
             model: "gemini-2.5-flash", 
             contents: [{ role: "user", parts: [{ text:
@@ -330,7 +330,7 @@ router.post("/log", protect, async (req, res) => {
       await CategoryCache.findOneAndUpdate(
         { url: domain },
         { url: domain, page_title: title, category, embedding, updatedAt: new Date() },
-        { upsert: true }
+        { upsert: true, returnDocument: "after" }
       );
     } catch (embedErr) {
       console.error("Embedding failed (non-fatal):", embedErr.message);

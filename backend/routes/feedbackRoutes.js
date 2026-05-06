@@ -58,7 +58,7 @@ router.post("/", protect, authorizeRoles("student"), async (req, res) => {
       await CategoryCache.findOneAndUpdate(
         { url: domain },
         { linucb: updatedState },
-        { upsert: false }
+        { upsert: false, returnDocument: "after" }
       );
     }
   } catch (err) {

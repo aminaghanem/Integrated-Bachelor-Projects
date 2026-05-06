@@ -23,7 +23,7 @@ router.post("/", protect, async (req, res) => {
     const profile = await StudentProfile.findOneAndUpdate(
       { student_id: req.user.id },
       { $set: { ...(nickname !== undefined && { nickname }), ...(avatar !== undefined && { avatar }), ...(best_score !== undefined && { best_score }) } },
-      { new: true, upsert: true }
+      { upsert: true, returnDocument: 'after' }
     )
     res.json(profile)
   } catch (err) {
