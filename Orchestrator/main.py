@@ -14,7 +14,8 @@ from urllib.request import Request as UrlRequest, urlopen
 
 import uvicorn
 import validators
-from fastapi import FastAPI, HTTPException, Request, PathParams
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, model_validator
@@ -743,7 +744,17 @@ class Orchestrator:
 				max_grade_level=None,
 			)
 			self.state_manager.update_state(request_id, ControlState.ACCESS_DECIDED)
-			self.state_manager.update_state(request_id, ControlState.COMPLETED)
+			self.state_manager.update_state(
+				request_id,
+				ControlState.COMPLETED,
+				result_metadata={
+					"decision": Decision.BLOCKED.value,
+					"source": "rate-limit",
+					"ai_used": False,
+					"cache_lookup_status": "not_attempted",
+					"cache_update_status": "not_attempted",
+				},
+			)
 			return OrchestrationResult(
 				request_id=request_id,
 				normalized_url=normalized_url,
@@ -783,7 +794,17 @@ class Orchestrator:
 				max_grade_level=None,
 			)
 			self.state_manager.update_state(request_id, ControlState.ACCESS_DECIDED)
-			self.state_manager.update_state(request_id, ControlState.COMPLETED)
+			self.state_manager.update_state(
+				request_id,
+				ControlState.COMPLETED,
+				result_metadata={
+					"decision": Decision.BLOCKED.value,
+					"source": "keyword-filter",
+					"ai_used": False,
+					"cache_lookup_status": "not_attempted",
+					"cache_update_status": "not_attempted",
+				},
+			)
 			return OrchestrationResult(
 				request_id=request_id,
 				normalized_url=normalized_url,
@@ -864,7 +885,17 @@ class Orchestrator:
 					if last_exception:
 						self.state_manager.update_state(request_id, ControlState.FAILED, error=str(last_exception))
 					# Close the audit trail cleanly
-					self.state_manager.update_state(request_id, ControlState.COMPLETED)
+					self.state_manager.update_state(
+						request_id,
+						ControlState.COMPLETED,
+						result_metadata={
+							"decision": Decision.BLOCKED.value,
+							"source": "fail-safe",
+							"ai_used": False,
+							"cache_lookup_status": cache_lookup_status,
+							"cache_update_status": "not_attempted",
+						},
+					)
 					
 					return OrchestrationResult(
 						request_id=request_id,
@@ -883,7 +914,17 @@ class Orchestrator:
 			# --- Step 5: Apply access decision rules ---
 			decision = self._decide(profile, policy)
 			self.state_manager.update_state(request_id, ControlState.ACCESS_DECIDED)
-			self.state_manager.update_state(request_id, ControlState.COMPLETED)
+			self.state_manager.update_state(
+				request_id,
+				ControlState.COMPLETED,
+				result_metadata={
+					"decision": decision.value,
+					"source": source,
+					"ai_used": ai_used,
+					"cache_lookup_status": cache_lookup_status,
+					"cache_update_status": cache_update_status,
+				},
+			)
 
 			return OrchestrationResult(
 				request_id=request_id,
@@ -1115,6 +1156,15 @@ class EvaluateResponse(BaseModel):
 
 app = FastAPI(title="SmartGuard Orchestrator", version="0.2.0")
 
+app.add_middleware(
+	CORSMiddleware,
+	allow_origins=[],
+	allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?$",
+	allow_credentials=True,
+	allow_methods=["*"],
+	allow_headers=["*"],
+)
+
 # Build the default cache base URL from the environment, with a hardcoded fallback
 default_cache_base_url = os.getenv("YASSIN_CACHE_BASE_URL", "https://logan-unroosted-jenine.ngrok-free.dev").rstrip("/")
 default_analyze_url = f"{default_cache_base_url}/analyze"
@@ -1134,6 +1184,10 @@ orchestrator = Orchestrator(
 	keyword_filter=UrlKeywordFilter(list_path=os.path.join(os.path.dirname(__file__), "blocked_keywords.json")),
 	state_manager=RedisStateManager(),
 )
+
+import orchestrator as audit_routes
+
+audit_routes.register_audit_routes(app, orchestrator.state_manager)
 
 # ---------------------------------------------------------------------------
 # Exception handlers
