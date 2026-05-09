@@ -2,6 +2,8 @@ import json
 import os
 import re
 import uuid
+import time
+import hashlib
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from enum import Enum
@@ -13,12 +15,14 @@ from urllib.request import Request as UrlRequest, urlopen
 import uvicorn
 import validators
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, model_validator
 
-from state_manager import RedisStateManager
+from state_manager import RedisStateManager, InvalidStateTransitionError
 from states import ControlState
+from redis_client import r
 
 
 def _load_env_file(path: str) -> None:
@@ -718,6 +722,53 @@ class Orchestrator:
 			self.state_manager.update_state(request_id, ControlState.FAILED)
 			raise InvalidUrlError(request_id=request_id, message="URL is not valid")
 
+		# --- Check per-student per-URL retrigger limit ---
+		if self._check_retrigger_limit(profile.user_id, normalized_url):
+			blocked_policy = AccessPolicy(
+				url=normalized_url,
+				category="Rate Limited",
+				age_restriction="All Ages",
+				educational_genre="Other",
+				suitability_for_school="Unsuitable",
+				recommended_grade_level=None,
+				unsuitability_reasons="Too Many Requests",
+				ai_generated="Real",
+				accessibility_score="Not Accessible",
+				safe_alternatives=[],
+				timing_breakdown=None,
+				reason="This URL has been requested too many times. Please try again later.",
+				allowed_for_user_ids=[],
+				min_age=None,
+				max_age=None,
+				min_grade_level=None,
+				max_grade_level=None,
+			)
+			self.state_manager.update_state(request_id, ControlState.ACCESS_DECIDED)
+			self.state_manager.update_state(
+				request_id,
+				ControlState.COMPLETED,
+				result_metadata={
+					"decision": Decision.BLOCKED.value,
+					"source": "rate-limit",
+					"ai_used": False,
+					"cache_lookup_status": "not_attempted",
+					"cache_update_status": "not_attempted",
+				},
+			)
+			return OrchestrationResult(
+				request_id=request_id,
+				normalized_url=normalized_url,
+				profile=profile,
+				policy=blocked_policy,
+				decision=Decision.BLOCKED,
+				ui_message="This URL has been requested too many times. Please try again later.",
+				retrigger_browser=False,
+				source="rate-limit",
+				cache_lookup_status="not_attempted",
+				cache_update_status="not_attempted",
+				ai_used=False,
+			)
+
 		# --- Step 2: Keyword filter (fast path for obvious violations) ---
 		self.state_manager.update_state(request_id, ControlState.KEYWORD_FILTER_CHECK)
 		matched_term = self.keyword_filter.match(normalized_url)
@@ -743,7 +794,17 @@ class Orchestrator:
 				max_grade_level=None,
 			)
 			self.state_manager.update_state(request_id, ControlState.ACCESS_DECIDED)
-			self.state_manager.update_state(request_id, ControlState.COMPLETED)
+			self.state_manager.update_state(
+				request_id,
+				ControlState.COMPLETED,
+				result_metadata={
+					"decision": Decision.BLOCKED.value,
+					"source": "keyword-filter",
+					"ai_used": False,
+					"cache_lookup_status": "not_attempted",
+					"cache_update_status": "not_attempted",
+				},
+			)
 			return OrchestrationResult(
 				request_id=request_id,
 				normalized_url=normalized_url,
@@ -758,28 +819,112 @@ class Orchestrator:
 				ai_used=False,
 			)
 
-		# --- Steps 3 & 4: Cache lookup → AI fallback ---
+		# --- Steps 3 & 4: Cache lookup → AI fallback with retry logic ---
+		cache_lookup_status, policy = None, None
+		cache_lookup_status = "disabled"
+		cache_update_status = "not_needed"
+		ai_used = False
+		source = "cache"
+		last_exception = None
+
 		try:
 			self.state_manager.update_state(request_id, ControlState.CACHE_CHECK)
 			cache_lookup_status, policy = self.cache_client.get_policy(normalized_url, profile.user_id)
 			source = "cache" if cache_lookup_status == "hit" else "ai"
-			cache_update_status = "not_needed"
-			ai_used = False
 
 			if policy is None:
-				# Cache miss (or error) – fall back to AI classification
+				# Cache miss (or error) – fall back to AI classification with retry loop
 				self.state_manager.update_state(request_id, ControlState.AI_ANALYSIS)
-				ai_result = self.ai_client.classify_url(normalized_url)
-				policy = ai_result.policy
-				# Store the AI result in the cache for future requests
-				cache_update_status = self.cache_client.post_policy(ai_result.raw_response, profile.user_id)
 				source = "ai"
-				ai_used = True
+				
+				# Retry loop with exponential backoff
+				max_ai_attempts = 3
+				for attempt in range(max_ai_attempts):
+					try:
+						ai_result = self.ai_client.classify_url(normalized_url)
+						policy = ai_result.policy
+						# Store the AI result in the cache for future requests
+						cache_update_status = self.cache_client.post_policy(ai_result.raw_response, profile.user_id)
+						ai_used = True
+						break  # Success, exit retry loop
+					except Exception as exc:
+						last_exception = exc
+						self.state_manager.increment_retry(request_id)
+						self.state_manager.update_state(request_id, ControlState.FAILED, error=str(exc))
+						
+						if attempt < max_ai_attempts - 1:
+							# Exponential backoff: 0.5s * attempt number
+							backoff_time = 0.5 * (attempt + 1)
+							time.sleep(backoff_time)
+						else:
+							# All retries exhausted
+							pass
+
+				if policy is None:
+					# AI classification failed after all retry attempts – use fail-safe default
+					fail_safe_policy = AccessPolicy(
+						url=normalized_url,
+						category="Unknown",
+						age_restriction="All Ages",
+						educational_genre="Other",
+						suitability_for_school="Unsuitable",
+						recommended_grade_level=None,
+						unsuitability_reasons="Unverified Content",
+						ai_generated="Real",
+						accessibility_score="Not Accessible",
+						safe_alternatives=[],
+						timing_breakdown=None,
+						reason="This website could not be verified as safe. Access has been blocked to protect you.",
+						allowed_for_user_ids=[],
+						min_age=None,
+						max_age=None,
+						min_grade_level=None,
+						max_grade_level=None,
+					)
+					# Log the failure reason
+					if last_exception:
+						self.state_manager.update_state(request_id, ControlState.FAILED, error=str(last_exception))
+					# Close the audit trail cleanly
+					self.state_manager.update_state(
+						request_id,
+						ControlState.COMPLETED,
+						result_metadata={
+							"decision": Decision.BLOCKED.value,
+							"source": "fail-safe",
+							"ai_used": False,
+							"cache_lookup_status": cache_lookup_status,
+							"cache_update_status": "not_attempted",
+						},
+					)
+					
+					return OrchestrationResult(
+						request_id=request_id,
+						normalized_url=normalized_url,
+						profile=profile,
+						policy=fail_safe_policy,
+						decision=Decision.BLOCKED,
+						ui_message="This website could not be verified as safe. Access has been blocked to protect you.",
+						retrigger_browser=False,
+						source="fail-safe",
+						cache_lookup_status=cache_lookup_status,
+						cache_update_status="not_attempted",
+						ai_used=False,
+					)
 
 			# --- Step 5: Apply access decision rules ---
 			decision = self._decide(profile, policy)
 			self.state_manager.update_state(request_id, ControlState.ACCESS_DECIDED)
-			self.state_manager.update_state(request_id, ControlState.COMPLETED)
+			self.state_manager.update_state(
+				request_id,
+				ControlState.COMPLETED,
+				result_metadata={
+					"decision": decision.value,
+					"source": source,
+					"ai_used": ai_used,
+					"cache_lookup_status": cache_lookup_status,
+					"cache_update_status": cache_update_status,
+				},
+			)
 
 			return OrchestrationResult(
 				request_id=request_id,
@@ -794,8 +939,12 @@ class Orchestrator:
 				cache_update_status=cache_update_status,
 				ai_used=ai_used,
 			)
-		except Exception:
-			self.state_manager.update_state(request_id, ControlState.FAILED)
+		except InvalidStateTransitionError as e:
+			# State transition error - log and propagate
+			self.state_manager.update_state(request_id, ControlState.FAILED, error=str(e))
+			raise
+		except Exception as exc:
+			self.state_manager.update_state(request_id, ControlState.FAILED, error=str(exc))
 			raise
 
 	@staticmethod
@@ -896,6 +1045,34 @@ class Orchestrator:
 			return "Allowed: Redirecting student to the website."
 		return f"Blocked: {policy.reason}"
 
+	def _check_retrigger_limit(self, user_id: str, normalized_url: str) -> bool:
+		"""
+		Check if a student has exceeded the per-URL retrigger limit (3 per 60 seconds).
+		
+		Uses a Redis key with pattern: retrigger:{user_id}:{normalized_url_hash}
+		with a TTL of 60 seconds.
+		
+		Args:
+			user_id: The student's user ID
+			normalized_url: The normalized URL being checked
+			
+		Returns:
+			True if the limit is exceeded, False otherwise
+		"""
+		# Create a hash of the URL to keep the key length reasonable
+		url_hash = hashlib.sha256(normalized_url.encode()).hexdigest()[:16]
+		redis_key = f"retrigger:{user_id}:{url_hash}"
+		
+		# Increment the counter
+		current_count = r.incr(redis_key)
+		
+		# Set TTL on first access
+		if current_count == 1:
+			r.expire(redis_key, 60)
+		
+		# Limit is 3 requests per 60 seconds
+		return current_count > 3
+
 # ---------------------------------------------------------------------------
 # Pydantic request / response models (FastAPI layer)
 # ---------------------------------------------------------------------------
@@ -979,6 +1156,15 @@ class EvaluateResponse(BaseModel):
 
 app = FastAPI(title="SmartGuard Orchestrator", version="0.2.0")
 
+app.add_middleware(
+	CORSMiddleware,
+	allow_origins=[],
+	allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?$",
+	allow_credentials=True,
+	allow_methods=["*"],
+	allow_headers=["*"],
+)
+
 # Build the default cache base URL from the environment, with a hardcoded fallback
 default_cache_base_url = os.getenv("YASSIN_CACHE_BASE_URL", "https://logan-unroosted-jenine.ngrok-free.dev").rstrip("/")
 default_analyze_url = f"{default_cache_base_url}/analyze"
@@ -998,6 +1184,10 @@ orchestrator = Orchestrator(
 	keyword_filter=UrlKeywordFilter(list_path=os.path.join(os.path.dirname(__file__), "blocked_keywords.json")),
 	state_manager=RedisStateManager(),
 )
+
+import orchestrator as audit_routes
+
+audit_routes.register_audit_routes(app, orchestrator.state_manager)
 
 # ---------------------------------------------------------------------------
 # Exception handlers
@@ -1088,6 +1278,27 @@ def evaluate_url(request: EvaluateRequest) -> EvaluateResponse:
 def health_check() -> Dict[str, str]:
 	"""Simple liveness probe. Returns 200 {"status": "healthy"} when the service is up."""
 	return {"status": "healthy"}
+
+
+@app.get("/status/{request_id}")
+def get_request_status(request_id: str) -> Dict[str, Any]:
+	"""
+	Get the audit trail and status for a specific request.
+	
+	Args:
+		request_id: The UUID of the request to check
+		
+	Returns:
+		Complete audit trail including request_id, current_state, url, user_id,
+		transition_log, timestamps, retry_count, errors, and duration_seconds.
+		
+	Raises:
+		HTTPException 404: If the request_id is not found in Redis
+	"""
+	audit_trail = orchestrator.state_manager.get_audit_trail(request_id)
+	if audit_trail is None:
+		raise HTTPException(status_code=404, detail=f"Request {request_id} not found")
+	return audit_trail
 
 # ---------------------------------------------------------------------------
 # Entry point
