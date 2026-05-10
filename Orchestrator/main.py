@@ -450,11 +450,11 @@ class AIServiceClient:
 	When the cache has no entry for a URL, this client sends the URL to the
 	AI service, which returns a full AccessPolicy classification.
 	"""
-	def __init__(self, endpoint: str, timeout_seconds: int = 600) -> None:
+	def __init__(self, endpoint: str, timeout_seconds: int = 6000) -> None:
 		"""
 		Args:
 			endpoint:        Full URL of the AI classification endpoint.
-			timeout_seconds: HTTP request timeout (default 10 minutes).
+			timeout_seconds: HTTP request timeout (None for no timeout 100 minutes).
 		"""
 		self.endpoint = endpoint.strip()
 		self.timeout_seconds = timeout_seconds
@@ -1180,7 +1180,7 @@ orchestrator = Orchestrator(
 		get_endpoint=os.getenv("YASSIN_CACHE_ANALYZE_URL", default_analyze_url),
 		post_endpoint=os.getenv("YASSIN_CACHE_UPDATE_URL", default_update_url),
 	),
-	ai_client=AIServiceClient(endpoint=configured_ai_policy_url),
+	ai_client=AIServiceClient(endpoint=configured_ai_policy_url, timeout_seconds=6000),
 	keyword_filter=UrlKeywordFilter(list_path=os.path.join(os.path.dirname(__file__), "blocked_keywords.json")),
 	state_manager=RedisStateManager(),
 )
