@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import RunnerGame from "@/components/RunnerGame"
+import RunnerGame, { MiniGamesSection } from "@/components/RunnerGame"
 import NicknameModal from "@/components/NicknameModal"
 
 const API = "http://localhost:4000"
@@ -2725,7 +2725,7 @@ function MissionControlDashboard() {
  
   const handleLaunch = useCallback(async (url:string) => {
     setLaunchingUrl(url)
-    setTimeout(() => setLaunchingUrl(null), 600)
+    // setTimeout(() => setLaunchingUrl(null), 600)
     await doVisit(url)
     setSelectedGroup(null); setSelectedGroupIdx(null)
   }, [doVisit])
@@ -2982,6 +2982,7 @@ function MissionControlDashboard() {
                       if (res.ok) setStudentProfile(await res.json())
                     }}
                   />
+                  <MiniGamesSection onOpenGame={(url) => loadPage(url, true)} />
                 </>
               )}
             </div>

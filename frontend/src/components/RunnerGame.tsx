@@ -22,6 +22,112 @@ const CAT_COLORS: Record<string, string> = {
   Coding: "#5b8dee", English: "#ff6bcd", Default: "#cb6ce6"
 }
 
+const MINI_GAMES = [
+  {
+    id: "game1",
+    title: "Mini Major",
+    description: "",
+    icon: "🎮",
+    color: "#cb6ce6",
+    url: "https://major-picker-app.vercel.app",
+    image: "/sg-minimajor.png",
+  },
+  {
+    id: "game2",
+    title: "GAME TWO",
+    description: "",
+    icon: "🕹️",
+    color: "#5b8dee",
+    url: "https://YOUR-GAME-LINK-2.com",
+  },
+  {
+    id: "game3",
+    title: "GAME THREE",
+    description: "",
+    icon: "⚡",
+    color: "#ffe600",
+    url: "",
+  },
+]
+
+export function MiniGamesSection({ onOpenGame }: { onOpenGame: (url: string) => void }) {
+  const [hovered, setHovered] = useState<string | null>(null)
+
+  return (
+    <div style={{ marginTop: 20 }}>
+      <div style={{
+        fontFamily: "'Share Tech Mono', monospace",
+        fontSize: 20,
+        color: "#fff",
+        letterSpacing: "0.1em",
+        marginBottom: 12,
+      }}>
+        Mini Games
+      </div>
+
+      <div style={{ display: "flex", gap: 10 }}>
+        {MINI_GAMES.map((game) => {
+          const isHov = hovered === game.id
+          return (
+            <div
+              key={game.id}
+              onClick={() => window.location.href = game.url}
+              onMouseEnter={() => setHovered(game.id)}
+              onMouseLeave={() => setHovered(null)}
+              style={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "12px 14px",
+                borderRadius: 8,
+                  border: `1px solid ${isHov ? game.color : "rgba(255,255,255,0.08)"}`,
+                  backgroundImage: `linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url(${game.image})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  cursor: "pointer",
+                transition: "all 0.15s",
+                height: 100
+              }}
+            >
+              <span style={{ fontSize:25, lineHeight: 1, left: 70, position: "relative" }}>{game.icon}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  fontFamily: "'Press Start 2P', monospace",
+                  fontSize: 15,
+                  color: isHov ? game.color : "rgba(255,255,255,0.7)",
+                  letterSpacing: "0.06em",
+                  marginBottom: 4,
+                  transition: "color 0.15s",
+                  left:70, position: "relative"
+                }}>
+                  {game.title}
+                </div>
+                <div style={{
+                  fontFamily: "'Share Tech Mono', monospace",
+                  fontSize: 9,
+                  color: "rgba(255,255,255,0.3)",
+                  left: 70, position: "relative"
+                }}>
+                  {game.description}
+                </div>
+              </div>
+              <span style={{
+                fontFamily: "'Share Tech Mono', monospace",
+                fontSize: 12,
+                color: isHov ? game.color : "rgba(255,255,255,0.2)",
+                transition: "color 0.15s",
+                flexShrink: 0,
+              }}>›</span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+
 function SidebarGroup({ group, onLaunch }: { group: RunnerGroup; onLaunch: (url:string)=>void }) {
   const [open, setOpen] = useState(false)
   const color = CAT_COLORS[group.category] ?? CAT_COLORS.Default
