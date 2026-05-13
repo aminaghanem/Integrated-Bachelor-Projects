@@ -25,12 +25,11 @@ const CAT_COLORS: Record<string, string> = {
 const MINI_GAMES = [
   {
     id: "game1",
-    title: "Mini Major",
+    title: "Uni-Path",
     description: "",
-    icon: "🎮",
+    icon: "📓",
     color: "#cb6ce6",
-    url: "https://major-picker-app.vercel.app",
-    image: "/sg-minimajor.png",
+    url: "https://major-picker-app.vercel.app"
   },
   {
     id: "game2",
@@ -54,16 +53,24 @@ export function MiniGamesSection({ onOpenGame }: { onOpenGame: (url: string) => 
   const [hovered, setHovered] = useState<string | null>(null)
 
   return (
-    <div style={{ marginTop: 20 }}>
-      <div style={{
-        fontFamily: "'Share Tech Mono', monospace",
-        fontSize: 20,
-        color: "#fff",
-        letterSpacing: "0.1em",
-        marginBottom: 12,
-      }}>
-        Mini Games
-      </div>
+    <div style={{ marginBottom: "1.2rem", top: 20, position: "relative", zIndex: 1 }}>
+          <div style={{
+            background: "transparent",
+            border: "2.5px solid #3d2c1e",
+            borderRadius: 12,
+            boxShadow: "4px 4px 0 #3d2c1e",
+            overflow: "hidden",
+            marginBottom: 8,
+          }}>
+            {/* Window title bar */}
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "6px 12px", background: "#cb6ce6",
+              borderBottom: "2px solid #3d2c1e"
+            }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#fff", letterSpacing: "0.05em", fontFamily: "'Silkscreen', monospace" }}>Play & Learn - Mini Games</span>
+              <span style={{ width: 54 }} /> {/* spacer */}
+            </div>
 
       <div style={{ display: "flex", gap: 10 }}>
         {MINI_GAMES.map((game) => {
@@ -82,12 +89,11 @@ export function MiniGamesSection({ onOpenGame }: { onOpenGame: (url: string) => 
                 padding: "12px 14px",
                 borderRadius: 8,
                   border: `1px solid ${isHov ? game.color : "rgba(255,255,255,0.08)"}`,
-                  backgroundImage: `linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url(${game.image})`,
                   backgroundSize: "cover",
                   backgroundPosition: "center",
                   cursor: "pointer",
                 transition: "all 0.15s",
-                height: 100
+                height: 200
               }}
             >
               <span style={{ fontSize:25, lineHeight: 1, left: 70, position: "relative" }}>{game.icon}</span>
@@ -95,7 +101,7 @@ export function MiniGamesSection({ onOpenGame }: { onOpenGame: (url: string) => 
                 <div style={{
                   fontFamily: "'Press Start 2P', monospace",
                   fontSize: 15,
-                  color: isHov ? game.color : "rgba(255,255,255,0.7)",
+                  color: isHov ? game.color : "#ffe600",
                   letterSpacing: "0.06em",
                   marginBottom: 4,
                   transition: "color 0.15s",
@@ -105,9 +111,9 @@ export function MiniGamesSection({ onOpenGame }: { onOpenGame: (url: string) => 
                 </div>
                 <div style={{
                   fontFamily: "'Share Tech Mono', monospace",
-                  fontSize: 9,
+                  fontSize: 15,
                   color: "rgba(255,255,255,0.3)",
-                  left: 70, position: "relative"
+                  left: -10, top: 50, position: "relative"
                 }}>
                   {game.description}
                 </div>
@@ -124,6 +130,7 @@ export function MiniGamesSection({ onOpenGame }: { onOpenGame: (url: string) => 
         })}
       </div>
     </div>
+  </div>
   )
 }
 
@@ -527,11 +534,11 @@ export default function RunnerGame({ recGroups, exploreRecs, onLaunch, currentBe
       </div>
 
       {/* ── Rec sidebar ── */}
-      <div style={{ width:240, flexShrink:0, background:"rgba(10,10,26,0.95)", border:"1px solid rgba(203,108,230,0.25)", borderRadius:12, overflow:"hidden" }}>
-        <div style={{ padding:"10px 14px", borderBottom:"1px solid rgba(203,108,230,0.15)", fontFamily:"'Share Tech Mono',monospace", fontSize:9, color:"rgba(255,230,0,0.7)", letterSpacing:"0.15em" }}>
+      <div style={{ width:280, flexShrink:0, background:"rgba(10,10,26,0.95)", border:"1px solid rgba(203,108,230,0.25)", borderRadius:12, overflow:"hidden" }}>
+        <div style={{ padding:"10px 14px", borderBottom:"1px solid rgba(203,108,230,0.15)", fontFamily:"'Share Tech Mono',monospace", fontSize:12, color:"rgba(255,230,0,0.7)", letterSpacing:"0.15em" }}>
           MISSION SECTORS
         </div>
-        <div style={{ maxHeight:400, overflowY:"auto" }}>
+        <div style={{ maxHeight:400, overflowY:"auto", fontSize: 20, padding:"10px 0" }}>
           {recGroups.map((group) => (
             <SidebarGroup key={group.category} group={group} onLaunch={onLaunch} />
           ))}

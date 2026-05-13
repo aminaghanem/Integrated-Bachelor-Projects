@@ -68,6 +68,7 @@ async function getCategoryFromRedis(url) {
     const domain = normalizeUrl(url);
     const keysToTry = [
       `url:https://${domain}`,
+      `url:https://${domain}/`,
       `url:https://www.${domain}`,
       `url:http://${domain}`,
       `url:${domain}`,

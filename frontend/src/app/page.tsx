@@ -155,13 +155,18 @@ export default function LoginPage() {
   return (
 
     <div style={{ 
-      backgroundColor: '#F5EAD4', // Warm cream background
+      backgroundColor: '#fff', // Warm cream background
       height: '100vh',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       padding: '20px',
-      fontFamily: 'sans-serif', // Clean sans-serif like examples
+      fontFamily: 'sans-serif',
+      backgroundImage: `
+          linear-gradient(rgba(204, 108, 230, 0.31) 10px, transparent 1px),
+          linear-gradient(90deg, rgba(209, 223, 16, 0.23) 10px, transparent 1px)
+        `,
+      backgroundSize: "32px 32px",
     }}>
       
       {/* The main centered layout, split into two distinct columns */}
@@ -191,13 +196,18 @@ export default function LoginPage() {
             width: '750px',
             height: '500px',
             border: '3px solid #4F4A45', // Blocky, bold brown lines
-            backgroundColor: '#F5EAD4', // Muted yellow frame
+            backgroundColor: '#fff', // Muted yellow frame
             borderRadius: '15px', // Pixelated curves
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             marginBottom: '15px',
-            position: 'relative'
+            position: 'relative',
+            backgroundImage: `
+                      linear-gradient(rgba(203,108,230,0.06) 10px, transparent 1px),
+                      linear-gradient(90deg, rgba(203,108,230,0.06) 10px, transparent 1px)
+                    `,
+            backgroundSize: "32px 32px",
           }}>
             {/* Miniature window icons styled as 'eyes' or details */}
             <img

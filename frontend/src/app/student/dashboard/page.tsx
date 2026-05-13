@@ -1028,7 +1028,7 @@ function MazeGame({
           ) : (
             <>
               <p style={{ margin: "0 0 4px", fontSize: 14, fontWeight: 700, color: "#fff", textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "center", fontFamily: "'VT323', monospace" }}>
-                🗺 Sections
+                Sections
               </p>
               <p style={{ margin: "0 0 8px", fontSize: 14, color: "#fff", lineHeight: 1.4, textAlign: "center", fontFamily: "'VT323', monospace" }}>
                 Click a section to teleport there!
@@ -1297,12 +1297,12 @@ function KidsDashboard() {
   const [showNicknameModal, setShowNicknameModal] = useState(false)
 
   // Auto-dismiss non-blocked notifications after 5s
-  useEffect(() => {
-    if (notification && notification.type !== "blocked") {
-      const t = setTimeout(() => setNotification(null), 5000)
-      return () => clearTimeout(t)
-    }
-  }, [notification])
+  // useEffect(() => {
+  //   if (notification && notification.type !== "blocked") {
+  //     const t = setTimeout(() => setNotification(null), 5000)
+  //     return () => clearTimeout(t)
+  //   }
+  // }, [notification])
  
   const showNotification = useCallback((n: Notification) => {
     setNotification(n)
@@ -2023,7 +2023,7 @@ function KidsDashboard() {
   if (!student) return <p style={{ padding: "2rem" }}>Loading...</p>
 
   return (
-    <div style={{ maxWidth: "100vw", margin: 0, padding: "1.5rem 2rem", fontFamily: "sans-serif", background:"#7a59af", minHeight: "100vh", boxSizing: "border-box" }}>
+    <div style={{ maxWidth: "100vw", margin: 0, padding: "1.5rem 2rem", fontFamily: "sans-serif", background:"#fff", minHeight: "100vh", boxSizing: "border-box" }}>
 
        {/* Dark pixel grid background — same family as kids dashboard */}
       <div style={{
@@ -2040,10 +2040,10 @@ function KidsDashboard() {
         {/* Logo + student name */}
         <div style={{ display:"flex", alignItems:"center", gap:16 }}>
           <div style={{ position:"relative" }}>
-            <div style={{ width:44, height:44, borderRadius:10, background:"rgba(255,230,0,0.1)", border:"1px solid rgba(255,230,0,0.3)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22 }}>🚀</div>
+            <div style={{ width:44, height:44, borderRadius:10, background:"rgba(255,230,0,0.1)", border:"1px solid rgba(255,230,0,0.3)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:30 }}>🚀</div>
           </div>
           
-          <span style={{ fontFamily:"'Press Start 2P', monospace", fontWeight:900, fontSize:30, color:"#ffe600", letterSpacing:"0.12em", animation:"mc-hud-glow 3s ease-in-out infinite" }}>
+          <span style={{ fontFamily:"'Press Start 2P', monospace", fontWeight:900, fontSize:30, color:"#cb6ce6", letterSpacing:"0.12em", animation:"mc-hud-glow 3s ease-in-out infinite" }}>
             Hello, {studentProfile?.nickname || student.username}!
           </span>
 
@@ -2184,7 +2184,7 @@ function KidsDashboard() {
                   fontFamily: "sans-serif", flexShrink: 0,
                 }}
                 onMouseEnter={e => e.currentTarget.style.background = "#e6b800"}
-                onMouseLeave={e => e.currentTarget.style.background = "#f5c842"}
+                onMouseLeave={e => e.currentTarget.style.background = "#cb6ce6"}
               >
                 GO 
               </button>
@@ -2272,7 +2272,6 @@ function KidsDashboard() {
       {isSearching && <p style={{ color: "#888" }}>Searching...</p>}
       {searchResults.length > 0 && !activeUrl && (
         <div style={{ marginBottom: "1rem" }}>
-          <p style={{ marginBottom: 8, color: "#666" }}>Search results:</p>
           {searchResults.map((result, i) => (
             <div key={i} onClick={() => handleResultClick(result.link)}
               style={{ padding: "12px", borderBottom: "1px solid #eee", cursor: "pointer" }}>
@@ -2555,6 +2554,11 @@ function MissionControlDashboard() {
   const stopTimer = () => {
     if (timerInterval.current) { clearInterval(timerInterval.current); timerInterval.current = null }
   }
+
+  const showNotification = useCallback((n: Notification) => {
+    setNotification(n)
+  }, [])
+
   const upgradeInteraction = useCallback((type:"scroll"|"click") => {
     if (type === "click" && interactionType.current !== "click") interactionType.current = "click"
     else if (type === "scroll" && interactionType.current === "view") interactionType.current = "scroll"
@@ -2687,6 +2691,7 @@ function MissionControlDashboard() {
   const doVisit = async (rawUrl: string) => {
     const url = /^https?:\/\//i.test(rawUrl) ? rawUrl : "https://" + rawUrl
     const token = localStorage.getItem("token")
+    if (!token) { router.push("/"); return } 
     try {
       setLoading(true)
       const checkRes = await fetch(`${API}/api/activity/check`, {
@@ -2722,6 +2727,43 @@ function MissionControlDashboard() {
       setIsSearching(false)
     }
   }
+
+  const handleResultClick = async (url: string) => {
+    setSearchResults([]);
+    setLoading(true);
+    const token = localStorage.getItem("token");
+    try {
+      const checkRes = await fetch(`${API}/api/activity/check`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ url })
+      });
+      const checkData = await checkRes.json();
+
+      if (checkRes.status === 400) {
+        showNotif({ type: "error", message: checkData.error || "Profile error." });  // ← showNotif
+        setLoading(false);
+        return;
+      }
+      if (checkData.decision === "Blocked") {
+        showNotif({ type: "blocked", message: checkData.message || "Restricted.", url });  // ← showNotif
+        setLoading(false);
+        return;
+      }
+      if (checkRes.status === 502) {
+        showNotif({ type: "error", message: checkData.message || "Safety service unavailable." });
+        setLoading(false);
+        return;
+      }
+      if (rootUrl.current) await endSession("in_progress");
+      setNavHistory([]);
+      rootCategory.current = checkData.category || "General";
+      await loadPage(checkData.normalized_url || url, true);
+    } catch (err) {
+      showNotif({ type: "error", message: "Could not load this page." });
+      setLoading(false);
+    }
+  };
  
   const handleLaunch = useCallback(async (url:string) => {
     setLaunchingUrl(url)
@@ -2839,7 +2881,6 @@ function MissionControlDashboard() {
           {/* Logo + student name */}
           <div style={{ display:"flex", alignItems:"center", gap:16 }}>
             <div style={{ position:"relative" }}>
-              <div style={{ width:44, height:44, borderRadius:10, background:"rgba(255,230,0,0.1)", border:"1px solid rgba(255,230,0,0.3)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22 }}>🚀</div>
             </div>
             <div>
               <div style={{ fontFamily:"'Press Start 2P', monospace", fontWeight:900, fontSize:30, color:"#ffe600", letterSpacing:"0.12em", animation:"mc-hud-glow 3s ease-in-out infinite" }}>
@@ -2883,7 +2924,7 @@ function MissionControlDashboard() {
                 padding:"8px 14px", borderRadius:8,
                 border: "2px solid #3d2c1e",
                 background: "#2a1a42",
-                color: "#e8e8f0", cursor:"pointer",
+                color: "#fff", cursor:"pointer",
                 fontFamily:"'Share Tech Mono', monospace",
                 fontSize:9, letterSpacing:"0.1em",
                 boxShadow: "2px 2px 0 #3d2c1e",
@@ -2900,11 +2941,11 @@ function MissionControlDashboard() {
         {notification && <MCNotificationBanner n={notification} onDismiss={dismissNotif} />}
  
         {/* ── Search bar ── */}
-        <div style={{
+        {/* <div style={{
           display:"flex", alignItems:"center", gap:12, marginBottom:24,
           background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)",
           borderRadius:12, padding:"10px 14px",
-          position:"relative",
+          position:"relative", height: 100
         }}>
           <div style={{
             width: 44, height: 44, flexShrink: 0,
@@ -2935,7 +2976,7 @@ function MissionControlDashboard() {
                 style={{
                   flex:1, padding:"10px 8px", fontSize:13,
                   background:"transparent", border:"none", outline:"none",
-                  color:"#e8e8f0", fontFamily:"'Share Tech Mono', monospace",
+                  color:"#fff", fontFamily:"'Share Tech Mono', monospace",
                   letterSpacing:"0.04em",
                 }}
               />
@@ -2951,26 +2992,85 @@ function MissionControlDashboard() {
               </button>
             </div>
           </div>
- 
-          {/* Live clock */}
-          {/* <LiveClock /> */}
+        </div> */}
+
+        {/* Search bar */}
+        <div style={{ marginBottom: "1.2rem", top: 10, position: "relative", zIndex: 1 }}>
+          <div style={{
+            background: "transparent",
+            border: "2.5px solid #3d2c1e",
+            borderRadius: 12,
+            boxShadow: "4px 4px 0 #3d2c1e",
+            overflow: "hidden",
+            marginBottom: 8,
+          }}>
+            {/* Window title bar */}
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "6px 12px", background: "#cb6ce6",
+              borderBottom: "2px solid #3d2c1e"
+            }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#fff", letterSpacing: "0.05em", fontFamily: "'Silkscreen', monospace" }}>Play & Learn - Search Engine</span>
+              <span style={{ width: 54 }} /> {/* spacer */}
+            </div>
+            {/* Globe icon + input area */}
+            <div style={{ background: "rgba(255,255,255,0.03)", padding: "18px 20px 14px", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+              <span style={{ fontFamily: "'Press Start 2P', cursive", fontSize: 18, color: "#fff" }}>What Will We Explore Today?</span>
+              <div style={{
+                display: "flex", width: "100%", maxWidth: 600,
+                border: "2px solid #3d2c1e", borderRadius: 30,
+                overflow: "hidden", background: "#fff",
+                boxShadow: "2px 2px 0 #3d2c1e"
+              }}>
+                <input
+                  type="text" value={urlInput}
+                  onChange={e => setUrlInput(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && handleVisit()}
+                  placeholder="Search or enter web address..."
+                  style={{
+                    flex: 1, padding: "10px 18px", fontSize: 14,
+                    border: "none", background: "transparent",
+                    color: "#3d2c1e", outline: "none",
+                    fontFamily: "sans-serif", fontWeight: 500
+                  }}
+                />
+                <button
+                  onClick={handleVisit}
+                  style={{
+                    padding: "0 30px", fontSize: 13, fontWeight: 800,
+                    border: "none", borderLeft: "2px solid #3d2c1e",
+                    background: "#cb6ce6", color: "#3d2c1e",
+                    cursor: "pointer", letterSpacing: "0.05em",
+                    fontFamily: "sans-serif", flexShrink: 0,
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = "#e6b800"}
+                  onMouseLeave={e => e.currentTarget.style.background = "#cb6ce6"}
+                >
+                  GO 
+                </button>
+              </div>
+              <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#ffe600", textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'Silkscreen', monospace" }}>
+                or try the recommendation runner game below
+              </p>
+            </div>
+          </div>
         </div>
  
         {/* ── Main view: Orbit system ── */}
         {showOrbitView && (
-          <div style={{ display:"flex", gap:20, alignItems:"flex-start" }}>
+          <div style={{ display:"flex", gap:20, alignItems:"flex-start", top: 20, position: "relative", zIndex: 1  }}>
             <div style={{ flex:1, minWidth:0 }}>
               {loadingRecs ? (
                 <RadarWidget />
               ) : (
                 <>
-                  <div style={{ fontFamily:"'Share Tech Mono',monospace",fontSize:10,color:"rgba(255,255,255,0.25)",letterSpacing:"0.1em",marginBottom:12 }}>
-                    COLLECT KNOWLEDGE ORBS TO UNLOCK RESOURCES — SPACE / TAP TO JUMP
+                  <div style={{ fontFamily:"'Share Tech Mono',monospace",fontSize:15,color:"rgba(255,255,255,0.25)",letterSpacing:"0.1em",marginBottom:12 }}>
+                    PLAY TO UNLOCK YOU PERSONALIZED RESOURCES — SPACE / TAP TO JUMP
                   </div>
                   <RunnerGame
                     recGroups={recGroups}
                     exploreRecs={exploreRecs}
-                    onLaunch={handleLaunch}   // ← your existing handler
+                    onLaunch={handleLaunch}
                     currentBestScore={studentProfile?.best_score ?? 0}
                     onNewBestScore={async (score) => {
                       const token = localStorage.getItem("token")
@@ -3002,14 +3102,14 @@ function MissionControlDashboard() {
               SEARCH RESULTS — {searchResults.length} TARGETS FOUND
             </div>
             {searchResults.map((r, i) => (
-              <div key={i} className="mc-rec-card" onClick={() => { setSearchResults([]); doVisit(r.link) }} style={{
+              <div key={i} className="mc-rec-card" onClick={() => { setSearchResults([]); handleResultClick(r.link) }} style={{
                 padding:"12px 16px", borderRadius:8, marginBottom:8, cursor:"pointer",
                 border:"1px solid rgba(255,255,255,0.07)", background:"rgba(255,255,255,0.02)",
                 transition:"all 0.2s",
               }}>
-                <div style={{ fontFamily:"'Exo 2', sans-serif", fontWeight:600, fontSize:13, color:"#5b8dee", marginBottom:4 }}>{r.title}</div>
-                <div style={{ fontFamily:"'Share Tech Mono', monospace", fontSize:11, color:"rgba(255,255,255,0.5)", marginBottom:4 }}>{r.snippet}</div>
-                <div style={{ fontFamily:"'Share Tech Mono', monospace", fontSize:9, color:"rgba(255,255,255,0.25)" }}>{r.link}</div>
+                <div style={{ fontFamily:"'Exo 2', sans-serif", fontWeight:600, fontSize:16, color:"#fff", marginBottom:4 }}>{r.title}</div>
+                <div style={{ fontFamily:"'Share Tech Mono', monospace", fontSize:14, color:"rgba(255,255,255,0.5)", marginBottom:4 }}>{r.snippet}</div>
+                <div style={{ fontFamily:"'Share Tech Mono', monospace", fontSize:12, color:"rgba(255,255,255,0.25)" }}>{r.link}</div>
               </div>
             ))}
           </div>
