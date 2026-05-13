@@ -37,7 +37,7 @@ const MINI_GAMES = [
     description: "",
     icon: "🕹️",
     color: "#5b8dee",
-    url: "https://YOUR-GAME-LINK-2.com",
+    url: "http://localhost:3001",
   },
   {
     id: "game3",
