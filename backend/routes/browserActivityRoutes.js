@@ -15,8 +15,12 @@ const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 const { updateInterestScores } = require("../utils/interestInference");
 const { embedText } = require("../utils/embeddings");
 const { buildContextVector, updateArm, initArmState, rewardFromFeedback } = require("../utils/linucb");
+const { getCategoryFromRedis } = require("../utils/redisCandidates");
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+const BYPASS_ORCHESTRATOR = true;
+const BYPASS_DECISION = "Allowed"; // change to "Blocked" to test blocked flow
 
 const calculateAge = (dob) => {
   const today = new Date()
@@ -185,91 +189,16 @@ router.post("/log", protect, async (req, res) => {
     else {
       console.log("⚠️ Not cached → calling AI")
         try {
-          // Use the new model identifier: gemini-2.5-flash
-          const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash", 
-            contents: [{ role: "user", parts: [{ text:
-              `You are classifying websites for a school monitoring system.
-              URL: ${url}
-              Title: ${title}
-              Choose ONE category:
-              Algebra
-              Geometry
-              Biology
-              Chemistry
-              Physics
-              Geography
-              History
-              Art
-              Social
-              Entertainment
-              Space
-              Games
-              Sports
+          const redisCategory = await getCategoryFromRedis(url);
 
-              OR any other MORE specific category that fits better.
-
-              Return ONLY the category name.` }] }]
-          });
-
-          const CATEGORY_ALIASES = {
-              
-            // Language variants
-            "languages": "Language",
-            "language learning": "Language",
-            "english": "Language",
-            "english language": "Language",
-            "arabic": "Language",
-            "foreign language": "Language",
-            "linguistics": "Language",
-
-            // Math variants
-            "mathematics": "Math",
-            "maths": "Math",
-            "algebra": "Math",
-            "geometry": "Math",
-            "calculus": "Math",
-            "arithmetic": "Math",
-            "statistics": "Math",
-
-            // Science variants
-            "sciences": "Science",
-            "natural science": "Science",
-            "general science": "Science",
-
-            // CS variants
-            "computer science": "Computer Science",
-            "coding": "Computer Science",
-            "programming": "Computer Science",
-            "software": "Computer Science",
-            "technology": "Computer Science",
-
-            // History variants
-            "social studies": "History",
-            "world history": "History",
-            "ancient history": "History",
-
-            // Reading variants
-            "reading": "Reading",
-            "literature": "Reading",
-            "books": "Reading",
-
-            // Learning platforms
-            "education": "Learning",
-            "e-learning": "Learning",
-            "online learning": "Learning",
-            "learning platform": "Learning",
-         };
-
-          function normalizeCategory(raw) {
-            if (!raw) return "General";
-            const lower = raw.trim().toLowerCase();
-            return CATEGORY_ALIASES[lower] || raw.trim();
+          if (redisCategory) {
+            category = redisCategory;
+            console.log(`✅ Category from Redis: ${category}`);
+          } else {
+            // URL not in Redis yet — use simple domain-based fallback
+            category = "General";
+            console.log(`⚠️ ${url} not in Redis, defaulting to General`);
           }
-
-          const aiText = response.text.trim();
-          if (aiText) category = normalizeCategory(aiText);
-
         } catch (error) {
           console.error("AI Error (Falling back to local logic):", error.message);
           // Simple local fallback as a safety net
@@ -330,7 +259,7 @@ router.post("/log", protect, async (req, res) => {
       await CategoryCache.findOneAndUpdate(
         { url: domain },
         { url: domain, page_title: title, category, embedding, updatedAt: new Date() },
-        { upsert: true }
+        { upsert: true, returnDocument: "after" }
       );
     } catch (embedErr) {
       console.error("Embedding failed (non-fatal):", embedErr.message);
