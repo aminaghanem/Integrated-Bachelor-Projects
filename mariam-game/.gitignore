@@ -1,0 +1,12 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Env files (general safety)
+.env
+
+# Node modules safety (in case)
+node_modules/

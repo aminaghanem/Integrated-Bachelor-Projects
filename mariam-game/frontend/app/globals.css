@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  /* Colors from Figma */
+  --pink-primary: #ff6db7;
+  --blue-primary: #4aa7ff;
+  --yellow-primary: #ffd85a;
+  --orange-secondary: #ff9f43;
+  --green-secondary: #2ecc71;
+  --black-neutral: #111111;
+  --white-neutral: #ffffff;
+  --midnight-blue: #010f73;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+body {
+  background: var(--background);
+  color: var(--foreground);
+  /* font-family: Arial, Helvetica, sans-serif; */
+}
+.header1_v2 {
+  font-family: var(--font-gafiton), sans-serif;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 76px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  text-align: center;
+  text-transform: capitalize;
+}
+.header2_v2 {
+  font-family: var(--font-gafiton), sans-serif;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 56px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  text-transform: capitalize;
+}
+.header3_v3 {
+  font-family: var(--font-gafiton), sans-serif;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 36px;
+  line-height: 100%;
+  letter-spacing: 3%;
+  text-align: center;
+  text-transform: capitalize;
+}
+.subtitle_v2 {
+  font-family: Helvetica;
+  font-weight: 700;
+  font-style: Bold Oblique;
+  font-size: 20px;
+  line-height: 105%;
+  letter-spacing: 5%;
+  text-align: center;
+  text-transform: uppercase;
+}
+.body {
+  font-family: Helvetica;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 18px;
+  line-height: 106%;
+  letter-spacing: 0%;
+  text-align: center;
+}
+.body_v2 {
+  font-family: Helvetica;
+  font-weight: 300;
+  font-style: Light;
+  font-size: 18px;
+  line-height: 100%;
+  letter-spacing: 5%;
+  text-transform: capitalize;
+}
+.unnamed {
+  font-family: var(--font-gafiton), sans-serif;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 36px;
+  line-height: 103%;
+  letter-spacing: 5%;
+  text-transform: capitalize;
+}
+/*used in footer (mail,phone number, etc)*/
+.unnmaned2 {
+  font-family: Helvetica;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 18px;
+  line-height: 100%;
+  letter-spacing: 5%;
+  text-transform: capitalize;
+}
