@@ -7,7 +7,7 @@ const navItems = [
 
 export default function Sidebar() {
   return (
-    <aside className="flex h-screen w-72 flex-col border-r border-white/10 bg-[#1a1a2e] text-white shadow-[0_0_40px_rgba(0,0,0,0.18)]">
+    <aside className="flex min-h-screen w-72 flex-col border-r border-white/10 bg-[#1a1a2e] text-white shadow-[0_0_40px_rgba(0,0,0,0.18)]">
       <div className="border-b border-white/10 px-6 py-6">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#FFD700]/25 bg-[#FFD700]/10 text-lg text-[#FFD700]">

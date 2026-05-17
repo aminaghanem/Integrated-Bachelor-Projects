@@ -15,6 +15,7 @@ from urllib.request import Request as UrlRequest, urlopen
 import uvicorn
 import validators
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -723,6 +724,7 @@ class Orchestrator:
 			raise InvalidUrlError(request_id=request_id, message="URL is not valid")
 
 		# --- Check per-student per-URL retrigger limit ---
+		self.state_manager.update_state(request_id, ControlState.KEYWORD_FILTER_CHECK)
 		if self._check_retrigger_limit(profile.user_id, normalized_url):
 			blocked_policy = AccessPolicy(
 				url=normalized_url,
@@ -811,7 +813,7 @@ class Orchestrator:
 				profile=profile,
 				policy=blocked_policy,
 				decision=Decision.BLOCKED,
-				ui_message=self._build_ui_feedback(Decision.BLOCKED, blocked_policy),
+				ui_message=self._build_ui_feedback(Decision.BLOCKED, blocked_policy, profile),
 				retrigger_browser=False,
 				source="keyword-filter",
 				cache_lookup_status="not_attempted",
@@ -932,7 +934,7 @@ class Orchestrator:
 				profile=profile,
 				policy=policy,
 				decision=decision,
-				ui_message=self._build_ui_feedback(decision, policy),
+				ui_message=self._build_ui_feedback(decision, policy, profile),
 				retrigger_browser=False,
 				source=source,
 				cache_lookup_status=cache_lookup_status,
@@ -1026,19 +1028,34 @@ class Orchestrator:
 		return Decision.ALLOWED
 
 	@staticmethod
-	def _build_ui_feedback(decision: Decision, policy: AccessPolicy) -> str:
+	def _build_ui_feedback(decision: Decision, policy: AccessPolicy, profile: Optional[StudentProfile] = None) -> str:
 		"""
 		Build the short message displayed to the student in the browser extension.
 
+		For BLOCKED decisions, explains the specific reason based on which access rule was triggered.
+
 		Args:
 			decision: The access decision.
-			policy:   Used to include the block reason for BLOCKED decisions.
+			policy:   The access policy for the URL.
+			profile:  The student profile (required to explain grade-based blocks).
 
 		Returns:
-			A user-facing string.
+			A user-facing string explaining the decision.
 		"""
 		if decision == Decision.ALLOWED:
 			return "Allowed: Redirecting student to the website."
+		
+		# Decision is BLOCKED – explain the specific reason
+		if profile and policy.suitability_for_school.strip().lower() == "unsuitable":
+			return "Blocked: This content is not suitable for school use."
+		
+		if profile and policy.allowed_for_user_ids and profile.user_id not in policy.allowed_for_user_ids:
+			return "Blocked: This content is not available for your account."
+		
+		if profile and policy.min_grade_level is not None and profile.grade_level < policy.min_grade_level:
+			return f"Blocked: This content is for students in grade {policy.min_grade_level} and above. You are currently in grade {profile.grade_level}."
+		
+		# Fallback to policy reason if none of the specific rules match
 		return f"Blocked: {policy.reason}"
 
 	def _check_retrigger_limit(self, user_id: str, normalized_url: str) -> bool:
@@ -1201,7 +1218,7 @@ async def request_validation_handler(request: Request, exc: RequestValidationErr
 		content={
 			"error": "Invalid payload",
 			"message": "Expected url, user_id, age, grade_level, interests[]",
-			"details": exc.errors(),
+			"details": jsonable_encoder(exc.errors()),
 			"path": str(request.url.path),
 		},
 	)
