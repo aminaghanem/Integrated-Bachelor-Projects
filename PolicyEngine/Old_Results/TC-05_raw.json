@@ -1,0 +1,7 @@
+{
+  "test_case_id": "TC-05",
+  "label": "Accessibility Challenge",
+  "url": "https://www.gambling-math.com",
+  "raw_result": {},
+  "error": "Page.goto: net::ERR_NAME_NOT_RESOLVED at https://www.gambling-math.com/\nCall log:\n  - navigating to \"https://www.gambling-math.com/\", waiting until \"domcontentloaded\"\n"
+}

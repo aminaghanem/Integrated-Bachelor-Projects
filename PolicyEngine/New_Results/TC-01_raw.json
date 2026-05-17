@@ -1,0 +1,34 @@
+{
+  "test_case_id": "TC-01",
+  "label": "Clear Pass",
+  "url": "https://www.pbslearningmedia.org",
+  "raw_result": {
+    "url": "https://www.pbslearningmedia.org",
+    "thought_process": "The page is a verified K-12 educational resource from a public broadcaster, specifically cited in policy as highly accessible for students with ADHD and hearing impairments.",
+    "safety_and_suitability_analysis": "This site is a high-quality educational portal providing curated videos and interactive lessons for classrooms. It contains no unmoderated user content, gambling, or mature themes, making it entirely suitable for school environments.",
+    "curriculum_and_age_analysis": "While content spans K-12, the platform is structured for use beginning in early primary education; therefore, a minimum age of 6+ (Grade 1) is appropriate for supervised learning.",
+    "category": "Educational",
+    "age_restriction": "6+",
+    "educational_genre": "Other",
+    "suitability_for_school": "Suitable",
+    "recommended_grade_level": "Grade 1",
+    "unsuitability_reasons": [],
+    "ai_generated": "Real",
+    "accessibility_analysis": {
+      "ADHD": 5,
+      "Color_Blindness": 4,
+      "Hearing_Impairment": 5,
+      "Dyslexia": 4,
+      "Autism": 4
+    },
+    "safe_alternatives": [],
+    "timing_breakdown": {
+      "content_understanding": 1.2,
+      "topic_assessment": 0.8,
+      "classification_decision": 0.5,
+      "json_generation": 0.7,
+      "total_estimated_time": 3.2
+    }
+  },
+  "error": null
+}

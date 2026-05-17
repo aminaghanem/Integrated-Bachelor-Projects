@@ -1,0 +1,537 @@
+{
+  "run_label": "NEW_ARCHITECTURE",
+  "timestamp": "2026-05-17_23-22-23",
+  "total_pass": 1,
+  "total_fail": 4,
+  "results": [
+    {
+      "C1_safety_decision": {
+        "pass": true,
+        "expected": "Suitable",
+        "got": "Suitable"
+      },
+      "C2_age_output": {
+        "pass": true,
+        "expected": "6+",
+        "got": "6+",
+        "is_exact_format": true,
+        "note": "Exact match"
+      },
+      "C3_grade_output": {
+        "pass": true,
+        "expected": "Grade 1",
+        "got": "Grade 1",
+        "is_exact_format": true,
+        "note": "New schema: must be exact like 'Grade 8' not 'Grades 7–9'"
+      },
+      "C4_safe_alternatives": {
+        "pass": true,
+        "expected": [],
+        "got": [],
+        "overlap": []
+      },
+      "C5_cot_reasoning": {
+        "pass": true,
+        "ssa_preview": "This site is a high-quality educational portal providing curated videos and interactive lessons for classrooms. It contains no unmoderated user conten...",
+        "caa_preview": "While content spans K-12, the platform is structured for use beginning in early primary education; therefore, a minimum age of 6+ (Grade 1) is appropr...",
+        "note": "Both CoT fields must be >60 chars"
+      },
+      "N1_granularity_upgrade": {
+        "pass": true,
+        "note": "Both age AND grade must use new exact integer format"
+      },
+      "N2_multi_reason_array": {
+        "pass": true,
+        "is_list": true,
+        "expected": [],
+        "got": [],
+        "note": "Old prompt returns single string; new must return a list"
+      },
+      "N3_accessibility_matrix": {
+        "pass": false,
+        "is_dict": true,
+        "detail": {
+          "ADHD": {
+            "pass": true,
+            "expected": 4,
+            "got": 5,
+            "note": "Within ±1 tolerance (expected 4, got 5)"
+          },
+          "Color_Blindness": {
+            "pass": false,
+            "expected": 2,
+            "got": 4,
+            "note": "Difference of 2 exceeds ±1 tolerance"
+          },
+          "Hearing_Impairment": {
+            "pass": true,
+            "expected": 4,
+            "got": 5,
+            "note": "Within ±1 tolerance (expected 4, got 5)"
+          },
+          "Dyslexia": {
+            "pass": true,
+            "expected": 4,
+            "got": 4,
+            "note": "Exact match"
+          },
+          "Autism": {
+            "pass": true,
+            "expected": 4,
+            "got": 4,
+            "note": "Exact match"
+          }
+        },
+        "note": "Values are integers 0-5 (both inclusive). PASS if |got - expected| <= 1 for all 5 keys. 0=completely inaccessible … 5=fully accessible."
+      },
+      "overall_pass": false,
+      "dimensions_passed": "7/8",
+      "dimension_breakdown": {
+        "C1_safety_decision": true,
+        "C2_age_output": true,
+        "C3_grade_output": true,
+        "C4_safe_alternatives": true,
+        "C5_cot_reasoning": true,
+        "N1_granularity_upgrade": true,
+        "N2_multi_reason_array": true,
+        "N3_accessibility_matrix": false
+      },
+      "warnings": [],
+      "test_id": "TC-01",
+      "label": "Clear Pass",
+      "url": "https://www.pbslearningmedia.org",
+      "elapsed_s": 10.7
+    },
+    {
+      "C1_safety_decision": {
+        "pass": true,
+        "expected": "Unsuitable",
+        "got": "Unsuitable"
+      },
+      "C2_age_output": {
+        "pass": true,
+        "expected": "16+",
+        "got": "16+",
+        "is_exact_format": true,
+        "note": "Exact match"
+      },
+      "C3_grade_output": {
+        "pass": true,
+        "expected": null,
+        "got": null,
+        "is_exact_format": true,
+        "note": "New schema: must be exact like 'Grade 8' not 'Grades 7–9'"
+      },
+      "C4_safe_alternatives": {
+        "pass": false,
+        "expected": [
+          "https://www.pbslearningmedia.org",
+          "https://kids.nationalgeographic.com"
+        ],
+        "got": [
+          "https://phet.colorado.edu",
+          "https://www.khanacademy.org/science/biology",
+          "https://www.physicsclassroom.com"
+        ],
+        "overlap": []
+      },
+      "C5_cot_reasoning": {
+        "pass": true,
+        "ssa_preview": "As a Reddit subreddit, the site consists of unmoderated user-generated discussions and external links that are not vetted for K-12 safety; furthermore...",
+        "caa_preview": "The policy strictly requires a minimum age of 16+ for all unmoderated social media and forum platforms, making it unsuitable for younger K-12 environm...",
+        "note": "Both CoT fields must be >60 chars"
+      },
+      "N1_granularity_upgrade": {
+        "pass": true,
+        "note": "Both age AND grade must use new exact integer format"
+      },
+      "N2_multi_reason_array": {
+        "pass": true,
+        "is_list": true,
+        "expected": [
+          "Unmoderated User Content"
+        ],
+        "got": [
+          "Unmoderated User Content",
+          "Commercial or Non-Educational",
+          "Privacy Risk"
+        ],
+        "note": "Old prompt returns single string; new must return a list"
+      },
+      "N3_accessibility_matrix": {
+        "pass": false,
+        "is_dict": true,
+        "detail": {
+          "ADHD": {
+            "pass": true,
+            "expected": 2,
+            "got": 1,
+            "note": "Within ±1 tolerance (expected 2, got 1)"
+          },
+          "Color_Blindness": {
+            "pass": true,
+            "expected": 2,
+            "got": 3,
+            "note": "Within ±1 tolerance (expected 2, got 3)"
+          },
+          "Hearing_Impairment": {
+            "pass": false,
+            "expected": 2,
+            "got": 4,
+            "note": "Difference of 2 exceeds ±1 tolerance"
+          },
+          "Dyslexia": {
+            "pass": true,
+            "expected": 2,
+            "got": 2,
+            "note": "Exact match"
+          },
+          "Autism": {
+            "pass": true,
+            "expected": 2,
+            "got": 2,
+            "note": "Exact match"
+          }
+        },
+        "note": "Values are integers 0-5 (both inclusive). PASS if |got - expected| <= 1 for all 5 keys. 0=completely inaccessible … 5=fully accessible."
+      },
+      "overall_pass": false,
+      "dimensions_passed": "6/8",
+      "dimension_breakdown": {
+        "C1_safety_decision": true,
+        "C2_age_output": true,
+        "C3_grade_output": true,
+        "C4_safe_alternatives": false,
+        "C5_cot_reasoning": true,
+        "N1_granularity_upgrade": true,
+        "N2_multi_reason_array": true,
+        "N3_accessibility_matrix": false
+      },
+      "warnings": [],
+      "test_id": "TC-02",
+      "label": "Clear Fail",
+      "url": "https://www.reddit.com/r/science",
+      "elapsed_s": 8.53
+    },
+    {
+      "C1_safety_decision": {
+        "pass": true,
+        "expected": "Suitable",
+        "got": "Suitable"
+      },
+      "C2_age_output": {
+        "pass": true,
+        "expected": "13+",
+        "got": "13+",
+        "is_exact_format": true,
+        "note": "Exact match"
+      },
+      "C3_grade_output": {
+        "pass": true,
+        "expected": "Grade 8",
+        "got": "Grade 8",
+        "is_exact_format": true,
+        "note": "New schema: must be exact like 'Grade 8' not 'Grades 7–9'"
+      },
+      "C4_safe_alternatives": {
+        "pass": true,
+        "expected": [],
+        "got": [],
+        "overlap": []
+      },
+      "C5_cot_reasoning": {
+        "pass": true,
+        "ssa_preview": "The page is suitable for school use as a primary reference for history, providing high-quality, cited information. While it contains descriptions of w...",
+        "caa_preview": "The content is best suited for students aged 13 and up (Grade 8+) who have the emotional maturity and prior historical context to process the complexi...",
+        "note": "TC-03: CoT must contain one of ['grade', 'middle', 'history', 'curriculum', 'appropriate', 'war', 'context', 'age']"
+      },
+      "N1_granularity_upgrade": {
+        "pass": true,
+        "note": "Both age AND grade must use new exact integer format"
+      },
+      "N2_multi_reason_array": {
+        "pass": true,
+        "is_list": true,
+        "expected": [],
+        "got": [],
+        "note": "Old prompt returns single string; new must return a list"
+      },
+      "N3_accessibility_matrix": {
+        "pass": false,
+        "is_dict": true,
+        "detail": {
+          "ADHD": {
+            "pass": true,
+            "expected": 2,
+            "got": 3,
+            "note": "Within ±1 tolerance (expected 2, got 3)"
+          },
+          "Color_Blindness": {
+            "pass": true,
+            "expected": 4,
+            "got": 4,
+            "note": "Exact match"
+          },
+          "Hearing_Impairment": {
+            "pass": true,
+            "expected": 4,
+            "got": 5,
+            "note": "Within ±1 tolerance (expected 4, got 5)"
+          },
+          "Dyslexia": {
+            "pass": true,
+            "expected": 2,
+            "got": 2,
+            "note": "Exact match"
+          },
+          "Autism": {
+            "pass": false,
+            "expected": 2,
+            "got": 4,
+            "note": "Difference of 2 exceeds ±1 tolerance"
+          }
+        },
+        "note": "Values are integers 0-5 (both inclusive). PASS if |got - expected| <= 1 for all 5 keys. 0=completely inaccessible … 5=fully accessible."
+      },
+      "overall_pass": false,
+      "dimensions_passed": "7/8",
+      "dimension_breakdown": {
+        "C1_safety_decision": true,
+        "C2_age_output": true,
+        "C3_grade_output": true,
+        "C4_safe_alternatives": true,
+        "C5_cot_reasoning": true,
+        "N1_granularity_upgrade": true,
+        "N2_multi_reason_array": true,
+        "N3_accessibility_matrix": false
+      },
+      "warnings": [],
+      "test_id": "TC-03",
+      "label": "Context Trap",
+      "url": "https://en.wikipedia.org/wiki/World_War_II",
+      "elapsed_s": 11.12
+    },
+    {
+      "C1_safety_decision": {
+        "pass": true,
+        "expected": "Unsuitable",
+        "got": "Unsuitable"
+      },
+      "C2_age_output": {
+        "pass": true,
+        "expected": "16+",
+        "got": "16+",
+        "is_exact_format": true,
+        "note": "Exact match"
+      },
+      "C3_grade_output": {
+        "pass": true,
+        "expected": null,
+        "got": null,
+        "is_exact_format": true,
+        "note": "New schema: must be exact like 'Grade 8' not 'Grades 7–9'"
+      },
+      "C4_safe_alternatives": {
+        "pass": true,
+        "expected": [],
+        "got": [
+          "https://www.bbc.com/news",
+          "https://newsela.com",
+          "https://www.pbs.org/newshour/extra"
+        ],
+        "overlap": []
+      },
+      "C5_cot_reasoning": {
+        "pass": true,
+        "ssa_preview": "This site is unsuitable for school environments due to its focus on sensationalized gossip, tabloid journalism, and the presence of unmoderated user c...",
+        "caa_preview": "Following the policy guidelines, tabloid and sensationalized media are strictly capped at a minimum age of 16+. Additionally, the site contains extens...",
+        "note": "Both CoT fields must be >60 chars"
+      },
+      "N1_granularity_upgrade": {
+        "pass": true,
+        "note": "Both age AND grade must use new exact integer format"
+      },
+      "N2_multi_reason_array": {
+        "pass": true,
+        "is_list": true,
+        "expected": [
+          "Commercial or Non-Educational",
+          "Inappropriate Content"
+        ],
+        "got": [
+          "Inappropriate Content",
+          "Age-Inappropriate Language",
+          "Unmoderated User Content",
+          "Commercial or Non-Educational"
+        ],
+        "note": "Old prompt returns single string; new must return a list"
+      },
+      "N3_accessibility_matrix": {
+        "pass": false,
+        "is_dict": true,
+        "detail": {
+          "ADHD": {
+            "pass": true,
+            "expected": 2,
+            "got": 1,
+            "note": "Within ±1 tolerance (expected 2, got 1)"
+          },
+          "Color_Blindness": {
+            "pass": false,
+            "expected": 2,
+            "got": 4,
+            "note": "Difference of 2 exceeds ±1 tolerance"
+          },
+          "Hearing_Impairment": {
+            "pass": true,
+            "expected": 4,
+            "got": 4,
+            "note": "Exact match"
+          },
+          "Dyslexia": {
+            "pass": true,
+            "expected": 2,
+            "got": 2,
+            "note": "Exact match"
+          },
+          "Autism": {
+            "pass": true,
+            "expected": 2,
+            "got": 1,
+            "note": "Within ±1 tolerance (expected 2, got 1)"
+          }
+        },
+        "note": "Values are integers 0-5 (both inclusive). PASS if |got - expected| <= 1 for all 5 keys. 0=completely inaccessible … 5=fully accessible."
+      },
+      "overall_pass": false,
+      "dimensions_passed": "7/8",
+      "dimension_breakdown": {
+        "C1_safety_decision": true,
+        "C2_age_output": true,
+        "C3_grade_output": true,
+        "C4_safe_alternatives": true,
+        "C5_cot_reasoning": true,
+        "N1_granularity_upgrade": true,
+        "N2_multi_reason_array": true,
+        "N3_accessibility_matrix": false
+      },
+      "warnings": [],
+      "test_id": "TC-04",
+      "label": "Cognitive Overload Trap",
+      "url": "https://www.dailymail.co.uk",
+      "elapsed_s": 39.35
+    },
+    {
+      "C1_safety_decision": {
+        "pass": true,
+        "expected": "Unsuitable",
+        "got": "Unsuitable"
+      },
+      "C2_age_output": {
+        "pass": true,
+        "expected": "18+",
+        "got": "18+",
+        "is_exact_format": true,
+        "note": "Exact match"
+      },
+      "C3_grade_output": {
+        "pass": true,
+        "expected": null,
+        "got": null,
+        "is_exact_format": true,
+        "note": "New schema: must be exact like 'Grade 8' not 'Grades 7–9'"
+      },
+      "C4_safe_alternatives": {
+        "pass": true,
+        "expected": [
+          "https://www.khanacademy.org/math"
+        ],
+        "got": [
+          "https://www.khanacademy.org/math",
+          "https://www.desmos.com/calculator",
+          "https://www.mathworld.wolfram.com"
+        ],
+        "overlap": [
+          "https://www.khanacademy.org/math"
+        ]
+      },
+      "C5_cot_reasoning": {
+        "pass": true,
+        "ssa_preview": "This site is classified as unsuitable because its domain explicitly references gambling, which triggers a strict 18+ age restriction under the safety ...",
+        "caa_preview": "The minimum age for any site involving gambling or betting is 18+ with zero exceptions. This excludes all K-12 grade levels from using this resource.",
+        "note": "Both CoT fields must be >60 chars"
+      },
+      "N1_granularity_upgrade": {
+        "pass": true,
+        "note": "Both age AND grade must use new exact integer format"
+      },
+      "N2_multi_reason_array": {
+        "pass": true,
+        "is_list": true,
+        "expected": [
+          "Gambling or Betting"
+        ],
+        "got": [
+          "Inappropriate Content",
+          "Unsafe or Malicious",
+          "Gambling or Betting"
+        ],
+        "note": "Old prompt returns single string; new must return a list"
+      },
+      "N3_accessibility_matrix": {
+        "pass": true,
+        "is_dict": true,
+        "detail": {
+          "ADHD": {
+            "pass": true,
+            "expected": 1,
+            "got": 0,
+            "note": "Within ±1 tolerance (expected 1, got 0)"
+          },
+          "Color_Blindness": {
+            "pass": true,
+            "expected": 1,
+            "got": 0,
+            "note": "Within ±1 tolerance (expected 1, got 0)"
+          },
+          "Hearing_Impairment": {
+            "pass": true,
+            "expected": 1,
+            "got": 0,
+            "note": "Within ±1 tolerance (expected 1, got 0)"
+          },
+          "Dyslexia": {
+            "pass": true,
+            "expected": 1,
+            "got": 0,
+            "note": "Within ±1 tolerance (expected 1, got 0)"
+          },
+          "Autism": {
+            "pass": true,
+            "expected": 1,
+            "got": 0,
+            "note": "Within ±1 tolerance (expected 1, got 0)"
+          }
+        },
+        "note": "Values are integers 0-5 (both inclusive). PASS if |got - expected| <= 1 for all 5 keys. 0=completely inaccessible … 5=fully accessible."
+      },
+      "overall_pass": true,
+      "dimensions_passed": "8/8",
+      "dimension_breakdown": {
+        "C1_safety_decision": true,
+        "C2_age_output": true,
+        "C3_grade_output": true,
+        "C4_safe_alternatives": true,
+        "C5_cot_reasoning": true,
+        "N1_granularity_upgrade": true,
+        "N2_multi_reason_array": true,
+        "N3_accessibility_matrix": true
+      },
+      "warnings": [],
+      "test_id": "TC-05",
+      "label": "Accessibility Challenge",
+      "url": "https://www.gambling-math.com",
+      "elapsed_s": 9.38
+    }
+  ]
+}

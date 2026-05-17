@@ -1,0 +1,42 @@
+{
+  "test_case_id": "TC-02",
+  "label": "Clear Fail",
+  "url": "https://www.reddit.com/r/science",
+  "raw_result": {
+    "url": "https://www.reddit.com/r/science",
+    "thought_process": "The page is a social media forum with unmoderated user-generated content, which requires a minimum age of 16+ according to policy, and the specific content was blocked by a network security message.",
+    "safety_and_suitability_analysis": "As a Reddit subreddit, the site consists of unmoderated user-generated discussions and external links that are not vetted for K-12 safety; furthermore, the current page content is a technical block screen which provides no educational value.",
+    "curriculum_and_age_analysis": "The policy strictly requires a minimum age of 16+ for all unmoderated social media and forum platforms, making it unsuitable for younger K-12 environments.",
+    "category": "Social Media",
+    "age_restriction": "16+",
+    "educational_genre": "STEM",
+    "suitability_for_school": "Unsuitable",
+    "recommended_grade_level": null,
+    "unsuitability_reasons": [
+      "Unmoderated User Content",
+      "Commercial or Non-Educational",
+      "Privacy Risk"
+    ],
+    "ai_generated": "Real",
+    "accessibility_analysis": {
+      "ADHD": 1,
+      "Color_Blindness": 3,
+      "Hearing_Impairment": 4,
+      "Dyslexia": 2,
+      "Autism": 2
+    },
+    "safe_alternatives": [
+      "https://phet.colorado.edu",
+      "https://www.khanacademy.org/science/biology",
+      "https://www.physicsclassroom.com"
+    ],
+    "timing_breakdown": {
+      "content_understanding": 0.5,
+      "topic_assessment": 0.5,
+      "classification_decision": 0.5,
+      "json_generation": 0.5,
+      "total_estimated_time": 2.0
+    }
+  },
+  "error": null
+}

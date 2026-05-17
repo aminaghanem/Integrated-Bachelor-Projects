@@ -1,0 +1,42 @@
+{
+  "test_case_id": "TC-05",
+  "label": "Accessibility Challenge",
+  "url": "https://www.gambling-math.com",
+  "raw_result": {
+    "url": "https://www.gambling-math.com",
+    "thought_process": "The URL identifies as gambling-related content which requires a mandatory 18+ rating according to policy, and the page failed to resolve, indicating it is unsafe for school use.",
+    "safety_and_suitability_analysis": "This site is classified as unsuitable because its domain explicitly references gambling, which triggers a strict 18+ age restriction under the safety policy. Furthermore, the technical failure to resolve the host suggests the site may be parked, malicious, or defunct, posing a security risk.",
+    "curriculum_and_age_analysis": "The minimum age for any site involving gambling or betting is 18+ with zero exceptions. This excludes all K-12 grade levels from using this resource.",
+    "category": "Unsafe",
+    "age_restriction": "18+",
+    "educational_genre": "Other",
+    "suitability_for_school": "Unsuitable",
+    "recommended_grade_level": null,
+    "unsuitability_reasons": [
+      "Inappropriate Content",
+      "Unsafe or Malicious",
+      "Gambling or Betting"
+    ],
+    "ai_generated": "Real",
+    "accessibility_analysis": {
+      "ADHD": 0,
+      "Color_Blindness": 0,
+      "Hearing_Impairment": 0,
+      "Dyslexia": 0,
+      "Autism": 0
+    },
+    "safe_alternatives": [
+      "https://www.khanacademy.org/math",
+      "https://www.desmos.com/calculator",
+      "https://www.mathworld.wolfram.com"
+    ],
+    "timing_breakdown": {
+      "content_understanding": 0.5,
+      "topic_assessment": 0.5,
+      "classification_decision": 0.5,
+      "json_generation": 0.5,
+      "total_estimated_time": 2.0
+    }
+  },
+  "error": null
+}

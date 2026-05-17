@@ -1,0 +1,43 @@
+{
+  "test_case_id": "TC-04",
+  "label": "Cognitive Overload Trap",
+  "url": "https://www.dailymail.co.uk",
+  "raw_result": {
+    "url": "https://www.dailymail.co.uk",
+    "thought_process": "The page is a high-traffic tabloid featuring sensationalist gossip, unmoderated user comments, and adult themes such as cosmetic surgery and celebrity scandals, necessitating a 16+ restriction per policy.",
+    "safety_and_suitability_analysis": "This site is unsuitable for school environments due to its focus on sensationalized gossip, tabloid journalism, and the presence of unmoderated user comments which often contain age-inappropriate discourse. The content prioritizes entertainment over educational value and includes references to weight loss 'diets' and celebrity affairs.",
+    "curriculum_and_age_analysis": "Following the policy guidelines, tabloid and sensationalized media are strictly capped at a minimum age of 16+. Additionally, the site contains extensive unmoderated user-generated content in the comments sections, which also triggers the 16+ baseline.",
+    "category": "News",
+    "age_restriction": "16+",
+    "educational_genre": "Other",
+    "suitability_for_school": "Unsuitable",
+    "recommended_grade_level": null,
+    "unsuitability_reasons": [
+      "Inappropriate Content",
+      "Age-Inappropriate Language",
+      "Unmoderated User Content",
+      "Commercial or Non-Educational"
+    ],
+    "ai_generated": "Real",
+    "accessibility_analysis": {
+      "ADHD": 1,
+      "Color_Blindness": 4,
+      "Hearing_Impairment": 4,
+      "Dyslexia": 2,
+      "Autism": 1
+    },
+    "safe_alternatives": [
+      "https://www.bbc.com/news",
+      "https://newsela.com",
+      "https://www.pbs.org/newshour/extra"
+    ],
+    "timing_breakdown": {
+      "content_understanding": 5,
+      "topic_assessment": 3,
+      "classification_decision": 2,
+      "json_generation": 2,
+      "total_estimated_time": 12
+    }
+  },
+  "error": null
+}

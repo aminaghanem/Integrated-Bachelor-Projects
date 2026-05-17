@@ -1,0 +1,7 @@
+{
+  "test_case_id": "TC-02",
+  "label": "Clear Fail",
+  "url": "https://www.reddit.com/r/science",
+  "raw_result": {},
+  "error": "Page.content: Unable to retrieve content because the page is navigating and changing the content."
+}

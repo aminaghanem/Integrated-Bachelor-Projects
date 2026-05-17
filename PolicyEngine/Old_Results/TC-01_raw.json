@@ -1,0 +1,21 @@
+{
+  "test_case_id": "TC-01",
+  "label": "Clear Pass",
+  "url": "https://www.pbslearningmedia.org",
+  "raw_result": {
+    "url": "https://www.pbslearningmedia.org",
+    "category": "Educational Media Platform",
+    "age_restriction": "None",
+    "educational_genre": "Multi-subject K-12 Resources",
+    "suitability_for_school": "Suitable",
+    "recommended_grade_level": "PreK-12",
+    "unsuitability_reasons": "None",
+    "ai_generated": "Real",
+    "accessibility_score": "Accessible",
+    "safe_alternatives": [],
+    "timing_breakdown": {
+      "total_estimated_time": 0.0
+    }
+  },
+  "error": null
+}

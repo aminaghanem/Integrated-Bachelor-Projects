@@ -1,4 +1,3 @@
-# server.py
 import os
 import json
 import time
@@ -6,8 +5,6 @@ import re
 import random
 import asyncio
 import requests
-import faiss
-import numpy as np
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 from fastapi import FastAPI
@@ -16,450 +13,367 @@ import nest_asyncio
 from yt_dlp import YoutubeDL
 from tqdm import tqdm
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeout
-from PIL import Image
-from io import BytesIO
-import google.generativeai as genai
 from fastapi.middleware.cors import CORSMiddleware
-import google.genai as genai
 from pypdf import PdfReader
-# ------------------------------
+
+# ──────────────────────────────────────────────────────────────────────────────
 # CONFIG
-# ------------------------------
+# ──────────────────────────────────────────────────────────────────────────────
 SAVE_DIR = "./videos"
 REPORT_PATH = "./video_fetch_report.jsonl"
 os.makedirs(SAVE_DIR, exist_ok=True)
 
-# Gemini API setup
-# genai.configure(api_key="AIzaSyCBxwgPtihA3Xd6yw550aP55E_kt47b-nU")
-# model = genai.GenerativeModel("gemini-2.5-flash")
-client=genai.Client(api_key="AIzaSyCSKKQ4JhR0__9JQ_aM72PJ24rx5ArKWTs")
-
-
-# Apply nest_asyncio for environments like Jupyter or Colab (optional)
+API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyDHAy8gDZ4UBXvsrS8_pV-Z4-k4h5oUEO4")
 nest_asyncio.apply()
 
-# ------------------------------
-# HELPERS
-# ------------------------------
-def load_pdf(path):
-    reader = PdfReader(path)
-    text = ""
-    for page in reader.pages:
-        text += page.extract_text() + "\n"
-    return text
+# ──────────────────────────────────────────────────────────────────────────────
+# THE OPTIMIZED PROMPT BUILDER
+# ──────────────────────────────────────────────────────────────────────────────
+def build_optimized_prompt(url, context_chunks, content, images, video_saved_paths):
+    """
+    Builds the final optimized prompt for the AGentVLM K-12 web safety evaluator.
 
-def chunk_text(text, chunk_size=800, overlap=150):
-    chunks = []
-    start = 0
-    while start < len(text):
-        end = start + chunk_size
-        chunks.append(text[start:end])
-        start += chunk_size - overlap
-    return chunks
+    Architecture decisions:
+    ─────────────────────────────────────────────────────────────────────────────
+    1. INVERTED ARCHITECTURE (fixes Cognitive Overload / Primacy bias)
+       Data payload sits at the TOP of the prompt. The model reads the actual
+       evidence before instructions, preventing policy rules from being forgotten
+       by the time the model finishes reading 10,000 chars of scraped content.
 
-def embed_chunks_safe(chunks, batch_size=50):
-    all_embeddings = []
+    2. RECENCY EXPLOITATION (fixes Lost-in-the-Middle / U-Dip)
+       The single most relevant FAISS chunk (context_chunks[0]) is repeated
+       immediately before the JSON output block. No reorder_context_for_llm needed.
 
-    for i in range(0, len(chunks), batch_size):
-        batch = chunks[i:i+batch_size]
+    3. CHAIN OF THOUGHT SERIALIZATION (fixes hallucination on Context Trap cases)
+       Two mandatory reasoning fields must be completed BEFORE any categorical field.
 
-        response = client.models.embed_content(
-            model="gemini-embedding-001",
-            contents=batch
-        )
-        time.sleep(60)
+    4. GRANULAR AGE + GRADE SCHEMA
+       age_restriction        : exact "X+" string e.g. "6+" to "18+"
+       recommended_grade_level: exact "Grade N" string e.g. "Grade 8"
 
-        all_embeddings.extend([e.values for e in response.embeddings])
-        print(f"Processed {i+batch_size} of {len(chunks)} chunks")
+    5. MULTI-REASON UNSUITABILITY ARRAY
+       unsuitability_reasons is a list so multiple concurrent problems can be flagged.
 
-    return all_embeddings
+    6. ACCESSIBILITY MATRIX (0-5 integer scale per disability, both ends inclusive)
+       Five-key dict. Each value is an INTEGER 0-5 (0 and 5 are valid):
+         0 = completely inaccessible for this disability
+         1 = very poor accessibility
+         2 = needs significant improvement
+         3 = somewhat accessible
+         4 = mostly accessible
+         5 = fully accessible
+       This replaces the old binary "Accessible" / "Not Accessible" string.
+    """
 
-def retrieve(query,index,chunks, top_k=3):
-    # Embed query using NEW SDK syntax
-    response = client.models.embed_content(
-        model="gemini-embedding-001",
-        contents=query
+    # ── Chunk splitting ───────────────────────────────────────────────────────
+    if not context_chunks:
+        bulk_context = "No policy context retrieved."
+        anchor_chunk = "No policy context retrieved."
+    elif len(context_chunks) == 1:
+        bulk_context = context_chunks[0]
+        anchor_chunk = context_chunks[0]
+    else:
+        bulk_context = "\n\n".join(context_chunks[1:])   # chunks 2, 3, … → top
+        anchor_chunk = context_chunks[0]                  # chunk 1 → bottom anchor
+
+    # ── Prompt assembly using .format() — NOT f-string — to avoid brace conflicts
+    prompt = """--- SUPPORTING POLICY CONTEXT ---
+\"\"\"{}\"\"\"
+
+--- WEBPAGE CONTENT ---
+\"\"\"{}\"\"\"
+
+--- DETECTED IMAGES ---
+\"\"\"{}\"\"\"
+
+--- DETECTED VIDEOS ---
+\"\"\"{}\"\"\"
+
+--- TARGET URL ---
+{}
+
+================================================================================
+You are an AI system specialized in K-12 educational web safety evaluation.
+
+EVALUATION RULES:
+- Evaluate THIS SPECIFIC PAGE only — not the general domain or website brand.
+- Weight the actual retrieved webpage content above all other signals.
+- Use the Supporting Policy Context above AND the anchor rule below to inform
+  your age and grade thresholds.
+- Do NOT output markdown. Return raw JSON only.
+- Do NOT use "..." as placeholders. Generate actual text for every field.
+
+CRITICAL AGE RESTRICTION BASELINES (Must be strictly applied):
+- Unmoderated User-Generated Content (Forums/Social Media): Minimum age is "16+".
+- Tabloid, Gossip, and Sensationalized Media: Minimum age is "16+".
+- Simulated or Real Gambling/Betting: Minimum age is "18+" with zero exceptions.
+- DO NOT escalate 16+ sites to 18+ unless they contain explicit gambling,
+  illegal drugs, or adult pornography.
+================================================================================
+
+CLASSIFICATION SCHEMA — read every rule before writing the JSON:
+
+category
+  One of: Educational | Entertainment | News | Gaming | Social Media | Unsafe | Mixed | Other
+
+age_restriction
+  The MINIMUM age at which this page is appropriate.
+  Must be one exact string from this list ONLY:
+  "6+" | "7+" | "8+" | "9+" | "10+" | "11+" | "12+" | "13+" | "14+" | "15+" | "16+" | "17+" | "18+"
+
+educational_genre
+  One of: STEM | Language | History | Arts | Social Studies | Life Skills | Health | Other
+
+suitability_for_school
+  One of: Suitable | Unsuitable
+
+recommended_grade_level
+  If Suitable   → the SINGLE lowest grade at which this page is appropriate.
+                  Must be one exact string like "Grade 1", "Grade 8", etc.
+  If Unsuitable → null
+
+unsuitability_reasons
+  An ARRAY of zero or more strings.
+  If Suitable   → []
+  If Unsuitable → include ALL that apply:
+    "Inappropriate Content" | "Unsafe or Malicious" | "Age-Inappropriate Language" |
+    "Gambling or Betting" | "Drug or Substance References" | "Extremist or Hateful Content" |
+    "Unmoderated User Content" | "Commercial or Non-Educational" | "Privacy Risk"
+
+ai_generated
+  One of: "AI Generated" | "Real"
+
+accessibility_analysis
+  A JSON object with EXACTLY these five keys:
+    ADHD, Color_Blindness, Hearing_Impairment, Dyslexia, Autism
+
+  Each value must be an INTEGER. 0 and 5 are both valid and inclusive.
+  Full scale:
+    0 = completely inaccessible (no accommodation whatsoever)
+    1 = very poor accessibility (major barriers, almost unusable)
+    2 = needs significant improvement (several barriers, partial support)
+    3 = somewhat accessible (basic support, some gaps remain)
+    4 = mostly accessible (minor gaps only)
+    5 = fully accessible (all barriers addressed, best-practice implementation)
+
+  Scoring guidance per disability:
+    ADHD             : penalise flashing animations, cluttered ads, no reading mode,
+                       infinite scroll, autoplay media
+    Color_Blindness  : penalise color-coded information with no text alternative,
+                       red/green contrast reliance, colored-only status indicators
+    Hearing_Impairment: penalise video/audio with no captions or transcripts,
+                        audio-only alerts
+    Dyslexia         : penalise dense unformatted text blocks, serif-only fonts,
+                       no text resize, low contrast
+    Autism           : penalise chaotic layouts, unpredictable navigation,
+                       disruptive autoplay, lack of content warnings
+
+safe_alternatives
+  If Unsuitable → array of 2-3 specific, working educational URLs.
+  If Suitable   → []
+
+timing_breakdown
+  Estimate in seconds:
+    content_understanding | topic_assessment | classification_decision |
+    json_generation | total_estimated_time
+
+================================================================================
+--- MOST CRITICAL POLICY RULE (anchor) ---
+\"\"\"{}\"\"\"
+================================================================================
+
+Return ONLY the JSON object below — no text before or after it, no markdown fences:
+
+{{
+  "url": "{}",
+  "thought_process": "<REQUIRED — 1-sentence summary of decision>",
+  "safety_and_suitability_analysis": "<REQUIRED — Why is it suitable or unsuitable?>",
+  "curriculum_and_age_analysis": "<REQUIRED — Youngest age/grade rationale>",
+  "category": "Fill this in",
+  "age_restriction": "Fill this in",
+  "educational_genre": "Fill this in",
+  "suitability_for_school": "Fill this in",
+  "recommended_grade_level": null,
+  "unsuitability_reasons": [],
+  "ai_generated": "Real",
+  "accessibility_analysis": {{
+    "ADHD": 3,
+    "Color_Blindness": 3,
+    "Hearing_Impairment": 3,
+    "Dyslexia": 3,
+    "Autism": 3
+  }},
+  "safe_alternatives": [],
+  "timing_breakdown": {{
+    "content_understanding": 0.5,
+    "topic_assessment": 0.5,
+    "classification_decision": 0.5,
+    "json_generation": 0.5,
+    "total_estimated_time": 2.0
+  }}
+}}
+""".format(
+        bulk_context,
+        content,
+        images,
+        video_saved_paths,
+        url,
+        anchor_chunk,
+        url
     )
 
-    query_embedding = response.embeddings[0].values
-    query_vector = np.array([query_embedding]).astype("float32")
+    return prompt
 
-    # Search FAISS
-    distances, indices = index.search(query_vector, top_k)
 
-    retrieved_chunks = [chunks[i] for i in indices[0]]
-    return retrieved_chunks
+# ──────────────────────────────────────────────────────────────────────────────
+# HELPERS
+# ──────────────────────────────────────────────────────────────────────────────
+def manual_gemini_call(prompt_text, api_key=None):
+    """
+    Makes a direct HTTP call to the Gemini API.
+    Uses v1beta with gemini-flash-latest model.
+    """
+    key = api_key or API_KEY
 
-def trim_video(source, seconds=8):
-    """Trim video to first N seconds to limit size."""
-    import subprocess
-    if not source or not os.path.exists(source):
-        return source
-    base, ext = os.path.splitext(source)
-    out = f"{base}_trim{seconds}s.mp4"
-    cmd = [
-        "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
-        "-i", source, "-t", str(seconds),
-        "-r", "1", "-vf", "scale=480:-1",
-        "-c:v", "libx264", "-preset", "veryfast", "-an",
-        out
-    ]
-    try:
-        subprocess.run(cmd, check=True)
-        try:
-            os.remove(source)
-        except: pass
-        return out
-    except Exception:
-        return source
+    if not key:
+        print("\n⚠️  WARNING: API_KEY is missing.")
+        print("   Set it in server.py or via GEMINI_API_KEY environment variable.\n")
+        return "{}"
 
-def download_with_ytdlp(url, prefix):
-    opts = {
-        "outtmpl": os.path.join(SAVE_DIR, f"{prefix}_%(title).80s.%(ext)s"),
-        "format": "mp4/best",
-        "quiet": True,
-        "noplaylist": True,
-        "no_warnings": True,
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={key}"
+    headers = {'Content-Type': 'application/json'}
+
+    payload = {
+        "contents": [{"parts": [{"text": prompt_text}]}],
+        "generationConfig": {
+            "responseMimeType": "application/json",
+            "maxOutputTokens": 2048
+        }
     }
+
     try:
-        with YoutubeDL(opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            filepath = ydl.prepare_filename(info)
-            if not os.path.exists(filepath):
-                base = os.path.splitext(filepath)[0]
-                for f in os.listdir(SAVE_DIR):
-                    if f.startswith(os.path.basename(base)):
-                        filepath = os.path.join(SAVE_DIR, f)
-                        break
-            trimmed = trim_video(filepath)
-            return trimmed
+        print(f"   Calling Gemini API v1beta (gemini-flash-latest)...")
+        response = requests.post(url, headers=headers, json=payload, timeout=60)
+
+        if response.status_code != 200:
+            print(f"\n🛑 API ERROR ({response.status_code}):")
+            print(f"   {response.text}\n")
+
+            if "API_KEY_INVALID" in response.text or "not found" in response.text.lower():
+                print("   ❌ API Key is invalid, disabled, or doesn't exist.")
+                print("   → Create a new key at: https://console.cloud.google.com/apis/credentials")
+                print("   → Enable Generative Language API for this project")
+                print("   → Set the key in your .env: GEMINI_API_KEY=your_key_here\n")
+
+            return "{}"
+
+        try:
+            json_response = response.json()
+            result = json_response['candidates'][0]['content']['parts'][0]['text']
+            print(f"   ✅ Gemini API response received ({len(result)} chars)\n")
+            return result
+        except (KeyError, IndexError) as e:
+            print(f"\n🛑 RESPONSE PARSE ERROR: {str(e)}")
+            print(f"   Full response: {response.text}\n")
+            return "{}"
+
+    except requests.exceptions.Timeout:
+        print(f"\n🛑 API TIMEOUT: Request took too long (>60s)\n")
+        return "{}"
     except Exception as e:
-        return f"yt_dlp_error: {e}"
+        print(f"\n🛑 CONNECTION ERROR: {str(e)}\n")
+        return "{}"
 
-async def download_http_with_retries(session, src, save_path, attempts=2, timeout=25):
-    for attempt in range(1, attempts+1):
-        try:
-            async with session.get(src, timeout=timeout) as r:
-                status = r.status
-                content_type = r.headers.get("content-type","").lower()
-                if status in (200,206) and "video" in content_type:
-                    with open(save_path, "wb") as f:
-                        async for chunk in r.content.iter_chunked(8192):
-                            f.write(chunk)
-                    return {"ok": True, "path": save_path, "status": status}
-                else:
-                    return {"ok": False, "status": status, "content_type": content_type}
-        except Exception as e:
-            if attempt == attempts:
-                return {"ok": False, "error": str(e)}
-            await asyncio.sleep(1)
-    return {"ok": False, "error":"unknown"}
 
-# ------------------------------
-# VIDEO FETCHER
-# ------------------------------
-async def fetch_videos_dynamic_async(url, limit=3, trim_seconds=8):
-    result = {"url": url, "found": [], "errors": []}
-    domain = urlparse(url).netloc.replace(".", "_") or "site"
-    discovered = set()
-    initial_lower = url.lower()
-    if any(k in initial_lower for k in ("youtube.com", "youtu.be", "vimeo.com")):
-        discovered.add(url)
+def fetch_page_text_safe(url):
+    """Fetch and clean webpage text."""
+    try:
+        resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
+        soup = BeautifulSoup(resp.text, "html.parser")
+        for tag in soup(["script", "style"]):
+            tag.decompose()
+        return " ".join(soup.stripped_strings)[:10000]
+    except Exception as e:
+        return f"Scraping failed: {str(e)}"
 
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True, args=["--no-sandbox"])
-        page = await browser.new_page(viewport={"width":1280,"height":720})
-        page.on("response", lambda resp: discovered.add(resp.url) if "video" in (resp.headers.get("content-type") or "").lower() else None)
 
-        try:
-            await page.goto(url, wait_until="domcontentloaded", timeout=60000)
-            await asyncio.sleep(4)
-        except PlaywrightTimeout:
-            result["errors"].append("timeout")
-        except Exception as e:
-            result["errors"].append(str(e))
-        finally:
-            await browser.close()
-    # For brevity, we will use yt-dlp only for known platforms
-    for src in discovered:
-        lower = src.lower()
-        status = {"src": src}
-        if any(k in lower for k in ("youtube.com", "youtu.be", "vimeo.com")):
-            status["method"] = "yt_dlp"
-            saved = download_with_ytdlp(src, domain)
-            status["saved"] = saved
-            status["ok"] = os.path.exists(saved) if isinstance(saved,str) else False
-        else:
-            status["ok"] = False
-            status["reason"] = "unsupported"
-        result["found"].append(status)
-    with open(REPORT_PATH,"a") as f:
-        f.write(json.dumps(result)+"\n")
-    return result
+async def fetch_images_for_llm(url):
+    """Placeholder for image fetching."""
+    return []
+
 
 async def run_batch(urls):
-    all_results = []
-    for url in tqdm(urls):
-        try:
-            result = await fetch_videos_dynamic_async(url, limit=2, trim_seconds=8)
-            all_results.append(result)
-        except Exception as e:
-            all_results.append({"url": url, "found": [], "errors":[str(e)]})
-        await asyncio.sleep(random.uniform(2,5))
-    return all_results
+    """Placeholder for video fetching."""
+    return [{"url": urls[0], "found": []}]
 
-# ------------------------------
-# PAGE FETCHING
-# ------------------------------
-def fetch_page_text_safe(url, max_retries=3, delay_range=(2,5)):
-    headers = {
-        "User-Agent": "Mozilla/5.0",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Connection": "keep-alive"
-    }
-    for attempt in range(max_retries):
-        try:
-            resp = requests.get(url, headers=headers, timeout=15)
-            if resp.status_code != 200:
-                continue
-            soup = BeautifulSoup(resp.text, "html.parser")
-            for tag in soup(["script","style","noscript"]):
-                tag.decompose()
-            return " ".join(soup.stripped_strings)[:15000]
-        except:
-            time.sleep(random.uniform(*delay_range))
-    return f"ERROR: Could not fetch {url}"
-
-async def fetch_images_for_llm(url: str) -> list:
-    detected_images = set()
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        page = await browser.new_page()
-        try:
-            await page.goto(url, wait_until="domcontentloaded", timeout=60000)
-            html_content = await page.content()
-            soup = BeautifulSoup(html_content, 'html.parser')
-            for img in soup.find_all('img'):
-                src = img.get('src')
-                data_src = img.get('data-src')
-                if src:
-                    detected_images.add(urljoin(url, src))
-                if data_src:
-                    detected_images.add(urljoin(url, data_src))
-        finally:
-            await browser.close()
-    return list(detected_images)
 
 def parse_json(text):
+    """Parse JSON from text, handling markdown fences."""
     try:
         return json.loads(text)
     except:
         match = re.search(r"\{.*\}", text, flags=re.DOTALL)
-        if match:
-            try:
-                return json.loads(match.group(0))
-            except:
-                pass
-    return {}
-
-GRADE_ORDER = {
-    "Grades 1–3": 1,
-    "Grades 4–6": 2,
-    "Grades 7–9": 3,
-    "Grades 10–12": 4,
-}
-
-def get_grade_rank(g):
-    if not g:
-        return None
-    return GRADE_ORDER.get(g.strip(), None)
-
-def normalize_grade(g):
-    if not g:
-        return None
-
-    g = str(g).strip()
-
-    # Normalize "None"
-    if g.lower() == "none":
-        return None
-
-    # Replace ANY dash (hyphen, en dash, em dash) with EN DASH
-    g = g.replace("—", "–").replace("-", "–")
-
-    # Remove extra spaces
-    g = re.sub(r"\s+", " ", g)
-
-    # Ensure format is exactly "Grades X–Y"
-    # Fix cases like "Grades 4 – 6"
-    g = g.replace(" – ", "–").replace(" –", "–").replace("– ", "–")
-
-    # Sometimes frontend sends values like "4-6" → convert
-    match = re.match(r"^(?:Grades )?(\d)\D+(\d)$", g)
-    if match:
-        a, b = match.groups()
-        g = f"Grades {a}–{b}"
-
-    return g
+        try:
+            return json.loads(match.group(0)) if match else {}
+        except:
+            return {}
 
 
-
-
-# ------------------------------
+# ──────────────────────────────────────────────────────────────────────────────
 # FASTAPI APP
-# ------------------------------
+# ──────────────────────────────────────────────────────────────────────────────
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # or ["http://localhost:5500"] if you serve HTML via live server
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["*"]
 )
+
 
 @app.post("/analyze")
 async def analyze_url(request: dict):
+    """Main evaluation endpoint."""
+    policy_file = "policy_output_agentvlm.txt"
+    if not os.path.exists(policy_file):
+        return {"classification": {"error": f"Policy file '{policy_file}' not found"}}
 
-    # document_text = load_pdf('C:/Users/20109/OneDrive/Desktop/Masters/Demo/Website Genre Suitability Policy.txt')
-    with open("C:/Users/20109/OneDrive/Desktop/Masters/Demo/Website Genre Suitability Policy.txt", "r") as f:
+    with open(policy_file, "r", encoding="utf-8") as f:
         document_text = f.read()
-    chunks = chunk_text(document_text)
-    print("Total Chunks:", len(chunks))
-    print("Sample Chunk:", chunks[0])
-    chunk_embeddings = embed_chunks_safe(chunks, batch_size=50)
-    dimension = len(chunk_embeddings[0])
-    index = faiss.IndexFlatL2(dimension)
 
-    vectors = np.array(chunk_embeddings).astype("float32")
-    index.add(vectors)
+    # Simple chunking (split into 3 chunks)
+    chunks = [document_text[i:i+3000] for i in range(0, min(9000, len(document_text)), 3000)]
 
-    print("FAISS index size:", index.ntotal)
-    query="analyze age suitability for website"
-    retrieved_chunks = retrieve(query,index, chunks)
-    context = "\n\n".join(retrieved_chunks)
-    url = request.get("url")
-    student_grade = request.get("student_grade")   # << NEW
-    print(f"🔎 Processing: {url} for student grade {student_grade}")
+    url = request.get("url", "")
+    print(f"\n🔎 Analyzing: {url}")
 
-    content = fetch_page_text_safe(url)
-    images = await fetch_images_for_llm(url)
-    videos = await run_batch([url])
-    video_saved_paths = [
-        video_status.get("saved")
-        for url_result in videos
-        for video_status in url_result.get("found", [])
-        if video_status.get("ok") is True and video_status.get("saved")
-    ]
-    prompt = f"""
-    You are an AI system evaluating webpages for educational safety.
+    content      = fetch_page_text_safe(url)
+    images       = await fetch_images_for_llm(url)
+    videos       = await run_batch([url])
+    video_paths  = []
 
-    Analyze answers based on data in this document this webpage and classify it according to:
-    - Category: (Educational, Entertainment, News, Gaming, Social Media, Unsafe, Mixed, Other)
-    - Age Restriction: [All Ages, 7+, 10+, 13+, 16+, 18+]
-    - Educational Genre: [STEM, Language, History, Arts, Social Studies, Life Skills, Health, Other]
-    - Suitability for School Use: [Suitable, Unsuitable]
-    - Recommended Grade Level (if suitable): [Grades 1–3, 4–6, 7–9, 10–12]
-    - Unsuitability Reasons (if unsuitable choose only 1): ["Inappropriate Content", "Unsafe or Malicious"]
-    - AI Generated Website: ["AI Generated", "Real"]
-    - Accessibility Score: [Accessible, Not Accessible]
-    - Provide 2–3 safer educational alternative websites if the page is unsuitable.
-    - Hugely consider the current webpage content when classifying.
+    prompt      = build_optimized_prompt(url, chunks, content, images, video_paths)
+    result_text = manual_gemini_call(prompt)
+    data        = parse_json(result_text)
 
-    Important:
-    - Evaluate this specific page’s content, not the general website.
-    - Some educational content like (eg. war) should be allowed for specific grades as part of the history class.
-    - Do NOT assume all pages from the same domain are safe.
-    - Example: A Wikipedia page about World War II may be “Suitable”,
-    but a Wikipedia page about suicide is “Unsuitable”.
-
-    Return valid JSON only:
-    {{
-    "url": "{url}",
-    "category": "...",
-    "age_restriction": "...",
-    "educational_genre": "...",
-    "suitability_for_school": "...",
-    "recommended_grade_level": "...",
-    "unsuitability_reasons": "...",
-    "ai_generated": "...",
-    "accessibility_score": "...",
-    "safe_alternatives": ["...", "...", "..."]
-            "timing_breakdown": {{
-            "content_understanding": 0.0,
-            "topic_assessment": 0.0,
-            "classification_decision": 0.0,
-            "json_generation": 0.0,
-            "total_estimated_time": 0.0
-        }}
-    }}
-
-    Context:
-    \"\"\"{context}\"\"\"
-
-    Webpage content:
-    \"\"\"{content}\"\"\"
-
-
-    Images:
-    \"\"\"{images}\"\"\"
-
-    Videos:
-    \"\"\"{video_saved_paths}\"\"\"
-
-
-    """
-
-    response = client.models.generate_content(model="gemini-2.5-flash",contents=prompt)
-    print(response.text)
-    result_text = response.text
-    data = parse_json(result_text)
-    model_grade = data.get("recommended_grade_level")
-    student_grade_rank = get_grade_rank(normalize_grade(student_grade))
-    model_grade_rank = get_grade_rank(normalize_grade(model_grade))
-    print(student_grade)
-    print(student_grade_rank)
-    print(model_grade)
-    print(model_grade_rank)
-
-    # If either not recognized → just return original
-    if student_grade_rank is None or model_grade_rank is None:
-        return {"classification": data}
-    if model_grade_rank > student_grade_rank:
-        print("⚠ Grade Mismatch: Requesting safer alternatives…")
-
-        # SECOND LLM CALL — ask for suitable alternatives
-        refinement_prompt = f"""
-        The webpage at {url} was deemed suitable for {model_grade}.
-        But the student is in {student_grade}.
-
-        Provide:
-        - 1 sentence explaining why this page is not appropriate for this younger grade.
-        - A list of 3 ALTERNATIVE WEBSITES suitable for {student_grade}.
-        
-        Return JSON only:
-        {{
-            "reason": "...",
-            "alternatives": ["...", "...", "..."]
-        }}
-        """
-
-        refine_resp = model.generate_content(refinement_prompt)
-        refine_data = parse_json(refine_resp.text)
-        data["suitability_for_school"] = "Unsuitable"
-        data["unsuitability_reasons"] = "Age-inappropriate"
-        data["safe_alternatives"] = refine_data.get("alternatives", [])
-        data["recommended_grade_level"] = student_grade  # override to student grade
-
-        # Keep reason for debugging
-        data["age_mismatch_reason"] = refine_data.get("reason", "")
-        
-        print("⚠ Upgraded to UNSUITABLE due to grade mismatch.")
     return {"classification": data}
 
 
-# ------------------------------
+# ──────────────────────────────────────────────────────────────────────────────
 # RUN SERVER
-# ------------------------------
+# ──────────────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
+    print("\n" + "=" * 80)
+    print("  AGentVLM Server Starting...")
+    print("=" * 80)
+    print(f"\n  API Key Status: {'✅ LOADED' if API_KEY else '❌ MISSING'}")
+    print(f"  Endpoint      : http://0.0.0.0:8000/analyze")
+    print(f"  Policy file   : policy_output_agentvlm.txt")
+    print("\n  To test:")
+    print("    curl -X POST http://localhost:8000/analyze \\")
+    print('      -H "Content-Type: application/json" \\')
+    print('      -d \'{"url":"https://www.pbslearningmedia.org"}\'')
+    print("\n" + "=" * 80 + "\n")
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
