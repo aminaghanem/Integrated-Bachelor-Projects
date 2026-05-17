@@ -33,9 +33,9 @@ const MINI_GAMES = [
   },
   {
     id: "game2",
-    title: "GAME TWO",
+    title: "PLANET PLAY",
     description: "",
-    icon: "🕹️",
+    icon: "🌎",
     color: "#5b8dee",
     url: "http://localhost:3001",
   },

@@ -207,7 +207,11 @@ export default function SignupWizard() {
 
   return (
     <div style={{
-      minHeight: "100vh", background: "#7a59af",
+      minHeight: "100vh", background: "rgba(10,10,26,0.72)",
+      backdropFilter: "blur(16px)",
+      borderRadius: 16,
+      border: "1px solid rgba(91,141,238,0.35)",
+      boxShadow: "0 0 40px rgba(91,141,238,0.12), 0 24px 48px rgba(0,0,0,0.4)",
       display: "flex", alignItems: "flex-start", justifyContent: "center",
       padding: "2rem", fontFamily: "'Exo 2', sans-serif",
       position: "relative", overflow: "hidden",

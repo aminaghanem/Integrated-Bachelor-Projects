@@ -7,6 +7,7 @@ const CATEGORY_ALIASES = {
   "education": "Learning", "e-learning": "Learning",
   "literature": "Reading", "books": "Reading",
   "natural science": "Science", "sciences": "Science",
+  "Learning": "Educational",  // ← add this, appears in your Redis data
 };
 
 function normalizeCategory(raw) {
@@ -23,11 +24,19 @@ function normalizeUrl(url) {
 
 async function getRedisCandidates({ maxAge } = {}) {
   try {
-    const keys = await redis.keys("url:*");
-    if (!keys.length) { console.log("⚠️ Redis returned no keys"); return []; }
+    // Match the actual key pattern your friend uses
+    const keys = await redis.keys("student:*:history:*");
+
+    if (!keys.length) {
+      console.log("⚠️ Redis returned no keys (tried pattern: student:*:history:*)");
+      return [];
+    }
+
+    console.log(`🔑 Found ${keys.length} keys in Redis`);
 
     const values = await redis.mget(...keys);
     const candidates = [];
+    const seenUrls = new Set(); // deduplicate same URL across multiple students
 
     for (const raw of values) {
       if (!raw) continue;
@@ -41,21 +50,33 @@ async function getRedisCandidates({ maxAge } = {}) {
 
       // Skip age-restricted
       if (maxAge && classification.age_restriction) {
-        const minAge = parseInt(classification.age_restriction);
-        if (!isNaN(minAge) && maxAge < minAge) continue;
+        const ageStr = classification.age_restriction.toString().toLowerCase();
+        if (ageStr === "all ages" || ageStr === "all") {
+          // always include
+        } else {
+          const minAge = parseInt(ageStr);
+          if (!isNaN(minAge) && maxAge < minAge) continue;
+        }
       }
 
+      const fullUrl = classification.url || "";
+      const normalizedUrl = normalizeUrl(fullUrl);
+
+      // Skip duplicates (same URL visited by multiple students)
+      if (seenUrls.has(normalizedUrl)) continue;
+      seenUrls.add(normalizedUrl);
+
       candidates.push({
-        url: normalizeUrl(classification.url || ""),
-        fullUrl: classification.url || "",
+        url: normalizedUrl,
+        fullUrl,
         category: normalizeCategory(classification.category || "General"),
         educational_genre: classification.educational_genre || "",
-        age_restriction: classification.age_restriction || "3+",
+        age_restriction: classification.age_restriction || "All Ages",
         safe_alternatives: classification.safe_alternatives || []
       });
     }
 
-    console.log(`📦 Redis: ${candidates.length} suitable candidates`);
+    console.log(`📦 Redis: ${candidates.length} suitable unique candidates`);
     return candidates;
   } catch (err) {
     console.error("Redis fetch failed:", err.message);
@@ -65,40 +86,62 @@ async function getRedisCandidates({ maxAge } = {}) {
 
 async function getCategoryFromRedis(url) {
   try {
-    const domain = normalizeUrl(url);
-    const keysToTry = [
-      `url:https://${domain}`,
-      `url:https://${domain}/`,
-      `url:https://www.${domain}`,
-      `url:http://${domain}`,
-      `url:${domain}`,
-    ];
+    const normalizedInput = normalizeUrl(url);
 
-    console.log("🔍 Trying Redis keys:", keysToTry);
+    // Search for any key that ends with this URL (any student's history)
+    const pattern = `student:*:history:*${normalizedInput}*`;
+    console.log(`🔍 Searching Redis pattern: ${pattern}`);
 
-    for (const key of keysToTry) {
+    const matchingKeys = await redis.keys(pattern);
+
+    if (matchingKeys.length === 0) {
+      // Also try with https:// prefix variations
+      const patterns = [
+        `student:*:history:https://${normalizedInput}`,
+        `student:*:history:https://${normalizedInput}/`,
+        `student:*:history:https://www.${normalizedInput}`,
+        `student:*:history:https://www.${normalizedInput}/`,
+      ];
+
+      for (const p of patterns) {
+        const keys = await redis.keys(p);
+        if (keys.length > 0) {
+          matchingKeys.push(...keys);
+          break;
+        }
+      }
+    }
+
+    if (matchingKeys.length === 0) {
+      console.log(`⚠️ ${url} not found in Redis`);
+      return null;
+    }
+
+    // Use the most recently accessed entry (highest access_count)
+    let bestRaw = null;
+    let bestCount = -1;
+
+    for (const key of matchingKeys) {
       const raw = await redis.get(key);
-      if (raw) {
-        const data = JSON.parse(raw);
-        const category = data.classification?.category;
-        return normalizeCategory(category || "General");
+      if (!raw) continue;
+      const data = JSON.parse(raw);
+      if ((data.access_count || 0) > bestCount) {
+        bestCount = data.access_count || 0;
+        bestRaw = data;
       }
     }
 
-    // Pattern match fallback
-    const matchingKeys = await redis.keys(`url:*${domain}*`);
-    if (matchingKeys.length > 0) {
-      const raw = await redis.get(matchingKeys[0]);
-      if (raw) {
-        const data = JSON.parse(raw);
-        return normalizeCategory(data.classification?.category || "General");
-      }
-    }
+    if (!bestRaw) return null;
 
-    return null;
+    const category = bestRaw.classification?.category;
+    const result = normalizeCategory(category || "General");
+    console.log(`✅ Category from Redis: ${result} (key pattern matched ${matchingKeys.length} entries)`);
+    return result;
+
   } catch (err) {
     console.error("Redis single lookup failed:", err.message);
     return null;
   }
 }
+
 module.exports = { getRedisCandidates, getCategoryFromRedis, normalizeUrl };

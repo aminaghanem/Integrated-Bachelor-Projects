@@ -33,11 +33,12 @@ interface Notification {
   url?: string
   retrigger?: boolean
   safeAlternatives?: string[]
+  age_restriction?: string
 }
 
 interface MCNotification {
   type: "blocked" | "error" | "success"
-  message: string; url?: string; retrigger?: boolean; safeAlternatives?: string[]
+  message: string; url?: string; retrigger?: boolean; safeAlternatives?: string[]; age_restriction?: string
 }
 
 interface Recommendation {
@@ -230,6 +231,11 @@ function NotificationBanner({
           </p>
           <p style={{ margin: "2px 0 0", fontSize: 13, color: "#374151" }}>
             {notification.message}
+            {notification.age_restriction && (
+              <span style={{ display: "block", marginTop: 4, fontSize: 12, color: "#9ca3af" }}>
+                Age Restriction: {notification.age_restriction}
+              </span>
+            )}
           </p>
           {notification.url && (
             <p style={{ margin: "2px 0 0", fontSize: 11, color: "#9ca3af", wordBreak: "break-all" }}>
@@ -1153,26 +1159,51 @@ function BlockedModal({ notification, onDismiss, onVisit }: {
           padding: "8px 14px", background: "#f47b7b",
           borderBottom: "2.5px solid #3d2c1e"
         }}>
-          {[["#f47b7b"], ["#f5c842"], ["#7bc67e"]].map(([bg], i) => (
-            <span key={i} style={{ width: 11, height: 11, borderRadius: "50%", background: bg, border: "1.5px solid #3d2c1e", flexShrink: 0 }} />
-          ))}
-          <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", marginLeft: 4 }}>access blocked</span>
+          <span style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginLeft: 4 }}>Access Blocked</span>
           <button onClick={onDismiss} style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: "#fff", fontSize: 20, fontWeight: 700, lineHeight: 1 }}>×</button>
         </div>
 
         <div style={{ padding: "24px 28px", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
-          {/* Lock icon */}
-          <img src="/sg-lock.png" alt="Blocked" style={{ width: 72, height: 72, objectFit: "contain", imageRendering: "pixelated" }} />
 
           {/* Message */}
           <div style={{
             background: "#fde8e8", border: "2px solid #3d2c1e",
-            borderRadius: 10, padding: "10px 18px",
-            boxShadow: "2px 2px 0 #3d2c1e", textAlign: "center"
+            borderRadius: 10, padding: "14px 18px",
+            boxShadow: "2px 2px 0 #3d2c1e", textAlign: "center",
+            width: "100%", boxSizing: "border-box" as const,
           }}>
-            <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#c0392b" }}>
+            {/* <p style={{ margin: "0 0 6px", fontSize: 15, fontWeight: 700, color: "#c0392b" }}>
+              This site is blocked
+            </p> */}
+
+            {/* Age restriction badge */}
+            {notification.age_restriction && (
+              <>
+                {/* <div style={{
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  background: "#fff", border: "2px solid #f47b7b",
+                  borderRadius: 8, padding: "8px 16px", margin: "0 0 10px",
+                }}>
+                  <span style={{ fontSize: 20 }}>🔞</span>
+                  <div style={{ textAlign: "left" }}>
+                    <p style={{ margin: 0, fontSize: 11, color: "#9ca3af", fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em" }}>
+                      Age restriction
+                    </p>
+                    <p style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#c0392b" }}>
+                      {notification.age_restriction}
+                    </p>
+                  </div>
+                </div> */}
+                <p style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 700, color: "#c0392b" }}>
+                  {`This page will be available for you once you're ${notification.age_restriction.replace("+", "")} 🚀`}
+                </p>
+              </>
+            )}
+
+            <p style={{ margin: "0 0 10px", fontSize: 13, color: "#374151" }}>
               {notification.message}
             </p>
+
             {notification.url && (
               <p style={{ margin: "4px 0 0", fontSize: 11, color: "#b89b82", wordBreak: "break-all" }}>
                 {notification.url}
@@ -1184,7 +1215,7 @@ function BlockedModal({ notification, onDismiss, onVisit }: {
           {alts.length > 0 ? (
             <div style={{ width: "100%" }}>
               <p style={{ margin: "0 0 10px", fontSize: 11, fontWeight: 700, color: "#b89b82", textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "center" }}>
-                🗺 safe alternatives — click to visit
+                try these instead — click to visit
               </p>
               <div style={{ display: "flex", justifyContent: "center" }}>
                 <div style={{
@@ -1295,14 +1326,6 @@ function KidsDashboard() {
 
   const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null)
   const [showNicknameModal, setShowNicknameModal] = useState(false)
-
-  // Auto-dismiss non-blocked notifications after 5s
-  // useEffect(() => {
-  //   if (notification && notification.type !== "blocked") {
-  //     const t = setTimeout(() => setNotification(null), 5000)
-  //     return () => clearTimeout(t)
-  //   }
-  // }, [notification])
  
   const showNotification = useCallback((n: Notification) => {
     setNotification(n)
@@ -1741,12 +1764,15 @@ function KidsDashboard() {
         }
 
         if (checkData.decision === "Blocked") {
+          console.log("FULL CHECK DATA:", JSON.stringify(checkData, null, 2))
+          console.log("AGE RESTRICTION FROM CHECKDATA:", checkData.age_restriction)
           showNotification({
             type: "blocked",
             message: checkData.message || "Access to this site is restricted.",
             url,
             retrigger: checkData.retrigger_browser === true,
             safeAlternatives: checkData.safe_alternatives ?? [],
+            age_restriction: checkData.age_restriction, 
           });
           setLoading(false);
           return; // STOP HERE
@@ -1819,6 +1845,7 @@ function KidsDashboard() {
           url,
           retrigger: checkData.retrigger_browser === true,
           safeAlternatives: checkData.safe_alternatives ?? [],
+          age_restriction: checkData.age_restriction,
         });
         setLoading(false);
         return;
@@ -1862,7 +1889,7 @@ function KidsDashboard() {
       const checkData = await checkRes.json()
 
       if (checkData.decision === "Blocked") {
-        showNotification({ type: "blocked", message: checkData.message || "Access restricted.", url: fullUrl, safeAlternatives: checkData.safe_alternatives ?? [] })
+        showNotification({ type: "blocked", message: checkData.message || "Access restricted.", url: fullUrl, safeAlternatives: checkData.safe_alternatives ?? [], age_restriction: checkData.age_restriction })
         setLoading(false)
         return
       }
@@ -2701,7 +2728,7 @@ function MissionControlDashboard() {
       const cd = await checkRes.json()
       if (checkRes.status === 400) { showNotif({ type:"error", message: cd.error||"Profile error." }); setLoading(false); return }
       if (cd.decision === "Blocked") {
-        showNotif({ type:"blocked", message: cd.message||"Access restricted.", url, safeAlternatives: cd.safe_alternatives??[] })
+        showNotif({ type:"blocked", message: cd.message||"Access restricted.", url, safeAlternatives: cd.safe_alternatives??[], age_restriction: cd.age_restriction ?? null })
         setLoading(false); return
       }
       if (checkRes.status === 502) { showNotif({ type:"error", message: cd.message||"Safety service unavailable." }); setLoading(false); return }
@@ -2746,7 +2773,7 @@ function MissionControlDashboard() {
         return;
       }
       if (checkData.decision === "Blocked") {
-        showNotif({ type: "blocked", message: checkData.message || "Restricted.", url });  // ← showNotif
+        showNotif({ type: "blocked", message: checkData.message || "Restricted.", url, safeAlternatives: checkData.safe_alternatives ?? [], age_restriction: checkData.age_restriction ?? null });  // ← showNotif
         setLoading(false);
         return;
       }
@@ -2938,7 +2965,25 @@ function MissionControlDashboard() {
         </header>
  
         {/* ── Notification ── */}
-        {notification && <MCNotificationBanner n={notification} onDismiss={dismissNotif} />}
+        {notification && notification.type === "blocked" ? (
+          <BlockedModal
+            notification={{
+              ...notification,
+              message: notification.message,
+              safeAlternatives: notification.safeAlternatives ?? [],
+              age_restriction: notification.age_restriction ?? undefined,
+            }}
+            onDismiss={dismissNotif}
+            onVisit={async (url) => {
+              dismissNotif()
+              if (rootUrl.current) await endSession("in_progress")
+              setNavHistory([])
+              await loadPage(url, true)
+            }}
+          />
+        ) : notification ? (
+          <MCNotificationBanner n={notification} onDismiss={dismissNotif} />
+        ) : null}
  
         {/* ── Search bar ── */}
         {/* <div style={{

@@ -1069,7 +1069,7 @@ export default function AdminDashboard() {
       {viewTarget && (
         <Modal title={`${viewTarget.type} Profile`} onClose={() => setViewTarget(null)}>
           {Object.entries(viewTarget.data)
-            .filter(([k]) => !["password_hash","__v","teaching_assignments","teachable_subjects","children_ids","interests","learning_history","proficiency_levels","accessibility"].includes(k))
+            .filter(([k]) => !["password_hash","__v","teaching_assignments","teachable_subjects","children_ids","interests","learning_history","proficiency_levels","accessibility","parent_id"].includes(k))
             .map(([key, val]) => (
               <Field key={key}
                 label={key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
