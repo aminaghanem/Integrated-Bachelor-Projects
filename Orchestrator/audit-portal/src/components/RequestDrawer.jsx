@@ -12,7 +12,9 @@ function formatDateTime(value) {
     return '—'
   }
 
-  const date = new Date(value)
+  const numericValue = Number(value)
+  const normalizedValue = Number.isFinite(numericValue) && Math.abs(numericValue) < 1e12 ? numericValue * 1000 : value
+  const date = new Date(normalizedValue)
   return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString('en-GB')
 }
 

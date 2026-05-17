@@ -1003,10 +1003,12 @@ class Orchestrator:
 		Rules are evaluated in priority order; the first matching block wins:
 		  1. Content is marked unsuitable for school.
 		  2. URL has an explicit allowlist that doesn't include this student.
-		  3. Student is below the minimum age.
-		  4. Student is above the maximum age.
-		  5. Student is below the minimum grade level.
-		  6. Student is above the maximum grade level.
+		  3. Student is below the minimum grade level.
+
+		Notes:
+		  - Age is intentionally not used for hard blocking so students in the
+		    same grade have consistent access decisions.
+		  - Maximum age and maximum grade are intentionally ignored.
 
 		Args:
 			profile: The student requesting access.
@@ -1019,13 +1021,7 @@ class Orchestrator:
 			return Decision.BLOCKED
 		if policy.allowed_for_user_ids and profile.user_id not in policy.allowed_for_user_ids:
 			return Decision.BLOCKED
-		if policy.min_age is not None and profile.age < policy.min_age:
-			return Decision.BLOCKED
-		if policy.max_age is not None and profile.age > policy.max_age:
-			return Decision.BLOCKED
 		if policy.min_grade_level is not None and profile.grade_level < policy.min_grade_level:
-			return Decision.BLOCKED
-		if policy.max_grade_level is not None and profile.grade_level > policy.max_grade_level:
 			return Decision.BLOCKED
 		return Decision.ALLOWED
 
