@@ -1754,6 +1754,10 @@ function KidsDashboard() {
 
         const checkData = await checkRes.json();
 
+        const studentAge = checkData.student_age
+        const minAge = checkData.min_age
+        const isTooYoung = minAge !== null && studentAge !== null && studentAge < minAge
+
         if (checkRes.status === 400) {
           showNotification({
             type: "error",
@@ -1768,11 +1772,13 @@ function KidsDashboard() {
           console.log("AGE RESTRICTION FROM CHECKDATA:", checkData.age_restriction)
           showNotification({
             type: "blocked",
-            message: checkData.message || "Access to this site is restricted.",
+            message: isTooYoung
+              ? checkData.message
+              : `This page is unsuitable for school use${checkData.unsuitability_reasons ? `: ${checkData.unsuitability_reasons}` : "."}`,
             url,
             retrigger: checkData.retrigger_browser === true,
             safeAlternatives: checkData.safe_alternatives ?? [],
-            age_restriction: checkData.age_restriction, 
+            age_restriction: isTooYoung ? checkData.age_restriction : null,
           });
           setLoading(false);
           return; // STOP HERE
@@ -1838,14 +1844,20 @@ function KidsDashboard() {
         return;
       }
 
+      const studentAge = checkData.student_age
+      const minAge = checkData.min_age
+      const isTooYoung = minAge !== null && studentAge !== null && studentAge < minAge
+
       if (checkData.decision === "Blocked") {
         showNotification({
           type: "blocked",
-          message: checkData.message || "This search result is restricted.",
+          message: isTooYoung
+            ? checkData.message
+            : `This page is unsuitable for school use${checkData.unsuitability_reasons ? `: ${checkData.unsuitability_reasons}` : "."}`,
           url,
           retrigger: checkData.retrigger_browser === true,
           safeAlternatives: checkData.safe_alternatives ?? [],
-          age_restriction: checkData.age_restriction,
+          age_restriction: isTooYoung ? checkData.age_restriction : null,
         });
         setLoading(false);
         return;
@@ -2715,6 +2727,19 @@ function MissionControlDashboard() {
   // ── Visit / check URL ──────────────────────────────────────────
   const isProbablyUrl = (s:string) => /^(https?:\/\/)/i.test(s) || /^[^\s]+\.[^\s]+$/.test(s)
  
+  const buildBlockedMessage = (checkData: any) => {
+    const studentAge = checkData.student_age
+    const minAge = checkData.min_age
+    const isTooYoung = minAge !== null && studentAge !== null && studentAge < minAge
+
+    return {
+      message: isTooYoung
+        ? checkData.message
+        : `This page is unsuitable for school use${checkData.unsuitability_reasons ? `: ${checkData.unsuitability_reasons}` : "."}`,
+      age_restriction: isTooYoung ? (checkData.age_restriction ?? null) : null,
+    }
+  }
+
   const doVisit = async (rawUrl: string) => {
     const url = /^https?:\/\//i.test(rawUrl) ? rawUrl : "https://" + rawUrl
     const token = localStorage.getItem("token")
@@ -2728,7 +2753,8 @@ function MissionControlDashboard() {
       const cd = await checkRes.json()
       if (checkRes.status === 400) { showNotif({ type:"error", message: cd.error||"Profile error." }); setLoading(false); return }
       if (cd.decision === "Blocked") {
-        showNotif({ type:"blocked", message: cd.message||"Access restricted.", url, safeAlternatives: cd.safe_alternatives??[], age_restriction: cd.age_restriction ?? null })
+        const { message, age_restriction } = buildBlockedMessage(cd)
+        showNotif({ type:"blocked", message, url, safeAlternatives: cd.safe_alternatives??[], age_restriction })
         setLoading(false); return
       }
       if (checkRes.status === 502) { showNotif({ type:"error", message: cd.message||"Safety service unavailable." }); setLoading(false); return }
@@ -2773,9 +2799,9 @@ function MissionControlDashboard() {
         return;
       }
       if (checkData.decision === "Blocked") {
-        showNotif({ type: "blocked", message: checkData.message || "Restricted.", url, safeAlternatives: checkData.safe_alternatives ?? [], age_restriction: checkData.age_restriction ?? null });  // ← showNotif
-        setLoading(false);
-        return;
+        const { message, age_restriction } = buildBlockedMessage(checkData)
+        showNotif({ type:"blocked", message, url, safeAlternatives: checkData.safe_alternatives??[], age_restriction })
+        setLoading(false); return;
       }
       if (checkRes.status === 502) {
         showNotif({ type: "error", message: checkData.message || "Safety service unavailable." });

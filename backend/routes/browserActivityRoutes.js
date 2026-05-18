@@ -113,7 +113,6 @@ router.post("/check", protect, async (req, res) => {
     // Handle BLOCKED decision (Test Cases 10, 12, 13, 17)
     if (decision === "Blocked") {
       console.log("FULL ORCH RESPONSE:", JSON.stringify(orchResponse.data, null, 2))
-      console.log("POLICY:", JSON.stringify(orchResponse.data.policy, null, 2))
       console.log("AGE RESTRICTION:", orchResponse.data.policy?.age_restriction)
       console.log("SAFE ALTERNATIVES:", orchResponse.data.policy?.safe_alternatives)
       return res.status(403).json({
@@ -122,7 +121,10 @@ router.post("/check", protect, async (req, res) => {
         message: ui_message,
         retrigger_browser: orchResponse.data.retrigger_browser ?? false,
         safe_alternatives: orchResponse.data.policy?.safe_alternatives ?? [],
-        age_restriction: orchResponse.data.policy?.age_restriction ?? null
+        age_restriction: orchResponse.data.policy?.age_restriction ?? null,
+        min_age: orchResponse.data.policy?.min_age ?? null,
+        student_age: orchResponse.data.profile?.age ?? null,
+        unsuitability_reasons: orchResponse.data.policy?.unsuitability_reasons ?? null,
       })
     }
 

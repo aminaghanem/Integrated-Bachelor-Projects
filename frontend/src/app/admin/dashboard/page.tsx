@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useEffect, useState, useCallback } from "react"
 
 const API = "http://localhost:4000"
-const AUDIT_URL = "http://172.25.80.1:5173"
+const AUDIT_URL = "http://172.18.128.1:5173"
 
 type Section =
   | "overview"
